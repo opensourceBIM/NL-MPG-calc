@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PluginDescriptor>
+	<JavaPlugin>
+		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
+		<implementationClass>org.opensourcebim.mpgcalculations.MpgCalculator</implementationClass>
+		<name>MpgCalculatorService</name>
+		<description>MpgCalculatorService</description>
+	</JavaPlugin>
+</PluginDescriptor>
