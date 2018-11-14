@@ -8,7 +8,6 @@ import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.interfaces.objects.SObjectType;
 import org.bimserver.plugins.services.BimBotAbstractService;
 
-
 public class MpgCalculator extends BimBotAbstractService {
 
 	@Override
@@ -30,12 +29,12 @@ public class MpgCalculator extends BimBotAbstractService {
 		// do calculations
 		
 		// TODO Auto-generated method stub
-		return new BimBotsOutput("some useful content", new byte[0]);
+		return new BimBotsOutput(getOutputSchema(), new byte[0]);
 	}
 
 	@Override
 	public String getOutputSchema() {
-		// TODO Auto-generated method stub
+		// TODO put a more meaningful schema name here
 		return "some useful content";
 	}
 	
