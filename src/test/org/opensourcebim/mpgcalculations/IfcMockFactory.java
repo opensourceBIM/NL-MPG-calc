@@ -21,7 +21,9 @@ public class IfcMockFactory {
 
 	private GeometryInfo geometry = null;
 	private EList<IfcRelAssociates> associations = null;
-
+	private IfcSIPrefix projectUnitPrefix = IfcSIPrefix.NULL;
+	
+	
 	public IfcMockFactory() {
 		setGeometry(getGeometryInfoMock(1,1));
 		setAssociations(new BasicEList<>());
@@ -36,7 +38,6 @@ public class IfcMockFactory {
 	}
 	
 	public void addProductToModel(IfcModelInterface mockModel) {
-		// TODO Auto-generated method stub
 		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
 		products.add(getIfcProductMock());
 		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
@@ -95,8 +96,8 @@ public class IfcMockFactory {
 		IfcUnitAssignment units = mock(IfcUnitAssignment.class);
 		EList<IfcUnit> unittypes = new BasicEList<>();
 		
-		unittypes.add(getUnitMock(IfcUnitEnum.VOLUMEUNIT, IfcSIPrefix.NULL ));
-		unittypes.add(getUnitMock(IfcUnitEnum.AREAUNIT, IfcSIPrefix.NULL ));
+		unittypes.add(getUnitMock(IfcUnitEnum.VOLUMEUNIT, this.projectUnitPrefix ));
+		unittypes.add(getUnitMock(IfcUnitEnum.AREAUNIT, this.projectUnitPrefix ));
 		
 		when(units.getUnits()).thenReturn(unittypes);
 		when(project.getUnitsInContext()).thenReturn(units);
@@ -170,6 +171,7 @@ public class IfcMockFactory {
 		return layerSetUsage;
 	}
 	
+	// ------------- auto-generated setters and getters ---------------
 	public GeometryInfo getGeometry() {
 		return geometry;
 	}
@@ -184,5 +186,13 @@ public class IfcMockFactory {
 
 	public void setAssociations(EList<IfcRelAssociates> associations) {
 		this.associations = associations;
+	}
+
+	public IfcSIPrefix getProjectUnitPrefix() {
+		return projectUnitPrefix;
+	}
+
+	public void setProjectUnitPrefix(IfcSIPrefix projectUnitPrefix) {
+		this.projectUnitPrefix = projectUnitPrefix;
 	}
 }

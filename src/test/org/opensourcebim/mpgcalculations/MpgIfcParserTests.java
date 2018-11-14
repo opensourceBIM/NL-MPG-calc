@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.bimserver.emf.IfcModelInterface;
+import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
+import org.bimserver.models.ifc2x3tc1.IfcSIPrefix;
 import org.eclipse.emf.common.util.BasicEList;
 import org.junit.After;
 import org.junit.Before;
@@ -181,4 +183,95 @@ public class MpgIfcParserTests {
 		assertEquals(4, parser.getMpgMaterials().size());
 	}
 	
+	@Test
+	public void testCanConvertIfcModelToToBeReportedUnits() {
+		// set the units before any model is created. (for that reason we have to reinstantiate the model here.)
+		factory.setProjectUnitPrefix(IfcSIPrefix.MILLI);
+		ifcModel = factory.getModelMock();
+		factory.addMaterial("aluminium");
+		
+		factory.addProductToModel(ifcModel);
+		parser.parseIfcModel(ifcModel);
+		assertEquals(1.0e9, parser.getMpgObjectLinks().get(0).getVolume(), 1e-15);
+	}
+	
+	@Test
+	public void testParserStoresVolumeOfObjects()
+	{
+		factory.setGeometry(factory.getGeometryInfoMock(1, 3));
+		factory.addMaterial("brick");
+		factory.addProductToModel(ifcModel);
+		
+		parser.parseIfcModel(ifcModel);
+		assertEquals(3, parser.getMpgObjectLinks().get(0).getVolume(), 1e-15);
+	}
+	
+	@Test
+	public void testParserDeterminesVolumeOfObjectsPerProduct()
+	{
+		factory.setGeometry(factory.getGeometryInfoMock(1, 3));
+		factory.addMaterial("brick");
+		factory.addProductToModel(ifcModel);
+
+		// add another product with a different geometry
+		factory.setGeometry(factory.getGeometryInfoMock(1, 2));
+		factory.addProductToModel(ifcModel);
+		
+		parser.parseIfcModel(ifcModel);
+		assertEquals(3, parser.getMpgObjectLinks().get(0).getVolume(), 1e-15);
+	}
+	
+	@Test
+	public void testParserDeterminesVolumeOnLayerThicknessRatio()
+	{
+		factory.setGeometry(factory.getGeometryInfoMock(1, 1));
+		factory.addMaterialLayer("brick", 1);
+		factory.addMaterialLayer("rockwool", 3);
+		factory.addProductToModel(ifcModel);
+		
+		parser.parseIfcModel(ifcModel);
+		assertEquals(.25, parser.getMpgObjectLinks().get(0).getVolume(), 1e-16);
+		assertEquals(.75, parser.getMpgObjectLinks().get(1).getVolume(), 1e-16);
+	}
+	
+	@Test
+	public void testParserDeterminesVolumesOfLayersPerProduct()
+	{
+		factory.setGeometry(factory.getGeometryInfoMock(1, 1));
+		factory.addMaterialLayer("brick", 1);
+		factory.addMaterialLayer("rockwool", 3);
+		factory.addProductToModel(ifcModel);
+		
+		factory.setGeometry(factory.getGeometryInfoMock(1, 10));
+		factory.setAssociations(new BasicEList<IfcRelAssociates>());
+		List<Entry<String, Double>> layers = new ArrayList<Entry<String, Double>>();
+		layers.add(new AbstractMap.SimpleEntry<>("brick", 0.25));
+		layers.add(new AbstractMap.SimpleEntry<>("rockwool", 0.5));
+		layers.add(new AbstractMap.SimpleEntry<>("brick", 0.25));
+		factory.addMaterialLayerSet(layers);
+		factory.addProductToModel(ifcModel);
+		
+		parser.parseIfcModel(ifcModel);
+		assertEquals(.25, parser.getMpgObjectLinks().get(0).getVolume(), 1e-8);
+		assertEquals(.75, parser.getMpgObjectLinks().get(1).getVolume(), 1e-8);
+
+		assertEquals(2.5, parser.getMpgObjectLinks().get(2).getVolume(), 1e-8);
+		assertEquals(5.0, parser.getMpgObjectLinks().get(3).getVolume(), 1e-8);
+		assertEquals(2.5, parser.getMpgObjectLinks().get(4).getVolume(), 1e-8);
+	}
+	
+	@Test
+	public void testParserDeterminesVolumesOfLayersAndNonLayersSeparately()
+	{
+		factory.setGeometry(factory.getGeometryInfoMock(1, 1));
+		factory.addMaterialLayer("brick", 1);
+		factory.addMaterialLayer("rockwool", 3);
+		factory.addMaterial("steel");
+		factory.addProductToModel(ifcModel);
+		
+		parser.parseIfcModel(ifcModel);
+		assertEquals(.125, parser.getMpgObjectLinks().get(0).getVolume(), 1e-8);
+		assertEquals(.375, parser.getMpgObjectLinks().get(1).getVolume(), 1e-8);
+		assertEquals(.5, parser.getMpgObjectLinks().get(2).getVolume(), 1e-8);
+	}
 }
