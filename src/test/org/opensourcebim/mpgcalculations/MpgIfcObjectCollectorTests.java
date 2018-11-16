@@ -41,13 +41,13 @@ public class MpgIfcObjectCollectorTests {
 
 	@Test
 	public void testNewCollectorHasNoParsedMaterials() {
-		assertEquals(0, collector.getMpgMaterials().size());
+		assertEquals(0, collector.results().getMaterials().size());
 	}
 	
 	@Test
 	public void testParseModelWithoutProducts() {
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(0, collector.getMpgMaterials().size());
+		assertEquals(0, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -55,7 +55,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.setAssociations(null);
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(0, collector.getMpgMaterials().size());
+		assertEquals(0, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -64,7 +64,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
 		
-		assertEquals(0, collector.getMpgMaterials().size());
+		assertEquals(0, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -73,16 +73,17 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel, name);
 		collector.collectIfcModelObjects(ifcModel);
 		
-		assertEquals(name, collector.getMpgObjectLinks().get(0).getObjectName());
+		assertEquals(name, collector.results().getObjectGroups().get(0).getObjectName());
 	}
 	
 	@Test
 	public void testCollectObjectsWillGatherObjectTypeOfProduct() {
-		String type = "ifcDoor";
+		String type = "Door";
 		factory.addProductToModel(ifcModel, null, type);
 		collector.collectIfcModelObjects(ifcModel);
 		
-		assertEquals(type, collector.getMpgObjectLinks().get(0).getObjectType());
+		// as getClass() is a final method it cannot be mocked to return 'Door'.
+		assertTrue(collector.results().getObjectGroups().get(0).getObjectType().contains("Mockito"));
 	}
 	
 	@Test
@@ -91,7 +92,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(1, collector.getMpgMaterials().size());
+		assertEquals(1, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -102,7 +103,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		collector.collectIfcModelObjects(ifcModel);
 		// if the materials are the same we should only store it once.
-		assertEquals(1, collector.getMpgMaterials().size());
+		assertEquals(1, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -118,7 +119,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		collector.collectIfcModelObjects(ifcModel);
 		// if the materials are the same we should only store it once.
-		assertEquals(2, collector.getMpgMaterials().size());
+		assertEquals(2, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -129,7 +130,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
 		// if the materials are the same we should only store it once.
-		assertEquals(0, collector.getMpgMaterials().size());
+		assertEquals(0, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -137,7 +138,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialList(Arrays.asList("Steel", "Aluminium", "Aluminium"));
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(2, collector.getMpgMaterials().size());
+		assertEquals(2, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -145,7 +146,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialList(new ArrayList<String>());
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(0, collector.getMpgMaterials().size());
+		assertEquals(0, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -153,7 +154,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialLayer("brick", 0.15);
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(1, collector.getMpgMaterials().size());
+		assertEquals(1, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -168,7 +169,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialLayerSet(layers);
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.getMpgMaterials().size());
+		assertEquals(3, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -183,7 +184,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialLayerSetUsage(layers);
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.getMpgMaterials().size());
+		assertEquals(3, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -200,7 +201,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(4, collector.getMpgMaterials().size());
+		assertEquals(4, collector.results().getMaterials().size());
 	}
 	
 	@Test
@@ -212,7 +213,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(1.0e9, collector.getMpgObjectLinks().get(0).getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(1.0e9, collector.results().getObjectGroups().get(0).getObjects().get(0).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -223,7 +224,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.getMpgObjectLinks().get(0).getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(3, collector.results().getObjectGroups().get(0).getObjects().get(0).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -238,7 +239,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.getMpgObjectLinks().get(0).getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(3, collector.results().getObjectGroups().get(0).getObjects().get(0).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -250,8 +251,8 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(.25, collector.getMpgObjectLinks().get(0).getObjects().get(0).getVolume(), 1e-8);
-		assertEquals(.75, collector.getMpgObjectLinks().get(0).getObjects().get(1).getVolume(), 1e-8);
+		assertEquals(.25, collector.results().getObjectGroups().get(0).getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(.75, collector.results().getObjectGroups().get(0).getObjects().get(1).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -272,12 +273,12 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(.25, collector.getMpgObjectLinks().get(0).getObjects().get(0).getVolume(), 1e-8);
-		assertEquals(.75, collector.getMpgObjectLinks().get(0).getObjects().get(1).getVolume(), 1e-8);
+		assertEquals(.25, collector.results().getObjectGroups().get(0).getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(.75, collector.results().getObjectGroups().get(0).getObjects().get(1).getVolume(), 1e-8);
 
-		assertEquals(2.5, collector.getMpgObjectLinks().get(1).getObjects().get(0).getVolume(), 1e-8);
-		assertEquals(5.0, collector.getMpgObjectLinks().get(1).getObjects().get(1).getVolume(), 1e-8);
-		assertEquals(2.5, collector.getMpgObjectLinks().get(1).getObjects().get(2).getVolume(), 1e-8);
+		assertEquals(2.5, collector.results().getObjectGroups().get(1).getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(5.0, collector.results().getObjectGroups().get(1).getObjects().get(1).getVolume(), 1e-8);
+		assertEquals(2.5, collector.results().getObjectGroups().get(1).getObjects().get(2).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -301,8 +302,8 @@ public class MpgIfcObjectCollectorTests {
 		collector.collectIfcModelObjects(ifcModel);
 		
 		// material names of layers are null
-		assertEquals(null, collector.getMpgObjectLinks().get(0).getObjects().get(0).getMaterial().getIfcName());
-		assertEquals(null, collector.getMpgObjectLinks().get(0).getObjects().get(1).getMaterial().getIfcName());
+		assertEquals(null, collector.results().getObjectGroups().get(0).getObjects().get(0).getMaterial().getIfcName());
+		assertEquals(null, collector.results().getObjectGroups().get(0).getObjects().get(1).getMaterial().getIfcName());
 	}
 	
 	@Test
@@ -315,11 +316,11 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(.25,collector.getMpgObjectLinks().get(0).getObjects().get(0).getVolume(), 1e-8);
-		assertEquals(.75,collector.getMpgObjectLinks().get(0).getObjects().get(1).getVolume(), 1e-8);
+		assertEquals(.25,collector.results().getObjectGroups().get(0).getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(.75,collector.results().getObjectGroups().get(0).getObjects().get(1).getVolume(), 1e-8);
 		
 		// as there are layers present and this material is added separately we cannot assign a volume to it.
-		assertTrue(Double.isNaN(collector.getMpgObjectLinks().get(0).getObjects().get(2).getVolume()));
+		assertTrue(Double.isNaN(collector.results().getObjectGroups().get(0).getObjects().get(2).getVolume()));
 	}
 	
 	@Test
@@ -331,8 +332,8 @@ public class MpgIfcObjectCollectorTests {
 		factory.addSpaceToModel(ifcModel);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(4.0, collector.getSpaces().get(0).getVolume(), 1e-8);
-		assertEquals(1.0, collector.getSpaces().get(0).getArea(), 1e-8);
+		assertEquals(4.0, collector.results().getSpaces().get(0).getVolume(), 1e-8);
+		assertEquals(1.0, collector.results().getSpaces().get(0).getArea(), 1e-8);
 	}
 	
 	@Test
@@ -347,8 +348,8 @@ public class MpgIfcObjectCollectorTests {
 		factory.addSpaceToModel(ifcModel, ifcModel.getAllWithSubTypes(IfcProduct.class).get(1));
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(4.0, collector.getSpaces().get(0).getVolume(), 1e-8);
-		assertEquals(1, collector.getSpaces().size());
+		assertEquals(4.0, collector.results().getSpaces().get(0).getVolume(), 1e-8);
+		assertEquals(1, collector.results().getSpaces().size());
 	}
 	
 	@Test
@@ -356,15 +357,15 @@ public class MpgIfcObjectCollectorTests {
 		factory.addGenericIfcProductToModel(ifcModel, IfcFurnishingElement.class, null);
 		collector.collectIfcModelObjects(ifcModel);
 		
-		assertEquals(0, collector.getSpaces().size());
-		assertEquals(0, collector.getMpgObjectLinks().size());
+		assertEquals(0, collector.results().getSpaces().size());
+		assertEquals(0, collector.results().getObjectGroups().size());
 	}
 	
 	@Test
 	public void testCollectorOmitsOpeningElements() {
 		// door and window openings are not included in the floor plan area calculation
 		factory.addGenericIfcProductToModel(ifcModel, IfcOpeningElement.class, null);
-		assertEquals(0, collector.getSpaces().size());
-		assertEquals(0, collector.getMpgObjectLinks().size());
+		assertEquals(0, collector.results().getSpaces().size());
+		assertEquals(0, collector.results().getObjectGroups().size());
 	}
 }

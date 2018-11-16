@@ -35,18 +35,18 @@ import org.eclipse.emf.common.util.EList;
  */
 public class MpgIfcObjectCollector {
 
-	private HashMap<String, MpgMaterial> mpgMaterials;
-	private List<MpgObjectGroup> mpgObjectLinks;
-	private List<MpgObject> spaces;
+	private MpgObjectStore objectStore;
 
 	// reporting units
 	private AreaUnit areaUnit = AreaUnit.SQUARED_METER;
 	private VolumeUnit volumeUnit = VolumeUnit.CUBIC_METER;
 
 	public MpgIfcObjectCollector() {
-		setMpgMaterials(new HashMap<>());
-		setMpgObjectLinks(new BasicEList<MpgObjectGroup>());
-		setSpaces(new BasicEList<MpgObject>());
+		objectStore = new MpgObjectStoreImpl();
+	}
+
+	public MpgObjectStore results() {
+		return this.objectStore;
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class MpgIfcObjectCollector {
 	 * @param ifcModel for now only a ifc2x3tc1 IfcModel object
 	 */
 	public void collectIfcModelObjects(IfcModelInterface ifcModel) {
-		getMpgMaterials().clear();
+		objectStore.Reset();
 
 		// get project wide parameters
 		VolumeUnit modelVolumeUnit = IfcUtils.getVolumeUnit(ifcModel);
@@ -101,26 +101,20 @@ public class MpgIfcObjectCollector {
 					boolean isIncludedGeometrically = false;
 
 					if (!isIncludedGeometrically && !isIncludedSemantically) {
-						getSpaces().add(new MpgObjectImpl(volume, area));
+						objectStore.getSpaces().add(new MpgObjectImpl(volume, area));
 					}
 
 				} else {
 					// retrieve information and add found values to the various data objects
 					List<Pair<String, Double>> mats = this.getMaterials(ifcProduct, volume);
 					mats.forEach((mat) -> {
-						// make sure there are only unique values in the material list
-						// - multiple objects can have a reference to a single material
-						if (mat.getLeft() == "Leer") {
-							System.out.println();
-						}
-
-						mpgMaterials.put(mat.getLeft(), new MpgMaterial(mat.getLeft()));
+						objectStore.addMaterial(mat.getLeft());
 						if (geometry != null) {
-							mpgObjectGroup
-									.addObject(new MpgObjectImpl(mat.getRight(), mpgMaterials.get(mat.getLeft())));
+							mpgObjectGroup.addObject(
+									new MpgObjectImpl(mat.getRight(), objectStore.getMaterials().get(mat.getLeft())));
 						}
 					});
-					mpgObjectLinks.add(mpgObjectGroup);
+					objectStore.getObjectGroups().add(mpgObjectGroup);
 				}
 			}
 		}
@@ -223,33 +217,10 @@ public class MpgIfcObjectCollector {
 	}
 
 	private void ReportResults() {
-		System.out.println("----------------------------");
-		System.out.println("ifc object collection report: ");
-		System.out.println(">> found objects : " + mpgMaterials.size());
-		mpgObjectLinks.forEach(group -> {
-			System.out.println(group.print());
-			System.out.println("");
-		});
-		System.out.println("----------------------------");
+		objectStore.FullReport();
 	}
 
 	// ---------- Standard getters and setters -------------
-	public HashMap<String, MpgMaterial> getMpgMaterials() {
-		return mpgMaterials;
-	}
-
-	public void setMpgMaterials(HashMap<String, MpgMaterial> mpgMaterials) {
-		this.mpgMaterials = mpgMaterials;
-	}
-
-	public List<MpgObjectGroup> getMpgObjectLinks() {
-		return mpgObjectLinks;
-	}
-
-	public void setMpgObjectLinks(List<MpgObjectGroup> mpgObjectLinks) {
-		this.mpgObjectLinks = mpgObjectLinks;
-	}
-
 	public AreaUnit getAreaUnit() {
 		return areaUnit;
 	}
@@ -264,13 +235,5 @@ public class MpgIfcObjectCollector {
 
 	public void setVolumeUnit(VolumeUnit volumeUnit) {
 		this.volumeUnit = volumeUnit;
-	}
-
-	public List<MpgObject> getSpaces() {
-		return spaces;
-	}
-
-	public void setSpaces(List<MpgObject> spaces) {
-		this.spaces = spaces;
 	}
 }

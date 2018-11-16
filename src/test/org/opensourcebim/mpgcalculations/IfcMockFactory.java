@@ -12,6 +12,7 @@ import org.bimserver.models.geometry.GeometryInfo;
 import org.bimserver.models.ifc2x3tc1.*;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
+import org.mockito.Mockito;
 
 /**
  * Factory class to create IfcModel objects to test various methods
@@ -49,9 +50,9 @@ public class IfcMockFactory {
 		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
 	}
 	
-	public void addProductToModel(IfcModelInterface mockModel, String name, String type) {
+	public void addProductToModel(IfcModelInterface mockModel, String name, String classShortName) {
 		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
-		products.add(addIfcProductToModel(null, name, type));
+		products.add(addIfcProductToModel(null, name, classShortName));
 		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
 	}
 		
@@ -74,11 +75,11 @@ public class IfcMockFactory {
 	 * Get Mock product with Geometry, the difference with the generic method is that products can be linked to materials.
 	 * @return a Mocked IfcProduct object
 	 */
-	private IfcProduct addIfcProductToModel(IfcObjectDefinition parent, String name, String type) {
+	private IfcProduct addIfcProductToModel(IfcObjectDefinition parent, String name, String classShortName) {
 		IfcProduct mockProduct = createGenericIfcProduct(IfcProduct.class, parent);
 		when(mockProduct.getHasAssociations()).thenReturn(associations);
 		when(mockProduct.getName()).thenReturn(name);
-		when(mockProduct.getObjectType()).thenReturn(type);
+
 		return mockProduct;
 	}
 

@@ -5,8 +5,8 @@ public class MpgObjectImpl implements MpgObject {
 	private double volume;
 	private double area;
 	
-	protected MpgObjectImpl() { }
-	protected MpgObjectImpl(double volume, MpgMaterial mat) {
+	public MpgObjectImpl() { }
+	public MpgObjectImpl(double volume, MpgMaterial mat) {
 		this.setVolume(volume);
 		this.setMaterial(mat);
 	}
