@@ -39,10 +39,22 @@ public class IfcMockFactory {
 
 	public void addProductToModel(IfcModelInterface mockModel) {
 		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
-		products.add(addIfcProductToModel(null));
+		products.add(addIfcProductToModel(null, null, null));
 		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
 	}
-
+	
+	public void addProductToModel(IfcModelInterface mockModel, String name) {
+		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
+		products.add(addIfcProductToModel(null, name, null));
+		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
+	}
+	
+	public void addProductToModel(IfcModelInterface mockModel, String name, String type) {
+		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
+		products.add(addIfcProductToModel(null, name, type));
+		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
+	}
+		
 	public void addSpaceToModel(IfcModelInterface mockModel) {
 		addGenericIfcProductToModel(mockModel, IfcSpace.class, null);
 	}
@@ -62,9 +74,11 @@ public class IfcMockFactory {
 	 * Get Mock product with Geometry, the difference with the generic method is that products can be linked to materials.
 	 * @return a Mocked IfcProduct object
 	 */
-	private IfcProduct addIfcProductToModel(IfcObjectDefinition parent) {
+	private IfcProduct addIfcProductToModel(IfcObjectDefinition parent, String name, String type) {
 		IfcProduct mockProduct = createGenericIfcProduct(IfcProduct.class, parent);
 		when(mockProduct.getHasAssociations()).thenReturn(associations);
+		when(mockProduct.getName()).thenReturn(name);
+		when(mockProduct.getObjectType()).thenReturn(type);
 		return mockProduct;
 	}
 

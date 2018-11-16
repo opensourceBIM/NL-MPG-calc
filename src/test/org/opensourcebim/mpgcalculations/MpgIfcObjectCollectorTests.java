@@ -68,6 +68,24 @@ public class MpgIfcObjectCollectorTests {
 	}
 	
 	@Test
+	public void testCollectObjectsWillGatherObjectNamesofProduct() {
+		String name = "a structural beam";
+		factory.addProductToModel(ifcModel, name);
+		collector.collectIfcModelObjects(ifcModel);
+		
+		assertEquals(name, collector.getMpgObjectLinks().get(0).getObjectName());
+	}
+	
+	@Test
+	public void testCollectObjectsWillGatherObjectTypeOfProduct() {
+		String type = "ifcDoor";
+		factory.addProductToModel(ifcModel, null, type);
+		collector.collectIfcModelObjects(ifcModel);
+		
+		assertEquals(type, collector.getMpgObjectLinks().get(0).getObjectType());
+	}
+	
+	@Test
 	public void testCanParseModelWithSingleMaterial() {
 		factory.addMaterial("aluminium");
 		factory.addProductToModel(ifcModel);

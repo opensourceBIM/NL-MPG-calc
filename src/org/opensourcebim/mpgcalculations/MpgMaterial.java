@@ -12,6 +12,8 @@ public class MpgMaterial {
 	private String BimBotIdentifier;
 	
 	// add any other properties that can be relevant for the mpg calculations
+	private double longevity = 30; // longevity of material in years
+	
 	
 	public MpgMaterial(String name)
 	{

@@ -78,7 +78,8 @@ public class MpgIfcObjectCollector {
 
 			if (geometry != null) {
 
-				MpgObjectGroup mpgObjectGroup = new MpgObjectGroupImpl(ifcProduct.getOid(), ifcProduct.getGlobalId());
+				MpgObjectGroup mpgObjectGroup = new MpgObjectGroupImpl(ifcProduct.getOid(), ifcProduct.getGlobalId(),
+						ifcProduct.getName(), ifcProduct.getClass().getSimpleName());
 
 				area = modelAreaUnit.convert(geometry.getArea(), this.getAreaUnit());
 				volume = modelVolumeUnit.convert(geometry.getVolume(), this.getVolumeUnit());
