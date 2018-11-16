@@ -11,4 +11,8 @@ public interface MpgObject {
 	 * @return
 	 */
 	public double getVolume(); // volume calculated based on layer ratios etc.
+	
+	public double getArea();
+	
+	public String print();
 }
