@@ -1,17 +1,17 @@
-package test.org.opensourcebim.mpgcalculations;
+package test.org.opensourcebim.ifccollection;
 
 import static org.junit.Assert.*;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.mpgcalculations.MpgMaterial;
-import org.opensourcebim.mpgcalculations.MpgObject;
-import org.opensourcebim.mpgcalculations.MpgObjectGroup;
-import org.opensourcebim.mpgcalculations.MpgObjectGroupImpl;
-import org.opensourcebim.mpgcalculations.MpgObjectImpl;
-import org.opensourcebim.mpgcalculations.MpgObjectStore;
-import org.opensourcebim.mpgcalculations.MpgObjectStoreImpl;
+import org.opensourcebim.ifccollection.MpgMaterial;
+import org.opensourcebim.ifccollection.MpgObject;
+import org.opensourcebim.ifccollection.MpgObjectGroup;
+import org.opensourcebim.ifccollection.MpgObjectGroupImpl;
+import org.opensourcebim.ifccollection.MpgObjectImpl;
+import org.opensourcebim.ifccollection.MpgObjectStore;
+import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 
 public class MpgObjectStoreTests {
 

@@ -1,4 +1,4 @@
-package test.org.opensourcebim.mpgcalculations;
+package test.org.opensourcebim.ifccollection;
 
 import static org.junit.Assert.*;
 
@@ -18,7 +18,7 @@ import org.eclipse.emf.common.util.BasicEList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.mpgcalculations.MpgIfcObjectCollector;
+import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
 
 public class MpgIfcObjectCollectorTests {
 

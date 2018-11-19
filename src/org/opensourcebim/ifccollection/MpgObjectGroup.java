@@ -1,4 +1,4 @@
-package org.opensourcebim.mpgcalculations;
+package org.opensourcebim.ifccollection;
 
 import java.util.List;
 

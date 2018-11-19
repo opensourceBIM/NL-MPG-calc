@@ -1,4 +1,4 @@
-package test.org.opensourcebim.mpgcalculations;
+package test.org.opensourcebim.ifccollection;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

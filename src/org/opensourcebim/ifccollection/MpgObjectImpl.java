@@ -1,4 +1,4 @@
-package org.opensourcebim.mpgcalculations;
+package org.opensourcebim.ifccollection;
 
 /**
  * Class to store data of objects found in IFC files.
