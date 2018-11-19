@@ -16,6 +16,12 @@ public class MpgMaterial {
 	// add any other properties that can be relevant for the mpg calculations
 	private HashMap<String, Object> properties;
 	
+	public enum Properties {
+		Replacements("replacements"),
+		TotalLifeTime("tTotalLifeTime")
+	}
+	
+	
 	public MpgMaterial(String name)
 	{
 		ifcName = name;

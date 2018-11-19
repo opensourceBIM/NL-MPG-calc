@@ -35,17 +35,16 @@ public class IfcToMpgCollectionService extends BimBotAbstractService {
 		NmdDataResolver nmdDataProvider = new NmdDataResolverImpl();
 		nmdDataProvider.addService(new NmdDataBaseSession());
 		nmdDataProvider.addService(new BimMaterialDatabaseSession());
-		
-		
 		MpgObjectStore nmdResults = nmdDataProvider.NmdToMpg(ifcResults);
 		
 		// notify user of unknown materials
-		
 		
 		// retrieve user input 
 		
 		// do calculations
 		
+		
+		ifcResults.SummaryReport();
 		// TODO Auto-generated method stub
 		return new BimBotsOutput(getOutputSchema(), new byte[0]);
 	}
