@@ -5,7 +5,7 @@ import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsInput;
 import org.bimserver.bimbots.BimBotsOutput;
 import org.bimserver.emf.IfcModelInterface;
-import org.bimserver.interfaces.objects.SObjectType;
+import org.bimserver.plugins.PluginConfiguration;
 import org.bimserver.plugins.services.BimBotAbstractService;
 import org.opensourcebim.nmd.BimMaterialDatabaseSession;
 import org.opensourcebim.nmd.NmdDataBaseSession;
@@ -15,7 +15,7 @@ import org.opensourcebim.nmd.NmdDataResolverImpl;
 public class IfcToMpgCollectionService extends BimBotAbstractService {
 
 	@Override
-	public BimBotsOutput runBimBot(BimBotsInput input, BimBotContext bimBotContext, SObjectType settings)
+	public BimBotsOutput runBimBot(BimBotsInput input, BimBotContext bimBotContext, PluginConfiguration pluginConfiguration)
 			throws BimBotsException {
 
 		IfcModelInterface ifcModel = input.getIfcModel();
