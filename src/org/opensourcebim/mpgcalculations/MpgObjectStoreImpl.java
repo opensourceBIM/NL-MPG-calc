@@ -1,6 +1,6 @@
 package org.opensourcebim.mpgcalculations;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -8,12 +8,10 @@ import java.util.stream.Collectors;
 
 import org.eclipse.emf.common.util.BasicEList;
 
-import com.google.common.collect.Lists;
-
 public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	private HashMap<String, MpgMaterial> mpgMaterials;
-	private List<MpgObjectGroup> mpgObjectLinks;
+	private List<MpgObjectGroup> mpgObjectGroups;
 	private List<MpgObject> spaces;
 
 	public MpgObjectStoreImpl() {
@@ -23,12 +21,11 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	public void Reset() {
-		mpgObjectLinks.clear();
+		mpgObjectGroups.clear();
 		mpgMaterials.clear();
 		spaces.clear();
 	}
 
-	// ---------- Standard getters and setters -------------
 	@Override
 	public void addMaterial(String name) {
 		mpgMaterials.putIfAbsent(name, new MpgMaterial(name));
@@ -45,11 +42,11 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public List<MpgObjectGroup> getObjectGroups() {
-		return mpgObjectLinks;
+		return mpgObjectGroups;
 	}
 
 	private void setObjectGroups(List<MpgObjectGroup> mpgObjectLinks) {
-		this.mpgObjectLinks = mpgObjectLinks;
+		this.mpgObjectGroups = mpgObjectLinks;
 	}
 
 	@Override
@@ -68,21 +65,69 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public List<MpgObjectGroup> getObjectsByProductType(String productType) {
-		// TODO Auto-generated method stub
-		return mpgObjectLinks.stream().filter(g -> g.getObjectType() == productType).collect(Collectors.toList());
+		return mpgObjectGroups.stream().filter(g -> g.getObjectType() == productType).collect(Collectors.toList());
 	}
 
 	@Override
 	public List<MpgObjectGroup> getObjectsByProductName(String productName) {
-		// TODO Auto-generated method stub
-		return mpgObjectLinks.stream().filter(g -> g.getObjectName() == productName).collect(Collectors.toList());
+		return mpgObjectGroups.stream().filter(g -> g.getObjectName() == productName).collect(Collectors.toList());
 	}
 
 	@Override
-	public List<MpgObject> getObjectsByMaterial(String materialName) {
-		// TODO Auto-generated method stub
-		return mpgObjectLinks.stream().flatMap(g -> g.getObjects().stream())
+	public List<MpgObject> getObjectsByMaterialName(String materialName) {
+		return mpgObjectGroups.stream().flatMap(g -> g.getObjects().stream())
+				.filter(o -> o.getMaterial() != null)
 				.filter(o -> o.getMaterial().getIfcName() == materialName).collect(Collectors.toList());
+	}
+
+	@Override
+	public Set<String> getAllMaterialNames() {
+		return getMaterials().keySet();
+	}
+
+	@Override
+	public MpgMaterial getMaterialByName(String name) {
+		return getMaterials().getOrDefault(name, null);
+	}
+
+	@Override
+	public Double GetTotalVolumeOfMaterial(String name) {
+		return getObjectsByMaterialName(name).stream().filter(mat -> mat != null).map(o -> o.getVolume())
+				.filter(o -> o != null).collect(Collectors.summingDouble(o -> o));
+	}
+
+	@Override
+	public void addSpace(MpgObject space) {
+		spaces.add(space);
+	}
+
+	@Override
+	public Double getTotalFloorArea() {
+		return spaces.stream().map(s -> s.getArea()).filter(a -> a != null).collect(Collectors.summingDouble(a -> a));
+	}
+
+	/**
+	 * Do a general check over all objects to check whether there are floating materials (not linked to any MpgObject)
+	 * or if there are MpgObjects that do no match with any material
+	 * @return
+	 */
+	@Override
+	public boolean CheckForWarningsAndErrors() {
+		// first: check if there are any orphaned materials
+		List<String> orphanMaterialNames = new ArrayList<String>();
+		for (String key : this.getMaterials().keySet()) {
+			if (getObjectsByMaterialName(key).size() == 0) {
+				orphanMaterialNames.add(key);
+			}
+		}
+		
+		// second: check for objectgroups with objects not linked to a material
+		List<MpgObject> unlinkedObjects = mpgObjectGroups.stream()
+				.flatMap(g -> g.getObjects().stream())
+				.filter(o -> o.getMaterial() == null)
+				.collect(Collectors.toList());
+		
+		return orphanMaterialNames.size() == 0 && unlinkedObjects.size() == 0;
 	}
 
 	@Override
@@ -116,29 +161,4 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		// TODO Auto-generated method stub
 	}
 
-	@Override
-	public Set<String> getAllMaterialNames() {
-		return getMaterials().keySet();
-	}
-
-	@Override
-	public MpgMaterial getMaterialByName(String name) {
-		return getMaterials().getOrDefault(name, null);
-	}
-
-	@Override
-	public Double GetTotalVolumeOfMaterial(String name) {
-		// TODO Auto-generated method stub
-		return getObjectsByMaterial(name).stream().map(o -> o.getVolume()).collect(Collectors.summingDouble(o -> o));
-	}
-
-	@Override
-	public void addSpace(MpgObject space) {
-		spaces.add(space);
-
-	}
-	
-	public Double getTotalFloorArea() {
-		return spaces.stream().map(s -> s.getArea()).collect(Collectors.summingDouble(a -> a));
-	}
 }

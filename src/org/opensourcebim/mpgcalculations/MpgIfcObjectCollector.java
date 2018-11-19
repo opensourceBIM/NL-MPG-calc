@@ -55,7 +55,7 @@ public class MpgIfcObjectCollector {
 	 * 
 	 * @param ifcModel for now only a ifc2x3tc1 IfcModel object
 	 */
-	public void collectIfcModelObjects(IfcModelInterface ifcModel) {
+	public MpgObjectStore collectIfcModelObjects(IfcModelInterface ifcModel) {
 		objectStore.Reset();
 
 		// get project wide parameters
@@ -118,7 +118,8 @@ public class MpgIfcObjectCollector {
 				}
 			}
 		}
-		ReportResults();
+		
+		return objectStore;
 	}
 
 	/**

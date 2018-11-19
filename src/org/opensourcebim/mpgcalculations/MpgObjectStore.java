@@ -14,7 +14,7 @@ public interface MpgObjectStore {
 	public void addObjectGroup(MpgObjectGroup group);
 	public List<MpgObjectGroup> getObjectsByProductType(String productType);
 	public List<MpgObjectGroup> getObjectsByProductName(String productName);
-	public List<MpgObject> getObjectsByMaterial(String materialName);
+	public List<MpgObject> getObjectsByMaterialName(String materialName);
 	
 	public void addMaterial(String string);
 	public Set<String> getAllMaterialNames();
@@ -22,9 +22,9 @@ public interface MpgObjectStore {
 	public Double GetTotalVolumeOfMaterial(String name);
 	
 	public void addSpace(MpgObject space);
+	Double getTotalFloorArea();
 	
+	boolean CheckForWarningsAndErrors();
 	public void FullReport();
 	public void SummaryReport();
-
-
 }

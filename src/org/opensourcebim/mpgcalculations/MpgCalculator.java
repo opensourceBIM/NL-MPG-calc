@@ -18,7 +18,7 @@ public class MpgCalculator extends BimBotAbstractService {
 
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
-		matParser.collectIfcModelObjects(ifcModel);
+		MpgObjectStore ifcResults = matParser.collectIfcModelObjects(ifcModel);
 		
 		// find matching material properties from Material DB
 		
