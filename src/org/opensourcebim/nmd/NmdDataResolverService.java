@@ -2,7 +2,7 @@ package org.opensourcebim.nmd;
 
 import org.opensourcebim.ifccollection.MpgObjectStore;
 
-public interface NmdDataResolver {
+public interface NmdDataResolverService {
 
 	MpgObjectStore NmdToMpg(MpgObjectStore ifcResults);
 

@@ -6,13 +6,17 @@ import java.util.List;
 import org.opensourcebim.ifccollection.MpgMaterial;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 
-public class NmdDataResolverImpl implements NmdDataResolver {
+public class NmdDataResolverImpl implements NmdDataResolverService {
 
 	private List<NmdDataService> services;
 	private EditableDataService editor;
 	
 	public NmdDataResolverImpl() {
 		services = new ArrayList<NmdDataService>();
+
+		this.addService(new NmdDataBaseSession());
+		this.addService(new BimMaterialDatabaseSession());
+
 	}
 	
 	@Override

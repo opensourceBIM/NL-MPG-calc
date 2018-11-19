@@ -6,10 +6,10 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
 public class NmdCalculator {
 
 	private MpgObjectStore objectStore = null;
-	private Double referenceDesignLife;
+	private DesignLife referenceDesignLife;
 	
 	public NmdCalculator() {
-		// load relevant modules.
+		referenceDesignLife = DesignLife.Residential;
 	}
 	
 	public NmdCalculationResults calculate() {
@@ -24,22 +24,10 @@ public class NmdCalculator {
 		this.objectStore = objectStore;
 	}
 
-	/**
-	 * Reference design life is by default 75 years for residential purposes and 50 years for commercial purposes.
-	 * a building that has mixed purposes can be set to 75 years. GWW projects can be set to 100 years.
-	 * @return
-	 */
-	public Double getReferenceDesignLife() {
-		return referenceDesignLife;
-	}
-
-	public void setReferenceDesignLife(Double referenceDesignLife) {
-		this.referenceDesignLife = referenceDesignLife;
+	public void setReferenceDesignLife() {
 		for (MpgMaterial mpgMaterial : objectStore.getMaterials().values()) {
-			mpgMaterial.setProperty("replacements",
-					Math.max(1, referenceDesignLife / mpgMaterial.getProperty("lifecycleduration", Double.class) - 1 ));
+			mpgMaterial.setProperty("replacements", referenceDesignLife.calculateReplacements(mpgMaterial.getProperty("lifecycle", Double.class)));
 		}
-		
 	}
 	
 }
