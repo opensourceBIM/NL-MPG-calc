@@ -76,8 +76,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public List<String> getDistinctProductTypes() {
-		return mpgObjectGroups.stream().map(group -> group.getObjectType()).distinct().collect(Collectors.toList());
+	public Set<String> getDistinctProductTypes() {
+		return mpgObjectGroups.stream().map(group -> group.getObjectType()).distinct().collect(Collectors.toSet());
 	}
 
 	@Override
@@ -153,17 +153,22 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			}
 		}
 
-		// second: check for with objects not linked to a material
+		// check for objectgroups that have not a single material defined
 		setObjectGUIDsWithoutMaterial(mpgObjectGroups.stream()
-				.filter(group -> group.getObjects().size() ==  0)
+				.filter(group -> group.getObjects().size() ==  0 || (
+						group.getObjects().size() > 0 && 
+						group.getObjects().size() == group.getObjects().stream().filter(o -> o.getMaterialName() == null).count()))
 				.map(g -> g.getGlobalId()).collect(Collectors.toList()));
 		
+		// check for objectgroups that have more than 0 materials linked, but are still missing 1 to n materials
 		setObjectGuidsWithPartialMaterialDefinition(mpgObjectGroups.stream()
 			.filter(group -> group.getObjects().size() > 0)
-			.filter(group -> group.getObjects().stream().filter(o -> o.getMaterialName() == null).count() > 0)
+			.filter(group -> group.getObjects().stream().filter(o -> o.getMaterialName() == null).count() < group.getObjects().size())
 			.map(g -> g.getGlobalId()).collect(Collectors.toList()));
 
-		return getOrphanedMaterials().size() == 0 && getObjectGUIDsWithoutMaterial().size() == 0;
+		return getOrphanedMaterials().size() == 0 &&
+				getObjectGUIDsWithoutMaterial().size() == 0 &&
+				getObjectGUIDsWithoutMaterial().size() == 0;
 	}
 	
 	@Override
@@ -193,34 +198,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void FullReport() {
-
-		System.out.println("----------------------------");
-		System.out.println(">> found materials : " + getMaterials().size());
-		getMaterials().forEach((key, mat) -> {
-			System.out.println(mat.print());
-			System.out.println("");
-		});
-
-		System.out.println();
-		System.out.println(">> ifc physical object collection: ");
-		getObjectGroups().forEach(group -> {
-			System.out.println(group.print());
-			System.out.println("");
-		});
-
-		System.out.println();
-		System.out.println(">> open spaces: ");
-		getSpaces().forEach(space -> {
-			System.out.println("space with volume : " + space.getVolume() + " and area : " + space.getArea());
-		});
-
-		System.out.println("----------------------------");
-	}
-
-	@Override
 	public void SummaryReport() {
-		List<String> types = this.getDistinctProductTypes();
 		System.out.println("----------------------------");
 		System.out.println("Summary report for ifc file:");
 		System.out.println("Materials found : " + mpgMaterials.size());
@@ -231,7 +209,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		System.out.println("object details per product type:");
 
 		List<MpgObjectGroup> products;
-		for (String productType : types) {
+		for (String productType : getDistinctProductTypes()) {
 			products = getObjectsByProductType(productType);
 			System.out.println("#product type : " + productType);
 			System.out.println(" - number found : " + products.size());

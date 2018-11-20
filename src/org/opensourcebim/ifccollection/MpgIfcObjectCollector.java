@@ -217,10 +217,6 @@ public class MpgIfcObjectCollector {
 		return GetMaterialLayerList(layerSetUsage.getForLayerSet());
 	}
 
-	private void ReportResults() {
-		objectStore.FullReport();
-	}
-
 	// ---------- Standard getters and setters -------------
 	public AreaUnit getAreaUnit() {
 		return areaUnit;
