@@ -1,6 +1,7 @@
 package org.opensourcebim.ifccollection;
 
 import org.bimserver.bimbots.BimBotContext;
+import org.bimserver.bimbots.BimBotErrorCode;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsInput;
 import org.bimserver.bimbots.BimBotsOutput;
@@ -9,8 +10,10 @@ import org.bimserver.plugins.PluginConfiguration;
 import org.bimserver.plugins.services.BimBotAbstractService;
 import org.opensourcebim.nmd.BimMaterialDatabaseSession;
 import org.opensourcebim.nmd.NmdDataBaseSession;
-import org.opensourcebim.nmd.NmdDataResolver;
 import org.opensourcebim.nmd.NmdDataResolverImpl;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class IfcToMpgCollectionService extends BimBotAbstractService {
 
@@ -31,28 +34,28 @@ public class IfcToMpgCollectionService extends BimBotAbstractService {
 			// return model has been read correctly.
 		}
 		
-		// find matching material properties from Material DB
-		NmdDataResolver nmdDataProvider = new NmdDataResolverImpl();
-		nmdDataProvider.addService(new NmdDataBaseSession());
-		nmdDataProvider.addService(new BimMaterialDatabaseSession());
-		MpgObjectStore nmdResults = nmdDataProvider.NmdToMpg(ifcResults);
-		
-		// notify user of unknown materials
-		
-		// retrieve user input 
-		
-		// do calculations
+		ifcResults.FullReport();
 		
 		
-		ifcResults.SummaryReport();
-		// TODO Auto-generated method stub
-		return new BimBotsOutput(getOutputSchema(), new byte[0]);
+		// convert output with Jackon
+		byte[] ifcJsonResults;
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			ifcJsonResults = mapper.writeValueAsBytes(ifcResults);
+			
+			BimBotsOutput output = new BimBotsOutput(getOutputSchema(), ifcJsonResults);
+			output.setContentType("application/json");
+			output.setTitle("results mpg check");
+			return output;
+			
+		} catch (JsonProcessingException e) {
+			throw new BimBotsException("Unable to convert retrieved objects to Json", 500);
+		}
 	}
 
 	@Override
 	public String getOutputSchema() {
-		// TODO put a more meaningful schema name here
-		return "some useful content";
+		return "MPG_OBJECT_JSON_V0.0.1";
 	}
 	
 	@Override

@@ -2,6 +2,8 @@ package org.opensourcebim.ifccollection;
 
 import java.util.HashMap;
 
+import org.opensourcebim.nmd.NmdMaterialSpecifications;
+
 /**
  * Storage container class to archive all material properties.
  * @author Jasper Vijverberg
@@ -13,14 +15,12 @@ public class MpgMaterial {
 	private String nmdIdentifier;
 	private String BimBotIdentifier;
 	
-	// add any other properties that can be relevant for the mpg calculations
-	private HashMap<String, Object> properties;
-	
+	// properties relevant from 
+	private NmdMaterialSpecifications nmdMaterialSpecs;
 	
 	public MpgMaterial(String name)
 	{
 		ifcName = name;
-		properties = new HashMap<String, Object>();
 	}
 	
 	/**
@@ -54,21 +54,22 @@ public class MpgMaterial {
 	public void setBimBotIdentifier(String bimBotIdentifier) {
 		BimBotIdentifier = bimBotIdentifier;
 	}
-
-	public <T> T getProperty(String key, Class<T> type) {
-		Object value = properties.getOrDefault(key.toLowerCase(), null);
-		return type.isInstance(value) ? (T)value : null;
-	}
-
-	public void setProperty(String key, Object value) {
-		this.properties.put(key.toLowerCase(), value);
-	}
 	
 	public String print() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("material : " + ifcName + " with poperties");
-		sb.append(System.getProperty("line.separator"));
-		properties.forEach((name, value) -> sb.append(name + " : " + value + System.getProperty("line.separator")) );
+		sb.append("material : " + ifcName + " with poperties" + System.getProperty("line.separator"));
+		sb.append("NMD ID: " + nmdIdentifier + System.getProperty("line.separator"));
+		sb.append("nmd material(s) linked to MpgMaterial: " + System.getProperty("line.separator"));
+		sb.append(getNmdMaterialSpecs().print());
+		
 		return sb.toString();
+	}
+
+	public NmdMaterialSpecifications getNmdMaterialSpecs() {
+		return nmdMaterialSpecs;
+	}
+
+	public void setNmdMaterialSpecs(NmdMaterialSpecifications nmdMaterialSpecs) {
+		this.nmdMaterialSpecs = nmdMaterialSpecs;
 	}
 }

@@ -2,8 +2,8 @@
 <PluginDescriptor>
 	<JavaPlugin>
 		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
-		<implementationClass>org.opensourcebim.mpgcalculations.MpgCalculator</implementationClass>
-		<name>MpgCalculatorService</name>
-		<description>MpgCalculatorService</description>
+		<implementationClass>org.opensourcebim.ifccollection.IfcToMpgCollectionService</implementationClass>
+		<name>IfcObjectCollection</name>
+		<description>IfcObjectCollection</description>
 	</JavaPlugin>
 </PluginDescriptor>

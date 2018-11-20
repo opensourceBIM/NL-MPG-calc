@@ -1,7 +1,5 @@
 package org.opensourcebim.nmdcalculation;
 
-import org.opensourcebim.ifccollection.MpgMaterial;
-
 public enum DesignLife{
 	
 	Residential(75.0),
