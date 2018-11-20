@@ -302,8 +302,8 @@ public class MpgIfcObjectCollectorTests {
 		collector.collectIfcModelObjects(ifcModel);
 		
 		// material names of layers are null
-		assertEquals(null, collector.results().getObjectGroups().get(0).getObjects().get(0).getMaterial().getIfcName());
-		assertEquals(null, collector.results().getObjectGroups().get(0).getObjects().get(1).getMaterial().getIfcName());
+		assertEquals(null, collector.results().getObjectGroups().get(0).getMaterials().get(0).getIfcName());
+		assertEquals(null, collector.results().getObjectGroups().get(0).getMaterials().get(0).getIfcName());
 	}
 	
 	@Test

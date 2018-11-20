@@ -1,16 +1,12 @@
 package org.opensourcebim.ifccollection;
 
 import org.bimserver.bimbots.BimBotContext;
-import org.bimserver.bimbots.BimBotErrorCode;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsInput;
 import org.bimserver.bimbots.BimBotsOutput;
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.plugins.PluginConfiguration;
 import org.bimserver.plugins.services.BimBotAbstractService;
-import org.opensourcebim.nmd.BimMaterialDatabaseSession;
-import org.opensourcebim.nmd.NmdDataBaseSession;
-import org.opensourcebim.nmd.NmdDataResolverImpl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,14 +24,9 @@ public class IfcToMpgCollectionService extends BimBotAbstractService {
 		MpgObjectStore ifcResults = matParser.collectIfcModelObjects(ifcModel);
 		
 		// notify user of any warnings:
-		if(ifcResults.CheckForWarningsAndErrors()) {
-			// return list of warnings
-		} else {
-			// return model has been read correctly.
-		}
+		ifcResults.CheckForWarningsAndErrors();
 		
-		ifcResults.FullReport();
-		
+		ifcResults.SummaryReport();
 		
 		// convert output with Jackon
 		byte[] ifcJsonResults;

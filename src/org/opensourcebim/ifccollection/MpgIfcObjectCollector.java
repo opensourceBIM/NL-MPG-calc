@@ -79,7 +79,7 @@ public class MpgIfcObjectCollector {
 			if (geometry != null) {
 
 				MpgObjectGroup mpgObjectGroup = new MpgObjectGroupImpl(ifcProduct.getOid(), ifcProduct.getGlobalId(),
-						ifcProduct.getName(), ifcProduct.getClass().getSimpleName());
+						ifcProduct.getName(), ifcProduct.getClass().getSimpleName(), objectStore);
 
 				area = modelAreaUnit.convert(geometry.getArea(), this.getAreaUnit());
 				volume = modelVolumeUnit.convert(geometry.getVolume(), this.getVolumeUnit());
@@ -111,14 +111,14 @@ public class MpgIfcObjectCollector {
 						objectStore.addMaterial(mat.getLeft());
 						if (geometry != null) {
 							mpgObjectGroup.addObject(
-									new MpgObjectImpl(mat.getRight(), objectStore.getMaterials().get(mat.getLeft())));
+									new MpgObjectImpl(mat.getRight(), mat.getLeft()));
 						}
 					});
 					objectStore.getObjectGroups().add(mpgObjectGroup);
 				}
 			}
 		}
-		
+				
 		return objectStore;
 	}
 

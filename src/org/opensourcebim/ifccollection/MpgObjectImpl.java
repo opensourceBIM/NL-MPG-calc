@@ -6,7 +6,7 @@ package org.opensourcebim.ifccollection;
  * @author vijj
  */
 public class MpgObjectImpl implements MpgObject {
-	private MpgMaterial mpgMaterial;
+	private String materialName = null;
 	private double volume;
 	private double area;
 
@@ -19,9 +19,9 @@ public class MpgObjectImpl implements MpgObject {
 	 * @param volume Volume of object
 	 * @param mat    material of object
 	 */
-	public MpgObjectImpl(double volume, MpgMaterial mat) {
+	public MpgObjectImpl(double volume, String mat) {
 		this.setVolume(volume);
-		this.setMaterial(mat);
+		this.setMaterialName(mat);
 	}
 
 	/**
@@ -33,16 +33,16 @@ public class MpgObjectImpl implements MpgObject {
 	public MpgObjectImpl(double volume, double area) {
 		this.setArea(area);
 		this.setVolume(volume);
-		this.setMaterial(null);
+		this.setMaterialName(null);
 	}
 
 	@Override
-	public MpgMaterial getMaterial() {
-		return this.mpgMaterial;
+	public String getMaterialName() {
+		return this.materialName;
 	}
 
-	protected void setMaterial(MpgMaterial mpgMaterial) {
-		this.mpgMaterial = mpgMaterial;
+	protected void setMaterialName(String mpgMaterial) {
+		this.materialName = mpgMaterial;
 	}
 
 	@Override
@@ -64,12 +64,7 @@ public class MpgObjectImpl implements MpgObject {
 	}
 
 	@Override
-	public String print() {
-		String materialName = "unknown material";
-		if (getMaterial() != null) {
-			materialName = getMaterial().getIfcName();
-		}
-		
+	public String print() {		
 		StringBuilder sb = new StringBuilder();
 		sb.append("- " + materialName + " object");
 		sb.append(System.getProperty("line.separator"));

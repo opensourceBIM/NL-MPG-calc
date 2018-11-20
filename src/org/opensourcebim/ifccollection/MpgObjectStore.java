@@ -12,6 +12,7 @@ public interface MpgObjectStore {
 	public void Reset();
 	
 	public void addObjectGroup(MpgObjectGroup group);
+	public List<String> getDistinctProductTypes();
 	public List<MpgObjectGroup> getObjectsByProductType(String productType);
 	public List<MpgObjectGroup> getObjectsByProductName(String productName);
 	public List<MpgObject> getObjectsByMaterialName(String materialName);
@@ -19,12 +20,21 @@ public interface MpgObjectStore {
 	public void addMaterial(String string);
 	public Set<String> getAllMaterialNames();
 	public MpgMaterial getMaterialByName(String name);
+	public List<MpgMaterial> getMaterialsByProductType(String productType);
 	public Double GetTotalVolumeOfMaterial(String name);
+	public Double GetTotalVolumeOfProductType(String productType);
 	
 	public void addSpace(MpgObject space);
 	Double getTotalFloorArea();
 	
 	boolean CheckForWarningsAndErrors();
+	List<String> getOrphanedMaterials();
+	List<String> getObjectGUIDsWithoutMaterial();
+	List<String> getObjectGuidsWithPartialMaterialDefinition();
+	
 	public void FullReport();
 	public void SummaryReport();
+
+
+
 }

@@ -57,10 +57,11 @@ public class MpgMaterial {
 	
 	public String print() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("material : " + ifcName + " with poperties" + System.getProperty("line.separator"));
+		sb.append("material : " + ifcName + " with properties" + System.getProperty("line.separator"));
 		sb.append("NMD ID: " + nmdIdentifier + System.getProperty("line.separator"));
 		sb.append("nmd material(s) linked to MpgMaterial: " + System.getProperty("line.separator"));
-		sb.append(getNmdMaterialSpecs().print());
+		sb.append("specs undefined " + System.getProperty("line.separator"));
+		//sb.append(getNmdMaterialSpecs().print());
 		
 		return sb.toString();
 	}

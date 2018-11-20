@@ -4,7 +4,7 @@ public interface MpgObject {
 	/**
 	 * Reference to a MpgMaterial object
 	 */
-	public MpgMaterial getMaterial();
+	public String getMaterialName();
 	
 	/**
 	 * The volume of the object
@@ -15,4 +15,6 @@ public interface MpgObject {
 	public double getArea();
 	
 	public String print();
+
+
 }

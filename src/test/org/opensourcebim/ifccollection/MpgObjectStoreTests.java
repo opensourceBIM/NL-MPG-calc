@@ -46,20 +46,16 @@ public class MpgObjectStoreTests {
 	}
 		
 	@Test
-	public void testChangingAMaterialWillChangeAnyLinkedObjectMaterials() {
+	public void testChangingAMaterialWillChangeAnyRelatedObjectMaterials() {
 		objectStore.addMaterial("dummyMaterial");
-		MpgMaterial mat = objectStore.getMaterialByName("dummyMaterial");
-		mat.setProperty("dummyProperty", 10.0);
-				
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall");
-		group.addObject(new MpgObjectImpl(2, mat));
+		
+		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgObjectImpl(2, "dummyMaterial"));
 		
 		objectStore.addObjectGroup(group);
-		assertEquals(10.0, objectStore.getObjectGroups().get(0).getObjects().get(0).getMaterial().getProperty("dummyProperty", Double.class), 1e-8);
-
-		Double newVal = 20.0;
-		mat.setProperty("dummyProperty", newVal);
-		assertEquals(newVal, objectStore.getObjectGroups().get(0).getObjects().get(0).getMaterial().getProperty("dummyProperty", Double.class), 1e-8);
+		objectStore.getMaterialByName("dummyMaterial").setBimBotIdentifier("some id");
+		
+		assertEquals("some id", objectStore.getMaterialsByProductType("Wall").get(0).getBimBotIdentifier());
 	}
 	
 	@Test
@@ -70,11 +66,10 @@ public class MpgObjectStoreTests {
 	@Test 
 	public void testVolumePerMaterialWithNoVolumesReturnZero() {
 		objectStore.addMaterial("dummyMaterial");
-		MpgMaterial mat = objectStore.getMaterialByName("dummyMaterial");
 		
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall");
-		group.addObject(new MpgObjectImpl(0, mat));
-		group.addObject(new MpgObjectImpl(0, mat));
+		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgObjectImpl(0, "dummyMaterial"));
+		group.addObject(new MpgObjectImpl(0, "dummyMaterial"));
 		
 		objectStore.addObjectGroup(group);
 		assertEquals(0.0, objectStore.GetTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
@@ -83,15 +78,13 @@ public class MpgObjectStoreTests {
 	}
 	
 	@Test
-	public void testTotalVolumeWithDifferentMaterialsReturnsOnlyRSelectedMaterialSum() {
+	public void testTotalVolumeWithDifferentMaterialsReturnsOnlySelectedMaterialSum() {
 		objectStore.addMaterial("dummyMaterial");
 		objectStore.addMaterial("ignoredMaterial");
-		MpgMaterial mat = objectStore.getMaterialByName("dummyMaterial");
-		MpgMaterial matIgnore = objectStore.getMaterialByName("ignoredMaterial");
 		
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall");
-		group.addObject(new MpgObjectImpl(10, mat));
-		group.addObject(new MpgObjectImpl(10, matIgnore ));
+		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgObjectImpl(10, "dummyMaterial"));
+		group.addObject(new MpgObjectImpl(10, "ignoredMaterial" ));
 		
 		objectStore.addObjectGroup(group);
 		assertEquals(10, objectStore.GetTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
@@ -114,9 +107,8 @@ public class MpgObjectStoreTests {
 	public void testWarningCheckReturnsFalseOnOrphanMaterials() {
 		objectStore.addMaterial("orphan material");
 		objectStore.addMaterial("a linked material");
-		MpgMaterial mat = objectStore.getMaterialByName("a linked material");
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall");
-		group.addObject(new MpgObjectImpl(10, mat));
+		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgObjectImpl(10, "a linked material"));
 		objectStore.addObjectGroup(group);
 		
 		assertFalse("warning checker did not find the ophan material",
@@ -125,7 +117,7 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterial() {
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall");
+		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
 		group.addObject(new MpgObjectImpl(10, null));
 		objectStore.addObjectGroup(group);
 		
@@ -136,7 +128,7 @@ public class MpgObjectStoreTests {
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterialAndOrphanMaterial() {
 		objectStore.addMaterial("orphan material");
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall");
+		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
 		group.addObject(new MpgObjectImpl(10, null));
 		objectStore.addObjectGroup(group);
 		
@@ -148,9 +140,9 @@ public class MpgObjectStoreTests {
 	public void testWarningCheckReturnsTrueWhenInformationIsComplete() {
 		objectStore.addMaterial("test material");
 		objectStore.addSpace(new MpgObjectImpl(20, 60));
-		MpgMaterial mat = objectStore.getMaterialByName("test material");
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall");
-		group.addObject(new MpgObjectImpl(10, mat));
+
+		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgObjectImpl(10, "test material"));
 		objectStore.addObjectGroup(group);
 		
 		assertTrue("warning found in objectstore while it should not be there.",
