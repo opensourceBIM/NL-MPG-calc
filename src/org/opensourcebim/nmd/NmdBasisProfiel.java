@@ -12,5 +12,5 @@ import org.opensourcebim.mpgcalculation.NmdImpactFactor;
  *
  */
 public interface NmdBasisProfiel {
-	Double GetImpactFactor(NmdImpactFactor factor);
+	double getImpactFactor(NmdImpactFactor factor);
 }

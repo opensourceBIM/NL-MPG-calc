@@ -24,7 +24,7 @@ public class IfcToMpgCollectionService extends BimBotAbstractService {
 		MpgObjectStore ifcResults = matParser.collectIfcModelObjects(ifcModel);
 		
 		// notify user of any warnings:
-		ifcResults.CheckForWarningsAndErrors();
+		ifcResults.isIfcDataComplete();
 		
 		ifcResults.SummaryReport();
 		

@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.input.NullReader;
 import org.eclipse.emf.common.util.BasicEList;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
+import org.opensourcebim.nmd.MaterialSpecifications;
 
 public class MpgObjectStoreImpl implements MpgObjectStore {
 
@@ -49,6 +52,12 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	private void setMaterials(HashMap<String, MpgMaterial> mpgMaterials) {
 		this.mpgMaterials = mpgMaterials;
+	}
+	
+	@Override
+	public void setSpecsForMaterial(String name, MaterialSpecifications specs) {
+		// TODO catch null reference exceptions
+		getMaterialByName(name).setMaterialSpecs(specs);
 	}
 
 	@Override
@@ -115,13 +124,13 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public Double GetTotalVolumeOfMaterial(String name) {
+	public double getTotalVolumeOfMaterial(String name) {
 		return getObjectsByMaterialName(name).stream().filter(mat -> mat != null).map(o -> o.getVolume())
 				.filter(o -> o != null).collect(Collectors.summingDouble(o -> o));
 	}
 
 	@Override
-	public Double GetTotalVolumeOfProductType(String productType) {
+	public double getTotalVolumeOfProductType(String productType) {
 		return getObjectsByProductType(productType).stream().flatMap(g -> g.getObjects().stream())
 				.filter(o -> o != null).collect(Collectors.summingDouble(o -> o.getVolume()));
 	}
@@ -132,7 +141,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public Double getTotalFloorArea() {
+	public double getTotalFloorArea() {
 		return spaces.stream().map(s -> s.getArea()).filter(a -> a != null).collect(Collectors.summingDouble(a -> a));
 	}
 
@@ -144,7 +153,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 * @return
 	 */
 	@Override
-	public boolean CheckForWarningsAndErrors() {
+	public boolean isIfcDataComplete() {
 		// first: check if there are any orphaned materials
 		for (String key : this.getMaterials().keySet()) {
 			if (getObjectsByMaterialName(key).size() == 0) {
@@ -168,6 +177,14 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		return getOrphanedMaterials().size() == 0 &&
 				getObjectGUIDsWithoutMaterial().size() == 0 &&
 				getObjectGUIDsWithoutMaterial().size() == 0;
+	}
+	
+	/**
+	 * Check if all the MpgMaterials have Materia
+	 */
+	@Override
+	public boolean isMaterialDataComplete() {
+		return getMaterials().values().stream().allMatch(mat -> mat.getNmdMaterialSpecs() != null);
 	}
 	
 	@Override
@@ -212,7 +229,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			products = getObjectsByProductType(productType);
 			System.out.println("#product type : " + productType);
 			System.out.println(" - number found : " + products.size());
-			System.out.println(" - with total volume : " + GetTotalVolumeOfProductType(productType));
+			System.out.println(" - with total volume : " + getTotalVolumeOfProductType(productType));
 			System.out.println("Materials found relating to product: ");
 			for (MpgMaterial mpgMaterial : getMaterialsByProductType(productType)) {
 				System.out.println(" - " + mpgMaterial.getIfcName());

@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import org.opensourcebim.nmd.MaterialSpecifications;
+
 public interface MpgObjectStore {
 
 	HashMap<String, MpgMaterial> getMaterials();
@@ -21,18 +23,20 @@ public interface MpgObjectStore {
 	Set<String> getAllMaterialNames();
 	MpgMaterial getMaterialByName(String name);
 	List<MpgMaterial> getMaterialsByProductType(String productType);
-	Double GetTotalVolumeOfMaterial(String name);
-	Double GetTotalVolumeOfProductType(String productType);
+	double getTotalVolumeOfMaterial(String name);
+	double getTotalVolumeOfProductType(String productType);
 	
 	void addSpace(MpgObject space);
-	Double getTotalFloorArea();
+	double getTotalFloorArea();
 	
-	boolean CheckForWarningsAndErrors();
+	boolean isIfcDataComplete();
 	List<String> getOrphanedMaterials();
 	List<String> getObjectGUIDsWithoutMaterial();
 	List<String> getObjectGuidsWithPartialMaterialDefinition();
 	
 	void SummaryReport();
+	void setSpecsForMaterial(String string, MaterialSpecifications specs);
+	boolean isMaterialDataComplete();
 
 
 

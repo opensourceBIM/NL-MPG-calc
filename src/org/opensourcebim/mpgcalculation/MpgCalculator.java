@@ -2,7 +2,8 @@ package org.opensourcebim.mpgcalculation;
 
 import org.opensourcebim.ifccollection.MpgMaterial;
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.nmd.NmdMaterialSpecifications;
+import org.opensourcebim.nmd.MaterialSpecification;
+import org.opensourcebim.nmd.MaterialSpecifications;
 
 /**
  * Do the MPG calculations based on a read in object model. with material data
@@ -14,27 +15,57 @@ import org.opensourcebim.nmd.NmdMaterialSpecifications;
 public class MpgCalculator {
 
 	private MpgObjectStore objectStore = null;
-
+	private MpgCalculationResults results;
+	
 	public MpgCalculator() {
+		setResults(new MpgCalculationResults());
 	}
 
-	public MpgCalculationResults calculate(Double designLife) {
-		// for each NmmMaterialSpec:
-		for (MpgMaterial mpgMaterial : objectStore.getMaterials().values()) {
-			NmdMaterialSpecifications specs = mpgMaterial.getNmdMaterialSpecs();
-			// calculate the # of replacements required
-
-			// calculate total mass
-
-			// adjust the required material for production losses
-
-			// determine tranport costs
-
-			// determine construction and replacement cost
-
-			// determine disposal ratios and determine recycle and disposal cost.
+	public MpgCalculationResults calculate(double designLife) {
+		
+		if (objectStore == null) {
+			results.SetResultsStatus(ResultStatus.NoData);
+			return results;
 		}
-		return new MpgCalculationResults();
+		
+		if (!(objectStore.isIfcDataComplete() && objectStore.isMaterialDataComplete())) {
+			results.SetResultsStatus(ResultStatus.IncompleteData);
+			return results;
+		}
+			
+		try {
+			// for each building material found:
+			for (MpgMaterial mpgMaterial : objectStore.getMaterials().values()) {
+				double totalVolume = objectStore.getTotalVolumeOfMaterial(mpgMaterial.getIfcName());
+				MaterialSpecifications specs = mpgMaterial.getNmdMaterialSpecs();
+				
+				// calculate the # of replacements required
+				double replacements = this.calculateReplacements(designLife, specs.getLifeTime());
+				double specsDensity = specs.getDensity();
+				
+				// a single building material can be composed of individual materials.
+				for (MaterialSpecification matSpec : specs.getMaterials()) {
+					// calculate total mass taking into account construction losses
+					double lifeTimeDesignVolume = replacements * totalVolume * matSpec.getMassPerUnit() / specsDensity;
+					double lifeTimeDesignMass = lifeTimeDesignVolume * matSpec.getMassPerUnit();
+					double lifeTimeTotalMass = lifeTimeDesignMass / (1 - matSpec.getConstructionLosses()); 
+				}
+
+				// determine tranport costs
+				
+
+				// determine construction and replacement cost
+
+				// determine disposal ratios and determine recycle and disposal cost.
+			}
+			
+			results.SetResultsStatus(ResultStatus.Success);
+			
+		} 
+		catch (Exception e) {
+			results.SetResultsStatus(ResultStatus.ValueError);
+		}
+		return results;
 	}
 
 	public MpgObjectStore getObjectStore() {
@@ -56,6 +87,14 @@ public class MpgCalculator {
 	 */
 	private double calculateReplacements(double designLife, double productLife) {
 		return Math.max(1.0, designLife / Math.max(1.0, productLife) - 1.0);
+	}
+
+	public MpgCalculationResults getResults() {
+		return results;
+	}
+
+	public void setResults(MpgCalculationResults results) {
+		this.results = results;
 	}
 
 }

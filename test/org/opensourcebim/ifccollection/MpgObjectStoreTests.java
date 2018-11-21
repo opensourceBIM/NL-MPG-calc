@@ -60,7 +60,7 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testVolumePerMaterialReturnsZeroOnNonExistingMaterial() {
-		assertEquals(0.0, objectStore.GetTotalVolumeOfMaterial("some non existing material"), 1e-8);
+		assertEquals(0.0, objectStore.getTotalVolumeOfMaterial("some non existing material"), 1e-8);
 	}
 	
 	@Test 
@@ -72,7 +72,7 @@ public class MpgObjectStoreTests {
 		group.addObject(new MpgObjectImpl(0, "dummyMaterial"));
 		
 		objectStore.addObjectGroup(group);
-		assertEquals(0.0, objectStore.GetTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
+		assertEquals(0.0, objectStore.getTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
 		
 		objectStore.addObjectGroup(group);
 	}
@@ -87,7 +87,7 @@ public class MpgObjectStoreTests {
 		group.addObject(new MpgObjectImpl(10, "ignoredMaterial" ));
 		
 		objectStore.addObjectGroup(group);
-		assertEquals(10, objectStore.GetTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
+		assertEquals(10, objectStore.getTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
 		
 		objectStore.addObjectGroup(group);
 	}
@@ -112,7 +112,7 @@ public class MpgObjectStoreTests {
 		objectStore.addObjectGroup(group);
 		
 		assertFalse("warning checker did not find the ophan material",
-				objectStore.CheckForWarningsAndErrors());
+				objectStore.isIfcDataComplete());
 	}
 	
 	@Test
@@ -122,7 +122,7 @@ public class MpgObjectStoreTests {
 		objectStore.addObjectGroup(group);
 		
 		assertFalse("warning checker did not find an object with no material linked",
-				objectStore.CheckForWarningsAndErrors());
+				objectStore.isIfcDataComplete());
 	}
 	
 	@Test
@@ -133,7 +133,7 @@ public class MpgObjectStoreTests {
 		objectStore.addObjectGroup(group);
 		
 		assertFalse("warning checker did not find an object with no material linked",
-				objectStore.CheckForWarningsAndErrors());
+				objectStore.isIfcDataComplete());
 	}
 	
 	@Test
@@ -146,6 +146,6 @@ public class MpgObjectStoreTests {
 		objectStore.addObjectGroup(group);
 		
 		assertTrue("warning found in objectstore while it should not be there.",
-				objectStore.CheckForWarningsAndErrors());
+				objectStore.isIfcDataComplete());
 	}
 }
