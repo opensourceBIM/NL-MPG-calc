@@ -1,4 +1,4 @@
-package test.org.opensourcebim.ifccollection;
+package org.opensourcebim.ifccollection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

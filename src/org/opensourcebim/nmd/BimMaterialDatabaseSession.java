@@ -2,7 +2,13 @@ package org.opensourcebim.nmd;
 
 import org.opensourcebim.ifccollection.MpgMaterial;
 
-public class BimMaterialDatabaseSession implements NmdDataService, EditableDataService {
+
+/**
+ * Implementation of the EditableDataService to collect edits to the NMD material data
+ * @author vijj
+ *
+ */
+public class BimMaterialDatabaseSession implements EditableDataService {
 
 	@Override
 	public void start() {

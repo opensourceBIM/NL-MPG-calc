@@ -1,4 +1,4 @@
-package test.org.opensourcebim.ifccollection;
+package org.opensourcebim.ifccollection;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -12,7 +12,6 @@ import org.bimserver.models.geometry.GeometryInfo;
 import org.bimserver.models.ifc2x3tc1.*;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
-import org.mockito.Mockito;
 
 /**
  * Factory class to create IfcModel objects to test various methods

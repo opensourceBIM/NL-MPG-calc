@@ -1,5 +1,13 @@
-package org.opensourcebim.nmd;
+package org.opensourcebim.mpgcalculation;
 
+/**
+ * Enumerator for the various impact factors that can be present in a single
+ * basisprofiel These coeficients can be multiplied with the total mass, volume
+ * or energy equivalent and summed to get a single number (per basisprofiel)
+ * 
+ * @author vijj
+ *
+ */
 public enum NmdImpactFactor {
 	AbioticDepletionNonFuel, // in kg antimoon
 	AbioticDepletionFuel, // in kg antimoon, or 4,81E-4 kg antimoon/MJ to convert from MJ to kg

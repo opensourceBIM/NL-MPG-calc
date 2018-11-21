@@ -59,7 +59,6 @@ public class MpgMaterial {
 		sb.append("NMD ID: " + nmdIdentifier + System.getProperty("line.separator"));
 		sb.append("nmd material(s) linked to MpgMaterial: " + System.getProperty("line.separator"));
 		sb.append("specs undefined " + System.getProperty("line.separator"));
-		//sb.append(getNmdMaterialSpecs().print());
 		
 		return sb.toString();
 	}
