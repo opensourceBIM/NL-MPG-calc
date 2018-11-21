@@ -1,7 +1,5 @@
 package org.opensourcebim.ifccollection;
 
-import java.util.HashMap;
-
 import org.opensourcebim.nmd.NmdMaterialSpecifications;
 
 /**

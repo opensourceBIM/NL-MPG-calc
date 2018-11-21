@@ -1,12 +1,12 @@
 package test.org.opensourcebim.ifccollection;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.ifccollection.MpgMaterial;
-import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectGroup;
 import org.opensourcebim.ifccollection.MpgObjectGroupImpl;
 import org.opensourcebim.ifccollection.MpgObjectImpl;

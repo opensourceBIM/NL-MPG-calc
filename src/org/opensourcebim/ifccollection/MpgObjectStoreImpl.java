@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.antlr.codegen.ObjCTarget;
 import org.eclipse.emf.common.util.BasicEList;
 
 public class MpgObjectStoreImpl implements MpgObjectStore {

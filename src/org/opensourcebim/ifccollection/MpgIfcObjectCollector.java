@@ -1,7 +1,6 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,7 +24,6 @@ import org.bimserver.models.ifc2x3tc1.IfcSpace;
 import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.IfcUtils;
 import org.bimserver.utils.VolumeUnit;
-import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
 
 /**
