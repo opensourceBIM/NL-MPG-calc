@@ -1,22 +1,29 @@
 package org.opensourcebim.mpgcalculation;
 
-import java.util.HashMap;
-import java.util.Map.Entry;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
+import javax.management.openmbean.KeyAlreadyExistsException;
 
+/**
+ * Class to store all the calculation results broken down by a series of
+ * properties as defined in the CostFactor class. This class will also
+ * adminstrate the calcualtion process: i.e.: whether it succeeded or not.
+ * 
+ * @author vijj
+ *
+ */
 public class MpgCalculationResults {
 
 	private ResultStatus status;
-	
-	private HashMap<Pair<NmdLifeCycleStage, NmdImpactFactor>, Double> costFactors;
-	
+	private Set<MpgCostFactor> costFactors;
+
 	public MpgCalculationResults() {
 		status = ResultStatus.NotRun;
-		costFactors = new HashMap<Pair<NmdLifeCycleStage,NmdImpactFactor>, Double>();
+		costFactors = new HashSet<MpgCostFactor>();
 	}
-	
+
 	public void SetResultsStatus(ResultStatus status) {
 		this.status = status;
 	}
@@ -25,25 +32,45 @@ public class MpgCalculationResults {
 		return this.status;
 	}
 
-	public double getCostPerLifeCycle(NmdLifeCycleStage stage) {
-		double sum = 0.0;
-		for (Entry<Pair<NmdLifeCycleStage, NmdImpactFactor>, Double> entry : costFactors.entrySet()) {
-			Pair<NmdLifeCycleStage, NmdImpactFactor> key = entry.getKey();
-			Double value = entry.getValue();
-			
-			sum += (key.getLeft() == stage) ? value : 0.0;
-		}
-		return sum;
+	public double getTotalCost() {
+		return costFactors.stream().collect(Collectors.summingDouble(f -> f.getValue()));
 	}
-	
+
+	public double getCostPerLifeCycle(NmdLifeCycleStage stage) {
+		return costFactors.stream().filter(f -> f.getStage() == stage)
+				.collect(Collectors.summingDouble(f -> f.getValue()));
+	}
+
 	public double getCostPerImpactFactor(NmdImpactFactor factor) {
-		double sum = 0.0;
-		for (Entry<Pair<NmdLifeCycleStage, NmdImpactFactor>, Double> entry : costFactors.entrySet()) {
-			Pair<NmdLifeCycleStage, NmdImpactFactor> key = entry.getKey();
-			Double value = entry.getValue();
-			
-			sum += (key.getRight() == factor) ? value : 0.0;
+		return costFactors.stream().filter(f -> f.getFactor() == factor)
+				.collect(Collectors.summingDouble(f -> f.getValue()));
+	}
+
+	public double getCosPerMaterialName(String name) {
+		return costFactors.stream().filter(f -> f.getMaterialName().equals(name))
+				.collect(Collectors.summingDouble(f -> f.getValue()));
+	}
+
+	/**
+	 * CostFactors should be unique per calculation. Therefore check for existence
+	 * and throw an error when a to be added factor already exists.
+	 * 
+	 * @param newFactors Collection of CostFactors
+	 */
+	public void addCostFactors(Set<MpgCostFactor> newFactors) {
+		for (MpgCostFactor costFactor : newFactors) {
+			this.addCostFactor(costFactor);
 		}
-		return sum;
+	}
+
+	public void addCostFactor(MpgCostFactor mpgCostFactor) {
+		if (costFactors.contains(mpgCostFactor)) {
+			throw new KeyAlreadyExistsException("Cannot add a cost factor that already exists");
+		}
+		costFactors.add(mpgCostFactor);
+	}
+
+	public Set<MpgCostFactor> getCostFactors() {
+		return this.costFactors;
 	}
 }
