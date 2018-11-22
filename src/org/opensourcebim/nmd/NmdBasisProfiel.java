@@ -1,6 +1,10 @@
 package org.opensourcebim.nmd;
 
+import java.util.Set;
+
+import org.opensourcebim.mpgcalculation.MpgCostFactor;
 import org.opensourcebim.mpgcalculation.NmdImpactFactor;
+import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 
 /**
  * Interface class to provide the impact factor coefficients for a single
@@ -12,5 +16,10 @@ import org.opensourcebim.mpgcalculation.NmdImpactFactor;
  *
  */
 public interface NmdBasisProfiel {
+
+	NmdLifeCycleStage getStage();
+
 	double getImpactFactor(NmdImpactFactor factor);
+
+	Set<MpgCostFactor> calculateFactors(double distanceFromProducer, String materialName);
 }

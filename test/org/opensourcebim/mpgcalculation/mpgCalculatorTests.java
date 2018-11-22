@@ -32,6 +32,7 @@ public class mpgCalculatorTests {
 	public void setUp() throws Exception {
 		calculator = new MpgCalculator();
 		store = new MpgObjectStoreImpl();
+		store.addSpace(new MpgObjectImpl(1,1));
 	}
 
 	@After
@@ -89,8 +90,19 @@ public class mpgCalculatorTests {
 		addUnitGroup("steel");
 		
 		startCalculations(1.0);
-		assertTrue(false);
 		assertEquals(0.0, results.getCostPerLifeCycle(NmdLifeCycleStage.Transport), 1e-8);
+	}
+	
+	@Test
+	public void testUnitDistanceToProducerResultsInNonZeroTransportCost() {
+
+		addMaterialWithSpec("steel", 1.0);
+		addUnitGroup("steel");
+		
+		startCalculations(1.0);
+		
+		assertTrue((double)(results.getCostFactors().size()) > 0);
+		assertEquals((double)(results.getCostFactors().size()), results.getCostPerLifeCycle(NmdLifeCycleStage.Transport), 1e-8);
 	}
 	
 	
@@ -129,12 +141,12 @@ public class mpgCalculatorTests {
 			spec.setDisposalRatio(NmdLifeCycleStage.Disposal, 1.0);
 			spec.setConstructionLossFactor(0.0);
 			spec.setProductLifeTime(1);
-			spec.addBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements, createUnitProfile());
-			spec.addBasisProfiel(NmdLifeCycleStage.Disposal, createUnitProfile());
-			spec.addBasisProfiel(NmdLifeCycleStage.Incineration, createUnitProfile());
-			spec.addBasisProfiel(NmdLifeCycleStage.Recycling, createUnitProfile());
-			spec.addBasisProfiel(NmdLifeCycleStage.Incineration, createUnitProfile());
-			spec.addBasisProfiel(NmdLifeCycleStage.Production, createUnitProfile());
+			spec.addBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements, createUnitProfile(NmdLifeCycleStage.ConstructionAndReplacements));
+			spec.addBasisProfiel(NmdLifeCycleStage.Disposal, createUnitProfile(NmdLifeCycleStage.Disposal));
+			spec.addBasisProfiel(NmdLifeCycleStage.Incineration, createUnitProfile(NmdLifeCycleStage.Incineration));
+			spec.addBasisProfiel(NmdLifeCycleStage.Recycling, createUnitProfile(NmdLifeCycleStage.Recycling));
+			spec.addBasisProfiel(NmdLifeCycleStage.Production, createUnitProfile(NmdLifeCycleStage.Production));
+			spec.addBasisProfiel(NmdLifeCycleStage.Operation, createUnitProfile(NmdLifeCycleStage.Operation));
 		} catch (InvalidInputException e) {
 			// do nothing as we should be able not to mess it up ourselves
 			System.out.println("test input is incorrect.");
@@ -149,8 +161,8 @@ public class mpgCalculatorTests {
 		
 	}
 	
-	private NmdBasisProfiel createUnitProfile() {
-		NmdBasisProfielImpl profile = new NmdBasisProfielImpl();
+	private NmdBasisProfiel createUnitProfile(NmdLifeCycleStage stage) {
+		NmdBasisProfielImpl profile = new NmdBasisProfielImpl(stage);
 		profile.setAll(1.0);
 		return profile;
 	}

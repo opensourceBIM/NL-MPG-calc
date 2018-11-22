@@ -16,53 +16,54 @@ public class MpgCalculator {
 
 	private MpgObjectStore objectStore = null;
 	private MpgCalculationResults results;
-	
+
 	public MpgCalculator() {
 		setResults(new MpgCalculationResults());
 	}
 
 	public MpgCalculationResults calculate(double designLife) {
-		
+
 		if (objectStore == null) {
 			results.SetResultsStatus(ResultStatus.NoData);
 			return results;
 		}
-		
+
 		if (!(objectStore.isIfcDataComplete() && objectStore.isMaterialDataComplete())) {
 			results.SetResultsStatus(ResultStatus.IncompleteData);
 			return results;
 		}
-			
+
 		try {
 			// for each building material found:
 			for (MpgMaterial mpgMaterial : objectStore.getMaterials().values()) {
 				double totalVolume = objectStore.getTotalVolumeOfMaterial(mpgMaterial.getIfcName());
 				MaterialSpecifications specs = mpgMaterial.getNmdMaterialSpecs();
-				
+
 				// calculate the # of replacements required
 				double replacements = this.calculateReplacements(designLife, specs.getLifeTime());
 				double specsDensity = specs.getDensity();
-				
+
 				// a single building material can be composed of individual materials.
+				double specsMatSum = 0.0;
 				for (MaterialSpecification matSpec : specs.getMaterials()) {
-					// calculate total mass taking into account construction losses
+					// calculate total mass taking into account construction losses and replacements
+					// during the lifetime. this is relevant for transport of the material
 					double lifeTimeDesignVolume = replacements * totalVolume * matSpec.getMassPerUnit() / specsDensity;
 					double lifeTimeDesignMass = lifeTimeDesignVolume * matSpec.getMassPerUnit();
-					double lifeTimeTotalMass = lifeTimeDesignMass / (1 - matSpec.getConstructionLosses()); 
+					double lifeTimeTotalMass = lifeTimeDesignMass / (1 - matSpec.getConstructionLosses());
+					specsMatSum += lifeTimeTotalMass;
+
+					// per individual material define construction and disposal impact factors
 				}
 
-				// determine tranport costs
-				
-
-				// determine construction and replacement cost
-
-				// determine disposal ratios and determine recycle and disposal cost.
+				// determine tranport costs per composed material
+				results.addCostFactors(specs.getTransportProfile()
+						.calculateFactors(specs.getDistanceFromProducer(), mpgMaterial.getIfcName()));
 			}
-			
+
 			results.SetResultsStatus(ResultStatus.Success);
-			
-		} 
-		catch (Exception e) {
+
+		} catch (Exception e) {
 			results.SetResultsStatus(ResultStatus.ValueError);
 		}
 		return results;
