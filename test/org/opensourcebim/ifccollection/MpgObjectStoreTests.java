@@ -7,9 +7,9 @@ import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.ifccollection.MpgObjectGroup;
-import org.opensourcebim.ifccollection.MpgObjectGroupImpl;
+import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
+import org.opensourcebim.ifccollection.MpgSubObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 
@@ -49,10 +49,10 @@ public class MpgObjectStoreTests {
 	public void testChangingAMaterialWillChangeAnyRelatedObjectMaterials() {
 		objectStore.addMaterial("dummyMaterial");
 		
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addObject(new MpgObjectImpl(2, "dummyMaterial"));
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgSubObjectImpl(2, "dummyMaterial"));
 		
-		objectStore.addObjectGroup(group);
+		objectStore.addObject(group);
 		objectStore.getMaterialByName("dummyMaterial").setBimBotIdentifier("some id");
 		
 		assertEquals("some id", objectStore.getMaterialsByProductType("Wall").get(0).getBimBotIdentifier());
@@ -67,14 +67,14 @@ public class MpgObjectStoreTests {
 	public void testVolumePerMaterialWithNoVolumesReturnZero() {
 		objectStore.addMaterial("dummyMaterial");
 		
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addObject(new MpgObjectImpl(0, "dummyMaterial"));
-		group.addObject(new MpgObjectImpl(0, "dummyMaterial"));
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgSubObjectImpl(0, "dummyMaterial"));
+		group.addObject(new MpgSubObjectImpl(0, "dummyMaterial"));
 		
-		objectStore.addObjectGroup(group);
+		objectStore.addObject(group);
 		assertEquals(0.0, objectStore.getTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
 		
-		objectStore.addObjectGroup(group);
+		objectStore.addObject(group);
 	}
 	
 	@Test
@@ -82,14 +82,14 @@ public class MpgObjectStoreTests {
 		objectStore.addMaterial("dummyMaterial");
 		objectStore.addMaterial("ignoredMaterial");
 		
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addObject(new MpgObjectImpl(10, "dummyMaterial"));
-		group.addObject(new MpgObjectImpl(10, "ignoredMaterial" ));
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgSubObjectImpl(10, "dummyMaterial"));
+		group.addObject(new MpgSubObjectImpl(10, "ignoredMaterial" ));
 		
-		objectStore.addObjectGroup(group);
+		objectStore.addObject(group);
 		assertEquals(10, objectStore.getTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
 		
-		objectStore.addObjectGroup(group);
+		objectStore.addObject(group);
 	}
 	
 	@Test
@@ -99,7 +99,7 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testTotalAreaOfSpacesReturnsAreaOfSingleSpace() {
-		objectStore.addSpace(new MpgObjectImpl(36, 12));
+		objectStore.addSpace(new MpgSubObjectImpl(36, 12));
 		assertEquals(12, objectStore.getTotalFloorArea(), 1e-8);
 	}
 	
@@ -107,9 +107,9 @@ public class MpgObjectStoreTests {
 	public void testWarningCheckReturnsFalseOnOrphanMaterials() {
 		objectStore.addMaterial("orphan material");
 		objectStore.addMaterial("a linked material");
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addObject(new MpgObjectImpl(10, "a linked material"));
-		objectStore.addObjectGroup(group);
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgSubObjectImpl(10, "a linked material"));
+		objectStore.addObject(group);
 		
 		assertFalse("warning checker did not find the ophan material",
 				objectStore.isIfcDataComplete());
@@ -117,9 +117,9 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterial() {
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addObject(new MpgObjectImpl(10, null));
-		objectStore.addObjectGroup(group);
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgSubObjectImpl(10, null));
+		objectStore.addObject(group);
 		
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
@@ -128,22 +128,39 @@ public class MpgObjectStoreTests {
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterialAndOrphanMaterial() {
 		objectStore.addMaterial("orphan material");
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addObject(new MpgObjectImpl(10, null));
-		objectStore.addObjectGroup(group);
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgSubObjectImpl(10, null));
+		objectStore.addObject(group);
 		
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
 	}
 	
 	@Test
+	public void testWarningCheckReturnsFalseOnPartiallyUndefinedMaterial() {
+		objectStore.addMaterial("steel");
+		MpgObject mpgObject1 = new MpgObjectImpl(1, "aaaa", "custom wall", "Wall", objectStore);
+		mpgObject1.addObject(new MpgSubObjectImpl(10, null));
+		mpgObject1.addObject(new MpgSubObjectImpl(10, "steel"));
+		objectStore.addObject(mpgObject1);
+		
+		MpgObject mpgObject2 = new MpgObjectImpl(2, "bbbb", "custom wall", "Wall", objectStore);
+		mpgObject2.addObject(new MpgSubObjectImpl(10, "steel"));
+		objectStore.addObject(mpgObject2);
+		
+		assertFalse("warning checker did not find an object with no material linked",
+				objectStore.isIfcDataComplete());
+		assertEquals(1, objectStore.getObjectGuidsWithPartialMaterialDefinition().size());
+	}
+	
+	@Test
 	public void testWarningCheckReturnsTrueWhenInformationIsComplete() {
 		objectStore.addMaterial("test material");
-		objectStore.addSpace(new MpgObjectImpl(20, 60));
+		objectStore.addSpace(new MpgSubObjectImpl(20, 60));
 
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addObject(new MpgObjectImpl(10, "test material"));
-		objectStore.addObjectGroup(group);
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
+		group.addObject(new MpgSubObjectImpl(10, "test material"));
+		objectStore.addObject(group);
 		
 		assertTrue("warning found in objectstore while it should not be there.",
 				objectStore.isIfcDataComplete());

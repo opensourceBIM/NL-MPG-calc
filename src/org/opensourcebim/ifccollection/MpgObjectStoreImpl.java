@@ -14,8 +14,8 @@ import org.opensourcebim.nmd.NmdProductCard;
 public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	private HashMap<String, MpgMaterial> mpgMaterials;
-	private List<MpgObjectGroup> mpgObjectGroups;
-	private List<MpgObject> spaces;
+	private List<MpgObject> mpgObjects;
+	private List<MpgSubObject> spaces;
 
 	// lists to find any problem with materials
 	private List<String> orphanedMaterials;
@@ -24,15 +24,15 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	public MpgObjectStoreImpl() {
 		setMaterials(new HashMap<>());
-		setObjectGroups(new BasicEList<MpgObjectGroup>());
-		setSpaces(new BasicEList<MpgObject>());
+		setObjects(new BasicEList<MpgObject>());
+		setSpaces(new BasicEList<MpgSubObject>());
 
 		setOrphanedMaterials(new ArrayList<String>());
 		setObjectGUIDsWithoutMaterial(new ArrayList<String>());
 	}
 
 	public void Reset() {
-		mpgObjectGroups.clear();
+		mpgObjects.clear();
 		mpgMaterials.clear();
 		spaces.clear();
 
@@ -61,46 +61,46 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public List<MpgObjectGroup> getObjectGroups() {
-		return mpgObjectGroups;
+	public List<MpgObject> getObjects() {
+		return mpgObjects;
 	}
 
-	private void setObjectGroups(List<MpgObjectGroup> mpgObjectGroups) {
-		this.mpgObjectGroups = mpgObjectGroups;
+	private void setObjects(List<MpgObject> mpgObjects) {
+		this.mpgObjects = mpgObjects;
 	}
 
 	@Override
-	public List<MpgObject> getSpaces() {
+	public List<MpgSubObject> getSpaces() {
 		return spaces;
 	}
 
-	private void setSpaces(List<MpgObject> spaces) {
+	private void setSpaces(List<MpgSubObject> spaces) {
 		this.spaces = spaces;
 	}
 
 	@Override
-	public void addObjectGroup(MpgObjectGroup group) {
-		this.getObjectGroups().add(group);
+	public void addObject(MpgObject mpgObject) {
+		this.getObjects().add(mpgObject);
 	}
 
 	@Override
 	public Set<String> getDistinctProductTypes() {
-		return mpgObjectGroups.stream().map(group -> group.getObjectType()).distinct().collect(Collectors.toSet());
+		return mpgObjects.stream().map(group -> group.getObjectType()).distinct().collect(Collectors.toSet());
 	}
 
 	@Override
-	public List<MpgObjectGroup> getObjectsByProductType(String productType) {
-		return mpgObjectGroups.stream().filter(g -> g.getObjectType().equals(productType)).collect(Collectors.toList());
+	public List<MpgObject> getObjectsByProductType(String productType) {
+		return mpgObjects.stream().filter(g -> g.getObjectType().equals(productType)).collect(Collectors.toList());
 	}
 
 	@Override
-	public List<MpgObjectGroup> getObjectsByProductName(String productName) {
-		return mpgObjectGroups.stream().filter(g -> g.getObjectName() == productName).collect(Collectors.toList());
+	public List<MpgObject> getObjectsByProductName(String productName) {
+		return mpgObjects.stream().filter(g -> g.getObjectName() == productName).collect(Collectors.toList());
 	}
 
 	@Override
-	public List<MpgObject> getObjectsByMaterialName(String materialName) {
-		return mpgObjectGroups.stream().flatMap(g -> g.getObjects().stream()).filter(o -> o.getMaterialName() != null)
+	public List<MpgSubObject> getObjectsByMaterialName(String materialName) {
+		return mpgObjects.stream().flatMap(g -> g.getSubObjects().stream()).filter(o -> o.getMaterialName() != null)
 				.filter(o -> o.getMaterialName().equals(materialName)).collect(Collectors.toList());
 	}
 
@@ -116,9 +116,11 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public List<MpgMaterial> getMaterialsByProductType(String productType) {
-		List<MpgObjectGroup> objectsByProductType = this.getObjectsByProductType(productType);
-		List<String> materialNames = objectsByProductType.stream().flatMap(g -> g.getObjects().stream())
+		List<MpgObject> objectsByProductType = this.getObjectsByProductType(productType);
+		
+		List<String> materialNames = objectsByProductType.stream().flatMap(g -> g.getSubObjects().stream())
 				.map(obj -> obj.getMaterialName()).distinct().collect(Collectors.toList());
+		
 		return mpgMaterials.values().stream().filter(mat -> materialNames.contains(mat.getIfcName()))
 				.collect(Collectors.toList());
 	}
@@ -131,12 +133,12 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public double getTotalVolumeOfProductType(String productType) {
-		return getObjectsByProductType(productType).stream().flatMap(g -> g.getObjects().stream())
+		return getObjectsByProductType(productType).stream().flatMap(g -> g.getSubObjects().stream())
 				.filter(o -> o != null).collect(Collectors.summingDouble(o -> o.getVolume()));
 	}
 
 	@Override
-	public void addSpace(MpgObject space) {
+	public void addSpace(MpgSubObject space) {
 		spaces.add(space);
 	}
 
@@ -162,21 +164,34 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		}
 
 		// check for objectgroups that have not a single material defined
-		setObjectGUIDsWithoutMaterial(mpgObjectGroups.stream()
-				.filter(group -> group.getObjects().size() ==  0 || (
-						group.getObjects().size() > 0 && 
-						group.getObjects().size() == group.getObjects().stream().filter(o -> o.getMaterialName() == null).count()))
-				.map(g -> g.getGlobalId()).collect(Collectors.toList()));
+		setObjectGUIDsWithoutMaterial(mpgObjects.stream()
+				.filter(o -> isObjectUndefined(o))
+				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
 		
 		// check for objectgroups that have more than 0 materials linked, but are still missing 1 to n materials
-		setObjectGuidsWithPartialMaterialDefinition(mpgObjectGroups.stream()
-			.filter(group -> group.getObjects().size() > 0)
-			.filter(group -> group.getObjects().stream().filter(o -> o.getMaterialName() == null).count() < group.getObjects().size())
+		setObjectGuidsWithPartialMaterialDefinition(mpgObjects.stream()
+			.filter(mpgObject -> mpgObject.getSubObjects().size() > 0)
+			.filter(o -> isObjectPartiallyUndefined(o))
 			.map(g -> g.getGlobalId()).collect(Collectors.toList()));
 
 		return getOrphanedMaterials().size() == 0 &&
 				getObjectGUIDsWithoutMaterial().size() == 0 &&
-				getObjectGUIDsWithoutMaterial().size() == 0;
+				getObjectGuidsWithPartialMaterialDefinition().size() == 0;
+	}
+	
+	private boolean isObjectUndefined(MpgObject o) {
+		long numSubObjects = o.getSubObjects().size();
+		long numUndefined = o.getSubObjects().stream()
+				.filter(so -> so.getMaterialName() == "" || so.getMaterialName() == null)
+				.collect(Collectors.toList()).size();
+		return numSubObjects == 0 || numSubObjects == numUndefined;
+	}
+	
+	private boolean isObjectPartiallyUndefined(MpgObject o) {
+		long defined = o.getSubObjects().stream()
+				.filter(so -> so.getMaterialName() == "" || so.getMaterialName() == null)
+				.collect(Collectors.toList()).size();
+		return defined > 0 && defined < o.getSubObjects().size();
 	}
 	
 	/**
@@ -221,10 +236,10 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		System.out.println(String.join(", ", getAllMaterialNames()));
 
 		System.out.println();
-		System.out.println("Total objects found : " + mpgObjectGroups.size());
+		System.out.println("Total objects found : " + mpgObjects.size());
 		System.out.println("object details per product type:");
 
-		List<MpgObjectGroup> products;
+		List<MpgObject> products;
 		for (String productType : getDistinctProductTypes()) {
 			products = getObjectsByProductType(productType);
 			System.out.println("#product type : " + productType);

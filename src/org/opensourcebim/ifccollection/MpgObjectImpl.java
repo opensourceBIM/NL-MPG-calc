@@ -1,78 +1,100 @@
 package org.opensourcebim.ifccollection;
 
-/**
- * Class to store data of objects found in IFC files.
- * For many IFC objects a single object group can contain many objects (insulated walls etc.)
- * @author vijj
- */
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import org.eclipse.emf.common.util.BasicEList;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class MpgObjectImpl implements MpgObject {
-	private String materialName = null;
-	private double volume;
-	private double area;
 
-	public MpgObjectImpl() {
+	private long objectId;
+	private String globalId;
+	private String objectName;
+	private List<MpgSubObject> mpgSubObjects;
+	private String objectType;
+	
+	@JsonIgnore
+	private Supplier<MpgObjectStore> getStore;
+	
+	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, MpgObjectStore objectStore) {
+		mpgSubObjects = new BasicEList<MpgSubObject>();
+		this.objectId = objectId;
+		this.setGlobalId(globalId);
+		this.setObjectName(objectName);
+		objectType = objectType.replaceAll("Impl$", "");
+		objectType = objectType.replaceAll("^Ifc", "");
+		this.setObjectType(objectType);
+		
+		this.getStore = () -> {return objectStore;};
 	}
-
-	/**
-	 * Object constructor for physical objects
-	 * 
-	 * @param volume Volume of object
-	 * @param mat    material of object
-	 */
-	public MpgObjectImpl(double volume, String mat) {
-		this.setVolume(volume);
-		this.setMaterialName(mat);
+		
+	@Override
+	public void addObject(MpgSubObject mpgSubObject) {
+		mpgSubObjects.add(mpgSubObject);
 	}
-
-	/**
-	 * Object constructor for spaces
-	 * 
-	 * @param volume Volume of space
-	 * @param area   Floor area of space
-	 */
-	public MpgObjectImpl(double volume, double area) {
-		this.setArea(area);
-		this.setVolume(volume);
-		this.setMaterialName(null);
+	
+	@Override
+	public List<MpgSubObject> getSubObjects() {
+		return mpgSubObjects;
 	}
 
 	@Override
-	public String getMaterialName() {
-		return this.materialName;
+	public long getObjectId() {
+		return objectId;
 	}
-
-	protected void setMaterialName(String mpgMaterial) {
-		this.materialName = mpgMaterial;
-	}
-
+	
 	@Override
-	public double getVolume() {
-		return volume;
+	public String getObjectType() {
+		return objectType;
 	}
 
-	protected void setVolume(double volume) {
-		this.volume = volume;
+	public void setObjectType(String objectType) {
+		this.objectType = objectType == null ? "undefined type" : objectType;
 	}
-
+	
 	@Override
-	public double getArea() {
-		return area;
+	public String getObjectName() {
+		return this.objectName;
 	}
-
-	public void setArea(double area) {
-		this.area = area;
+	
+	private void setObjectName(String objectName) {
+		this.objectName = objectName == null ? "undefined name" : objectName;
 	}
-
+	
 	@Override
-	public String print() {		
+	public String getGlobalId() {
+		return globalId;
+	}
+
+	public void setGlobalId(String globalId) {
+		this.globalId = globalId;
+	}
+	
+	@Override
+	public List<MpgMaterial> getMaterials() {
+		// gte material names
+		List<String> materialNames = this.getSubObjects().stream().map(obj -> obj.getMaterialName()).collect(Collectors.toList());
+		// retrieve the materials from the store
+		List<MpgMaterial> materials = new ArrayList<MpgMaterial>();
+		for(String matName : materialNames) {
+			materials.add(this.getStore.get().getMaterialByName(matName));
+		}
+		return materials;
+	}
+	
+	
+	@Override
+	public String print() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("- " + materialName + " object");
+		sb.append(this.objectType + " : " + this.objectName +" with id:" + objectId);
 		sb.append(System.getProperty("line.separator"));
-		sb.append(">> Volume: " + getVolume());
+		sb.append(">> GUID: " + this.getGlobalId());
 		sb.append(System.getProperty("line.separator"));
-		sb.append(">> Area: " + "TBD");
-		sb.append(System.getProperty("line.separator"));
-
+		mpgSubObjects.forEach(o -> sb.append(o.print()));
 		return sb.toString();
 	}
 }

@@ -1,20 +1,21 @@
 package org.opensourcebim.ifccollection;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public interface MpgObject {
-	/**
-	 * Reference to a MpgMaterial object
-	 */
-	public String getMaterialName();
 	
-	/**
-	 * The volume of the object
-	 * @return
-	 */
-	public double getVolume(); // volume calculated based on layer ratios etc.
+	long getObjectId();
+	List<MpgSubObject> getSubObjects();
+	String getObjectName();
+	String getObjectType();
+	String getGlobalId();
 	
-	public double getArea();
+	@JsonIgnore
+	List<MpgMaterial> getMaterials();
 	
-	public String print();
-
-
+	void addObject(MpgSubObject mpgObject);
+	
+	String print();
 }

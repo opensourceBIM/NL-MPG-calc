@@ -76,7 +76,7 @@ public class MpgIfcObjectCollector {
 
 			if (geometry != null) {
 
-				MpgObjectGroup mpgObjectGroup = new MpgObjectGroupImpl(ifcProduct.getOid(), ifcProduct.getGlobalId(),
+				MpgObject mpgObjectGroup = new MpgObjectImpl(ifcProduct.getOid(), ifcProduct.getGlobalId(),
 						ifcProduct.getName(), ifcProduct.getClass().getSimpleName(), objectStore);
 
 				area = modelAreaUnit.convert(geometry.getArea(), this.getAreaUnit());
@@ -99,7 +99,7 @@ public class MpgIfcObjectCollector {
 					boolean isIncludedGeometrically = false;
 
 					if (!isIncludedGeometrically && !isIncludedSemantically) {
-						objectStore.getSpaces().add(new MpgObjectImpl(volume, area));
+						objectStore.getSpaces().add(new MpgSubObjectImpl(volume, area));
 					}
 
 				} else {
@@ -109,10 +109,10 @@ public class MpgIfcObjectCollector {
 						objectStore.addMaterial(mat.getLeft());
 						if (geometry != null) {
 							mpgObjectGroup.addObject(
-									new MpgObjectImpl(mat.getRight(), mat.getLeft()));
+									new MpgSubObjectImpl(mat.getRight(), mat.getLeft()));
 						}
 					});
-					objectStore.getObjectGroups().add(mpgObjectGroup);
+					objectStore.getObjects().add(mpgObjectGroup);
 				}
 			}
 		}

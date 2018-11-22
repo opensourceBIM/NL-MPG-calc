@@ -9,15 +9,15 @@ import org.opensourcebim.nmd.NmdProductCard;
 public interface MpgObjectStore {
 
 	HashMap<String, MpgMaterial> getMaterials();
-	List<MpgObjectGroup> getObjectGroups();
-	List<MpgObject> getSpaces();
+	List<MpgObject> getObjects();
+	List<MpgSubObject> getSpaces();
 	void Reset();
 	
-	void addObjectGroup(MpgObjectGroup group);
+	void addObject(MpgObject group);
 	Set<String> getDistinctProductTypes();
-	List<MpgObjectGroup> getObjectsByProductType(String productType);
-	List<MpgObjectGroup> getObjectsByProductName(String productName);
-	List<MpgObject> getObjectsByMaterialName(String materialName);
+	List<MpgObject> getObjectsByProductType(String productType);
+	List<MpgObject> getObjectsByProductName(String productName);
+	List<MpgSubObject> getObjectsByMaterialName(String materialName);
 	
 	void addMaterial(String string);
 	Set<String> getAllMaterialNames();
@@ -26,7 +26,7 @@ public interface MpgObjectStore {
 	double getTotalVolumeOfMaterial(String name);
 	double getTotalVolumeOfProductType(String productType);
 	
-	void addSpace(MpgObject space);
+	void addSpace(MpgSubObject space);
 	double getTotalFloorArea();
 	
 	boolean isIfcDataComplete();

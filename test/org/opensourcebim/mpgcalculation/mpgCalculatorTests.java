@@ -10,10 +10,10 @@ import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensourcebim.ifccollection.MpgSubObject;
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.ifccollection.MpgObjectGroup;
-import org.opensourcebim.ifccollection.MpgObjectGroupImpl;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
+import org.opensourcebim.ifccollection.MpgSubObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.nmd.MaterialSpecification;
@@ -34,7 +34,7 @@ public class mpgCalculatorTests {
 	public void setUp() throws Exception {
 		calculator = new MpgCalculator();
 		store = new MpgObjectStoreImpl();
-		store.addSpace(new MpgObjectImpl(1,1));
+		store.addSpace(new MpgSubObjectImpl(1,1));
 	}
 
 	@After
@@ -137,10 +137,10 @@ public class mpgCalculatorTests {
 	}
 		
 	private void addUnitGroup(String material) {
-		MpgObjectGroup group = new MpgObjectGroupImpl(1, "test", material + " element", "Slab", store);
-		MpgObject testObject = new MpgObjectImpl(1.0, "steel");
+		MpgObject group = new MpgObjectImpl(1, "test", material + " element", "Slab", store);
+		MpgSubObject testObject = new MpgSubObjectImpl(1.0, "steel");
 		group.addObject(testObject);
-		store.addObjectGroup(group);
+		store.addObject(group);
 	}
 	
 	private NmdProductCard createUnitSpec(double transportDistance, double lossFactor) {
