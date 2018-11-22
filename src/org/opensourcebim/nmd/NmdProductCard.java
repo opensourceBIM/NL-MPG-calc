@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * @author vijj
  *
  */
-public interface MaterialSpecifications {
+public interface NmdProductCard {
 	String getName();
 
 	String getDescription();

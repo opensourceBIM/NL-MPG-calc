@@ -3,6 +3,8 @@ package org.opensourcebim.mpgcalculation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.stream.Collectors;
+
 import org.bimserver.shared.interfaces.async.AsyncPluginInterface.AddObjectIDMCallback;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.junit.After;
@@ -16,8 +18,8 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.nmd.MaterialSpecification;
 import org.opensourcebim.nmd.MaterialSpecificationImpl;
-import org.opensourcebim.nmd.MaterialSpecifications;
-import org.opensourcebim.nmd.MaterialSpecificationsImpl;
+import org.opensourcebim.nmd.NmdProductCard;
+import org.opensourcebim.nmd.NmdProductCardImpl;
 import org.opensourcebim.nmd.NmdBasisProfiel;
 import org.opensourcebim.nmd.NmdBasisProfielImpl;
 
@@ -75,8 +77,7 @@ public class mpgCalculatorTests {
 		
 	@Test
 	public void testResultsReturnSuccessStatusWhenCalculationsSucceed() {
-
-		addMaterialWithSpec("steel", 1.0);
+		addMaterialWithSpec("steel", 0.0, 0.0);
 		addUnitGroup("steel");
 		
 		startCalculations(1.0);
@@ -85,24 +86,38 @@ public class mpgCalculatorTests {
 	
 	@Test
 	public void testZeroDistanceToProducerResultsInNoTransportCost() {
-
-		addMaterialWithSpec("steel", 0.0);
+		addMaterialWithSpec("steel", 0.0, 0.0);
 		addUnitGroup("steel");
 		
 		startCalculations(1.0);
-		assertEquals(0.0, results.getCostPerLifeCycle(NmdLifeCycleStage.Transport), 1e-8);
+		assertEquals(0.0, results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
 	}
 	
 	@Test
-	public void testUnitDistanceToProducerResultsInNonZeroTransportCost() {
-
-		addMaterialWithSpec("steel", 1.0);
+	public void testUnitDistanceToProducerResultsInTransportCostForDoubleTheDistance() {
+		addMaterialWithSpec("steel", 1.0, 0.0);
 		addUnitGroup("steel");
 		
 		startCalculations(1.0);
+		// we have added a unit value for every ImpactFactor
+		assertEquals(2.0 * (double)(NmdImpactFactor.values().length) / 1000.0,
+				results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
+	}
+	
+	@Test
+	public void testLossFactorOfMaterialInducesExtraTransportCost() {
+		double loss = 0.5;
+		addMaterialWithSpec("steel", 1.0, loss);
+		addUnitGroup("steel");
 		
-		assertTrue((double)(results.getCostFactors().size()) > 0);
-		assertEquals((double)(results.getCostFactors().size()), results.getCostPerLifeCycle(NmdLifeCycleStage.Transport), 1e-8);
+		startCalculations(1.0);
+		assertEquals(2.0 * (double)(NmdImpactFactor.values().length) * (1.0 + loss) / 1000.0,
+				results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
+	}
+	
+	@Test
+	public void testCategory3DataIncreasesTotalCost() {
+		
 	}
 	
 	
@@ -116,11 +131,11 @@ public class mpgCalculatorTests {
 		this.results = calculator.getResults();
 	}
 	
-	private void addMaterialWithSpec(String matName, double producerDistance) {
+	private void addMaterialWithSpec(String matName, double producerDistance, double lossFactor) {
 		store.addMaterial(matName);
-		store.setSpecsForMaterial(matName, createUnitSpec(producerDistance));
+		store.setSpecsForMaterial(matName, createUnitSpec(producerDistance, lossFactor));
 	}
-	
+		
 	private void addUnitGroup(String material) {
 		MpgObjectGroup group = new MpgObjectGroupImpl(1, "test", material + " element", "Slab", store);
 		MpgObject testObject = new MpgObjectImpl(1.0, "steel");
@@ -128,25 +143,28 @@ public class mpgCalculatorTests {
 		store.addObjectGroup(group);
 	}
 	
-	private MaterialSpecifications createUnitSpec(double transportDistance) {
-		MaterialSpecificationsImpl specs = new MaterialSpecificationsImpl();
-		specs.setDistanceToProducer(0.0);
-		specs.addSpecification(createDummySpec(1.0));
+	private NmdProductCard createUnitSpec(double transportDistance, double lossFactor) {
+		NmdProductCardImpl specs = new NmdProductCardImpl();
+		specs.setDistanceToProducer(transportDistance);
+		specs.setTransportProfile(createUnitProfile(NmdLifeCycleStage.TransportToSite));
+		specs.addSpecification(createDummySpec(1.0, lossFactor));
 		return specs;
 	}
 	
-	private MaterialSpecification createDummySpec(double massPerUnit) {
+	private MaterialSpecification createDummySpec(double massPerUnit, double lossFactor) {
 		MaterialSpecificationImpl spec = new MaterialSpecificationImpl();
 		try {
 			spec.setDisposalRatio(NmdLifeCycleStage.Disposal, 1.0);
-			spec.setConstructionLossFactor(0.0);
+			spec.setConstructionLossFactor(lossFactor);
 			spec.setProductLifeTime(1);
 			spec.addBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements, createUnitProfile(NmdLifeCycleStage.ConstructionAndReplacements));
 			spec.addBasisProfiel(NmdLifeCycleStage.Disposal, createUnitProfile(NmdLifeCycleStage.Disposal));
 			spec.addBasisProfiel(NmdLifeCycleStage.Incineration, createUnitProfile(NmdLifeCycleStage.Incineration));
 			spec.addBasisProfiel(NmdLifeCycleStage.Recycling, createUnitProfile(NmdLifeCycleStage.Recycling));
+			spec.addBasisProfiel(NmdLifeCycleStage.Reuse, createUnitProfile(NmdLifeCycleStage.Reuse));
 			spec.addBasisProfiel(NmdLifeCycleStage.Production, createUnitProfile(NmdLifeCycleStage.Production));
 			spec.addBasisProfiel(NmdLifeCycleStage.Operation, createUnitProfile(NmdLifeCycleStage.Operation));
+			spec.addBasisProfiel(NmdLifeCycleStage.CyclicMaintenance, createUnitProfile(NmdLifeCycleStage.CyclicMaintenance));
 		} catch (InvalidInputException e) {
 			// do nothing as we should be able not to mess it up ourselves
 			System.out.println("test input is incorrect.");

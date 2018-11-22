@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import org.opensourcebim.nmd.MaterialSpecifications;
+import org.opensourcebim.nmd.NmdProductCard;
 
 public interface MpgObjectStore {
 
@@ -35,7 +35,7 @@ public interface MpgObjectStore {
 	List<String> getObjectGuidsWithPartialMaterialDefinition();
 	
 	void SummaryReport();
-	void setSpecsForMaterial(String string, MaterialSpecifications specs);
+	void setSpecsForMaterial(String string, NmdProductCard specs);
 	boolean isMaterialDataComplete();
 
 

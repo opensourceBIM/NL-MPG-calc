@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.input.NullReader;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
-import org.opensourcebim.nmd.MaterialSpecifications;
+import org.opensourcebim.nmd.NmdProductCard;
 
 public class MpgObjectStoreImpl implements MpgObjectStore {
 
@@ -55,7 +55,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 	
 	@Override
-	public void setSpecsForMaterial(String name, MaterialSpecifications specs) {
+	public void setSpecsForMaterial(String name, NmdProductCard specs) {
 		// TODO catch null reference exceptions
 		getMaterialByName(name).setMaterialSpecs(specs);
 	}

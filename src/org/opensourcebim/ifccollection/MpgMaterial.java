@@ -1,6 +1,6 @@
 package org.opensourcebim.ifccollection;
 
-import org.opensourcebim.nmd.MaterialSpecifications;
+import org.opensourcebim.nmd.NmdProductCard;
 
 /**
  * Storage container class to archive all material properties.
@@ -14,7 +14,7 @@ public class MpgMaterial {
 	private String BimBotIdentifier;
 	
 	// properties relevant from 
-	private MaterialSpecifications nmdMaterialSpecs;
+	private NmdProductCard nmdMaterialSpecs;
 	
 	public MpgMaterial(String name)
 	{
@@ -63,11 +63,11 @@ public class MpgMaterial {
 		return sb.toString();
 	}
 
-	public MaterialSpecifications getNmdMaterialSpecs() {
+	public NmdProductCard getNmdMaterialSpecs() {
 		return nmdMaterialSpecs;
 	}
 
-	public void setMaterialSpecs(MaterialSpecifications nmdMaterialSpecs) {
+	public void setMaterialSpecs(NmdProductCard nmdMaterialSpecs) {
 		this.nmdMaterialSpecs = nmdMaterialSpecs;
 	}
 }

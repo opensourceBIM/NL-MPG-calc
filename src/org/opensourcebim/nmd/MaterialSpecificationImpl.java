@@ -21,6 +21,7 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 		this.disposalRatios.put(NmdLifeCycleStage.Disposal, 0.0);
 		this.disposalRatios.put(NmdLifeCycleStage.Incineration, 0.0);
 		this.disposalRatios.put(NmdLifeCycleStage.Recycling, 0.0);
+		this.disposalRatios.put(NmdLifeCycleStage.Reuse, 0.0);
 		
 		this.profiles = new HashMap<NmdLifeCycleStage, NmdBasisProfiel>();
 	}
@@ -108,7 +109,7 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 	}
 	
 	public void addBasisProfiel(NmdLifeCycleStage stage, NmdBasisProfiel profile) throws InvalidInputException {
-		if (stage == NmdLifeCycleStage.Transport) {
+		if (stage == NmdLifeCycleStage.TransportToSite) {
 			throw new InvalidInputException("cannot add transport profile to a single material");
 		}
 		this.profiles.put(stage, profile);

@@ -1,9 +1,11 @@
 package org.opensourcebim.mpgcalculation;
 
+import java.util.Map.Entry;
+
 import org.opensourcebim.ifccollection.MpgMaterial;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.nmd.MaterialSpecification;
-import org.opensourcebim.nmd.MaterialSpecifications;
+import org.opensourcebim.nmd.NmdProductCard;
 
 /**
  * Do the MPG calculations based on a read in object model. with material data
@@ -37,28 +39,43 @@ public class MpgCalculator {
 			// for each building material found:
 			for (MpgMaterial mpgMaterial : objectStore.getMaterials().values()) {
 				double totalVolume = objectStore.getTotalVolumeOfMaterial(mpgMaterial.getIfcName());
-				MaterialSpecifications specs = mpgMaterial.getNmdMaterialSpecs();
+				NmdProductCard specs = mpgMaterial.getNmdMaterialSpecs();
 
 				// calculate the # of replacements required
 				double replacements = this.calculateReplacements(designLife, specs.getLifeTime());
 				double specsDensity = specs.getDensity();
 
 				// a single building material can be composed of individual materials.
-				double specsMatSum = 0.0;
+				double specsMatSumKg = 0.0;
 				for (MaterialSpecification matSpec : specs.getMaterials()) {
 					// calculate total mass taking into account construction losses and replacements
-					// during the lifetime. this is relevant for transport of the material
 					double lifeTimeDesignVolume = replacements * totalVolume * matSpec.getMassPerUnit() / specsDensity;
-					double lifeTimeDesignMass = lifeTimeDesignVolume * matSpec.getMassPerUnit();
-					double lifeTimeTotalMass = lifeTimeDesignMass / (1 - matSpec.getConstructionLosses());
-					specsMatSum += lifeTimeTotalMass;
-
-					// per individual material define construction and disposal impact factors
+					double lifeTimeDesignMassKg = lifeTimeDesignVolume * matSpec.getMassPerUnit();
+					double lifeTimeTotalMassKg = lifeTimeDesignMassKg * (1 + matSpec.getConstructionLosses());
+					
+					// per individual material define construction factors
+					results.addCostFactors(matSpec.getBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
+								.calculateFactors(lifeTimeTotalMassKg, matSpec.getName()));
+					
+					// disposal impact factors have to be adjusted for disposal ratios
+					for (Entry<NmdLifeCycleStage, Double> entry : matSpec.GetDisposalRatios().entrySet()) {
+						results.addCostFactors(matSpec.getBasisProfiel(entry.getKey())
+								.calculateFactors(lifeTimeTotalMassKg * entry.getValue(), matSpec.getName()));
+					}					
+					
+					// TODO: calculate cyclic maintenance stage - apply different replacement factor
+					
+					// TODO: calculate energy and water use impact factors - apply different units of measure
+					
+					// add the individual material to the composite material mass for transport calculations
+					specsMatSumKg += lifeTimeTotalMassKg;
 				}
+				
+				// TODO: determine disposal transport phase - determine composite recycling factor based on mayterial disposal factors.
 
-				// determine tranport costs per composed material
+				// determine tranport costs per composed material in tonnes * km. 
 				results.addCostFactors(specs.getTransportProfile()
-						.calculateFactors(specs.getDistanceFromProducer(), mpgMaterial.getIfcName()));
+						.calculateFactors(2 * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0), mpgMaterial.getIfcName()));
 			}
 
 			results.SetResultsStatus(ResultStatus.Success);

@@ -41,10 +41,10 @@ public class NmdBasisProfielImpl implements NmdBasisProfiel {
 	}
 
 	@Override
-	public Set<MpgCostFactor> calculateFactors(double distanceFromProducer, String material) {
+	public Set<MpgCostFactor> calculateFactors(double multiplier, String material) {
 		Set<MpgCostFactor> results = new HashSet<MpgCostFactor>();
 		for (Entry<NmdImpactFactor, Double> entry : factors.entrySet()) {
-			results.add(new MpgCostFactor(this.stage, entry.getKey(), material, entry.getValue()));
+			results.add(new MpgCostFactor(this.stage, entry.getKey(), material, entry.getValue() * multiplier));
 		}
 		return results;
 	}

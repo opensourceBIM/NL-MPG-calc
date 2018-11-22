@@ -3,7 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MaterialSpecificationsImpl implements MaterialSpecifications {
+public class NmdProductCardImpl implements NmdProductCard {
 	private String name;
 	private String description;
 	private int dataCategory;
@@ -16,7 +16,7 @@ public class MaterialSpecificationsImpl implements MaterialSpecifications {
 	private NmdBasisProfiel transportProfile;
 	private Set<MaterialSpecification> specifications;
 	
-	public MaterialSpecificationsImpl() {
+	public NmdProductCardImpl() {
 		this.specifications = new HashSet<MaterialSpecification>();
 	}
 	
