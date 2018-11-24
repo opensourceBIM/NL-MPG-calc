@@ -1,6 +1,5 @@
 package org.opensourcebim.test;
 
-
 import java.nio.file.Path;
 
 import org.bimserver.bimbots.BimBotDummyContext;
@@ -11,7 +10,6 @@ import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.interfaces.objects.SDeserializerPluginConfiguration;
 import org.bimserver.interfaces.objects.SProject;
 import org.bimserver.plugins.services.BimServerClientInterface;
-import org.bimserver.plugins.services.Flow;
 import org.bimserver.shared.BimServerClientFactory;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.slf4j.Logger;
@@ -46,7 +44,7 @@ public class BimBotTest implements Runnable {
 			if (project.getLastRevisionId() == -1) {
 				LOGGER.info("Checking-in " + projectName);
 				SDeserializerPluginConfiguration deserializer = client.getServiceInterface().getSuggestedDeserializerForExtension("ifc", project.getOid());
-				client.checkin(project.getOid(), "Auto checkin for BIMbot test", deserializer.getOid(), false, Flow.SYNC, path);
+				client.checkinSync(project.getOid(), "Auto checkin for BIMbot test", deserializer.getOid(), false, path);
 				project = client.getServiceInterface().getTopLevelProjectByName(projectName);
 			} else {
 				LOGGER.info("Revision already available");
