@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PluginDescriptor>
+	<JavaPlugin>
+		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
+		<implementationClass>org.opensourcebim.ifccollection.IfcToMpgCollectionService</implementationClass>
+		<name>Ifc Object Collection for MPG Calculation</name>
+		<description>Collects all IFC objects that are required for MPG calculations</description>
+	</JavaPlugin>
+</PluginDescriptor>
