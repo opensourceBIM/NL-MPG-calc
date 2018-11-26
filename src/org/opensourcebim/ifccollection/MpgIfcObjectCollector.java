@@ -108,6 +108,22 @@ public class MpgIfcObjectCollector {
 		return objectStore;
 	}
 
+	@SuppressWarnings("unchecked")
+	private <T extends IfcProduct> IfcProduct getParent(IfcObjectDefinition ifcObject, Class<T> productClass,
+			int maxDepth) {
+		EList<IfcRelDecomposes> parentDecomposedProduct = ifcObject.getIsDecomposedBy();
+		// on no or ambiguously defined parent return null
+		if (parentDecomposedProduct != null && (parentDecomposedProduct.size() > 0 && maxDepth > 0)) {
+			IfcObjectDefinition relatingObject = parentDecomposedProduct.get(0).getRelatingObject();
+			if (productClass.isAssignableFrom(relatingObject.getClass())){
+				return (T) relatingObject;
+			} else {
+				return getParent(relatingObject, productClass, maxDepth - 1);
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Retrieve the materials and layers from the IfcProduct object and store these as
 	 * MpgMaterial objects
@@ -118,8 +134,11 @@ public class MpgIfcObjectCollector {
 	 */
 	private void createMpgObjectFromIfcProduct(IfcProduct ifcProduct, double totalVolume) {
 		
+		IfcProduct parent = getParent(ifcProduct, IfcProduct.class, 3);
+		
 		MpgObjectImpl mpgObject = new MpgObjectImpl(ifcProduct.getOid(), ifcProduct.getGlobalId(),
-				ifcProduct.getName(), ifcProduct.getClass().getSimpleName(), objectStore);
+				ifcProduct.getName(), ifcProduct.getClass().getSimpleName(),
+				parent == null ? "" : parent.getGlobalId(), objectStore);
 		mpgObject.setVolume(totalVolume);
 
 		EList<IfcRelAssociates> associates = ifcProduct.getHasAssociations();

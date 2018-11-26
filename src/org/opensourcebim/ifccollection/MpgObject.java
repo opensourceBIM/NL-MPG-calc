@@ -12,6 +12,7 @@ public interface MpgObject {
 	String getObjectName();
 	String getObjectType();
 	String getGlobalId();
+	String getParentId();
 	
 	double getVolume();
 	

@@ -16,13 +16,14 @@ public class MpgObjectImpl implements MpgObject {
 	private String objectName;
 	private List<MpgSubObject> mpgSubObjects;
 	private String objectType;
-
+	private String parentId;
+	
 	@JsonIgnore
 	private Supplier<MpgObjectStore> getStore;
 	private Set<String> listedMaterials;
 	private double volume;
 
-	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType,
+	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId,
 			MpgObjectStore objectStore) {
 		mpgSubObjects = new BasicEList<MpgSubObject>();
 		this.objectId = objectId;
@@ -123,5 +124,11 @@ public class MpgObjectImpl implements MpgObject {
 		sb.append(System.getProperty("line.separator"));
 		mpgSubObjects.forEach(o -> sb.append(o.print()));
 		return sb.toString();
+	}
+
+	@Override
+	public String getParentId() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
