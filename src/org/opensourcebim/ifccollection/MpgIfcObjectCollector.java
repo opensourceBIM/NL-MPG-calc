@@ -75,10 +75,6 @@ public class MpgIfcObjectCollector {
 			area = 0.0;
 
 			if (geometry != null) {
-
-				MpgObject mpgObjectGroup = new MpgObjectImpl(ifcProduct.getOid(), ifcProduct.getGlobalId(),
-						ifcProduct.getName(), ifcProduct.getClass().getSimpleName(), objectStore);
-
 				area = modelAreaUnit.convert(geometry.getArea(), this.getAreaUnit());
 				volume = modelVolumeUnit.convert(geometry.getVolume(), this.getVolumeUnit());
 
@@ -104,15 +100,7 @@ public class MpgIfcObjectCollector {
 
 				} else {
 					// retrieve information and add found values to the various data objects
-					List<Pair<String, Double>> mats = this.getMaterials(ifcProduct, volume);
-					mats.forEach((mat) -> {
-						objectStore.addMaterial(mat.getLeft());
-						if (geometry != null) {
-							mpgObjectGroup.addObject(
-									new MpgSubObjectImpl(mat.getRight(), mat.getLeft()));
-						}
-					});
-					objectStore.getObjects().add(mpgObjectGroup);
+					this.createMpgObjectFromIfcProduct(ifcProduct, volume);
 				}
 			}
 		}
@@ -121,20 +109,26 @@ public class MpgIfcObjectCollector {
 	}
 
 	/**
-	 * Retrieve the materials from the IfcProduct object and store these as
+	 * Retrieve the materials and layers from the IfcProduct object and store these as
 	 * MpgMaterial objects
 	 * 
 	 * @param ifcProduct  The ifcProduct object to retrieve the material names from
 	 * @param totalVolume The total volume of the product. used to determine ratios
 	 *                    of volume in case there are multiple materials defined
-	 * @return a list of material names and estimated volume
 	 */
-	private List<Pair<String, Double>> getMaterials(IfcProduct ifcProduct, double totalVolume) {
-		List<Pair<String, Double>> materials = new ArrayList<>();
+	private void createMpgObjectFromIfcProduct(IfcProduct ifcProduct, double totalVolume) {
+		
+		MpgObjectImpl mpgObject = new MpgObjectImpl(ifcProduct.getOid(), ifcProduct.getGlobalId(),
+				ifcProduct.getName(), ifcProduct.getClass().getSimpleName(), objectStore);
+		mpgObject.setVolume(totalVolume);
 
 		EList<IfcRelAssociates> associates = ifcProduct.getHasAssociations();
 		if (associates != null) {
 
+			
+			List<Pair<String, Double>> productLayers = new ArrayList<Pair<String, Double>>();
+			List<String> productMaterials = new ArrayList<String>();
+			
 			for (IfcRelAssociates ifcRelAssociates : associates) {
 
 				if (ifcRelAssociates instanceof IfcRelAssociatesMaterial) {
@@ -144,42 +138,41 @@ public class MpgIfcObjectCollector {
 					// try determine what the derived interface of the IfcMaterialSelect is
 					if (relatingMaterial instanceof IfcMaterial) {
 						IfcMaterial mat = (IfcMaterial) relatingMaterial;
-						Pair<String, Double> item = new MutablePair<String, Double>(mat.getName(), 0.0);
-						materials.add(item);
+						productMaterials.add(mat.getName());
 					} else if (relatingMaterial instanceof IfcMaterialList) {
 						IfcMaterialList mats = (IfcMaterialList) relatingMaterial;
-						mats.getMaterials().forEach((mat) -> {
-							Pair<String, Double> item = new MutablePair<String, Double>(mat.getName(), 0.0);
-							materials.add(item);
-						});
+						mats.getMaterials().forEach((mat) -> productMaterials.add(mat.getName()));
 					} else if (relatingMaterial instanceof IfcMaterialLayerSetUsage) {
-						materials.addAll(GetMaterialLayerList((IfcMaterialLayerSetUsage) relatingMaterial));
+						productLayers.addAll(GetMaterialLayerList((IfcMaterialLayerSetUsage) relatingMaterial));
 					} else if (relatingMaterial instanceof IfcMaterialLayerSet) {
-						materials.addAll(GetMaterialLayerList((IfcMaterialLayerSet) relatingMaterial));
+						productLayers.addAll(GetMaterialLayerList((IfcMaterialLayerSet) relatingMaterial));
 					} else if (relatingMaterial instanceof IfcMaterialLayer) {
-						materials.add(GetMaterialLayer((IfcMaterialLayer) relatingMaterial));
+						productLayers.addAll(GetMaterialLayer((IfcMaterialLayer) relatingMaterial));
 					}
+					
 				}
 			}
 
 			// check total volume matches up with found materials and thickness sums and
 			// adjust accordingly.
-			Double totalThickness = materials.stream().map(mat -> mat.getValue())
-					.collect(Collectors.summingDouble(o -> o));
-			// if there are layers present the material definitions should relate to the
-			// layers
-			double volumePerMaterial = totalThickness == 0 ? totalVolume / Math.max(1.0, materials.size())
-					: totalVolume;
-
-			materials.forEach(mat -> {
-				if (mat.getValue() <= 0.0) {
-					mat.setValue(totalThickness == 0 ? volumePerMaterial : Double.NaN);
-				} else if (totalThickness != 0) {
-					mat.setValue(volumePerMaterial * (mat.getValue() / totalThickness));
-				}
+			double totalThickness = productLayers.stream().collect(Collectors.summingDouble(o -> o.getRight()));		
+			
+			// add separately listed materials
+			productMaterials.forEach((mat) -> {
+				objectStore.addMaterial(mat);
+				mpgObject.addListedMaterial(mat);
 			});
+			// add layers and any materials that have been found with those layers
+			productLayers.forEach(layer -> {
+				String materialName = layer.getKey();
+				double volumeRatio = layer.getValue() / totalThickness * totalVolume;
+				mpgObject.addSubObject(new MpgSubObjectImpl(volumeRatio, materialName));
+				mpgObject.addListedMaterial(materialName);
+				objectStore.addMaterial(materialName);
+			});
+			
+			objectStore.getObjects().add(mpgObject);
 		}
-		return materials;
 	}
 
 	/**
@@ -188,10 +181,11 @@ public class MpgIfcObjectCollector {
 	 * @param layer the material layer object to parse
 	 * @return an object with material layer information
 	 */
-	private Pair<String, Double> GetMaterialLayer(IfcMaterialLayer layer) {
+	private List<Pair<String, Double>> GetMaterialLayer(IfcMaterialLayer layer) {
 		IfcMaterial material = layer.getMaterial();
-		return new MutablePair<String, Double>(material != null ? material.getName() : "unknown",
-				layer.getLayerThickness());
+		List<Pair<String, Double>> res = new ArrayList<Pair<String, Double>>();
+		res.add(new MutablePair<String, Double>(material != null ? material.getName() : "", layer.getLayerThickness()));
+		return res;
 	}
 
 	/**
@@ -200,8 +194,8 @@ public class MpgIfcObjectCollector {
 	 * @param layerSet ifcLayerSet object
 	 * @return a list of material names and matching thickness.
 	 */
-	private List<Pair<String, Double>> GetMaterialLayerList(IfcMaterialLayerSet layerSet) {
-		return layerSet.getMaterialLayers().stream().map((layer) -> GetMaterialLayer(layer))
+	private List<Pair<String, Double>> GetMaterialLayerList(IfcMaterialLayerSet layerSet) {	
+		return layerSet.getMaterialLayers().stream().flatMap((layer) -> GetMaterialLayer(layer).stream())
 				.collect(Collectors.toList());
 	}
 

@@ -6,9 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.input.NullReader;
 import org.eclipse.emf.common.util.BasicEList;
-import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.opensourcebim.nmd.NmdProductCard;
 
 public class MpgObjectStoreImpl implements MpgObjectStore {
@@ -17,10 +15,23 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	private List<MpgObject> mpgObjects;
 	private List<MpgSubObject> spaces;
 
-	// lists to find any problem with materials
+	/**
+	 * List that states which materials have no objects linked
+	 */
 	private List<String> orphanedMaterials;
+
+	/**
+	 * List that states which object GUIDs have no material or no layers, but
+	 * multiple materials
+	 */
 	private List<String> objectGUIDsWithoutMaterial;
+
+	/**
+	 * List that states which objects have layers that cannot be resolved to a
+	 * material
+	 */
 	private List<String> objectGuidsWithPartialMaterialDefinition;
+	private List<String> objectGUIDsWithRedundantMats;
 
 	public MpgObjectStoreImpl() {
 		setMaterials(new HashMap<>());
@@ -53,9 +64,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	private void setMaterials(HashMap<String, MpgMaterial> mpgMaterials) {
 		this.mpgMaterials = mpgMaterials;
 	}
-	
+
 	@Override
-	public void setSpecsForMaterial(String name, NmdProductCard specs) {
+	public void setProductCardForMaterial(String name, NmdProductCard specs) {
 		// TODO catch null reference exceptions
 		getMaterialByName(name).setMaterialSpecs(specs);
 	}
@@ -117,24 +128,22 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	public List<MpgMaterial> getMaterialsByProductType(String productType) {
 		List<MpgObject> objectsByProductType = this.getObjectsByProductType(productType);
-		
+
 		List<String> materialNames = objectsByProductType.stream().flatMap(g -> g.getSubObjects().stream())
 				.map(obj -> obj.getMaterialName()).distinct().collect(Collectors.toList());
-		
+
 		return mpgMaterials.values().stream().filter(mat -> materialNames.contains(mat.getIfcName()))
 				.collect(Collectors.toList());
 	}
 
 	@Override
 	public double getTotalVolumeOfMaterial(String name) {
-		return getObjectsByMaterialName(name).stream().filter(mat -> mat != null).map(o -> o.getVolume())
-				.filter(o -> o != null).collect(Collectors.summingDouble(o -> o));
+		return getObjectsByMaterialName(name).stream().collect(Collectors.summingDouble(o -> o == null ? 0.0 : o.getVolume()));
 	}
 
 	@Override
 	public double getTotalVolumeOfProductType(String productType) {
-		return getObjectsByProductType(productType).stream().flatMap(g -> g.getSubObjects().stream())
-				.filter(o -> o != null).collect(Collectors.summingDouble(o -> o.getVolume()));
+		return getObjectsByProductType(productType).stream().collect(Collectors.summingDouble(o -> o.getVolume()));
 	}
 
 	@Override
@@ -144,7 +153,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public double getTotalFloorArea() {
-		return spaces.stream().map(s -> s.getArea()).filter(a -> a != null).collect(Collectors.summingDouble(a -> a));
+		return spaces.stream().map(s -> s.getArea()).collect(Collectors.summingDouble(a -> a == null ? 0.0 : a));
 	}
 
 	/**
@@ -158,42 +167,52 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public boolean isIfcDataComplete() {
 		// first: check if there are any orphaned materials
 		for (String key : this.getMaterials().keySet()) {
-			if (getObjectsByMaterialName(key).size() == 0) {
+			if (!(mpgObjects.stream().anyMatch(o -> o.getListedMaterials().contains(key)))) {
 				getOrphanedMaterials().add(key);
 			}
 		}
 
-		// check for objectgroups that have not a single material defined
-		setObjectGUIDsWithoutMaterial(mpgObjects.stream()
-				.filter(o -> isObjectUndefined(o))
-				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
-		
-		// check for objectgroups that have more than 0 materials linked, but are still missing 1 to n materials
-		setObjectGuidsWithPartialMaterialDefinition(mpgObjects.stream()
-			.filter(mpgObject -> mpgObject.getSubObjects().size() > 0)
-			.filter(o -> isObjectPartiallyUndefined(o))
-			.map(g -> g.getGlobalId()).collect(Collectors.toList()));
+		// check for objects that have not a single material defined or objects without
+		// layers and multiple materials
+		setObjectGUIDsWithoutMaterial(mpgObjects.stream().filter(o -> isObjectUndefined(o)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
 
-		return getOrphanedMaterials().size() == 0 &&
-				getObjectGUIDsWithoutMaterial().size() == 0 &&
-				getObjectGuidsWithPartialMaterialDefinition().size() == 0;
+		// check for materials without layers that have more than a single material
+		// added to them and as such cannot be resolved automatically
+		setObjectGUIDsWithRedundantMaterialSpecs(mpgObjects.stream().filter(o -> hasRedundantMaterialSpecs(o))
+				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
+
+		// check for objects that have more than 0 materials linked, but are still
+		// missing 1 to n materials
+		setObjectGuidsWithPartialMaterialDefinition(mpgObjects.stream()
+				.filter(mpgObject -> mpgObject.getSubObjects().size() > 0).filter(o -> isObjectLayerUnresolved(o))
+				.map(g -> g.getGlobalId()).collect(Collectors.toList()));
+
+		return getOrphanedMaterials().size() == 0 && getObjectGUIDsWithoutMaterial().size() == 0
+				&& getObjectGUIDsWithRedundantMaterialSpecs().size() == 0
+				&& getObjectGuidsWithPartialMaterialDefinition().size() == 0;
 	}
-	
+
+	// no materials nor subobjects defined
 	private boolean isObjectUndefined(MpgObject o) {
-		long numSubObjects = o.getSubObjects().size();
-		long numUndefined = o.getSubObjects().stream()
-				.filter(so -> so.getMaterialName() == "" || so.getMaterialName() == null)
-				.collect(Collectors.toList()).size();
-		return numSubObjects == 0 || numSubObjects == numUndefined;
+		long numLayers = o.getSubObjects().size();
+		return (numLayers + o.getListedMaterials().size()) == 0;
 	}
-	
-	private boolean isObjectPartiallyUndefined(MpgObject o) {
-		long defined = o.getSubObjects().stream()
-				.filter(so -> so.getMaterialName() == "" || so.getMaterialName() == null)
-				.collect(Collectors.toList()).size();
-		return defined > 0 && defined < o.getSubObjects().size();
+
+	private boolean hasRedundantMaterialSpecs(MpgObject o) {
+		long numLayers = o.getSubObjects().size();
+		return (numLayers == 0) && (o.getListedMaterials().size() > 1);
 	}
-	
+
+	// check if there are objects with layers, but with the layers not defined
+	private boolean isObjectLayerUnresolved(MpgObject o) {
+		long undefinedLayers = o.getSubObjects().stream()
+				.filter(so -> so.getMaterialName() == "" || so.getMaterialName() == null).collect(Collectors.toList())
+				.size();
+		long numLayers = o.getSubObjects().size();
+		return (numLayers > 0) && ((undefinedLayers > 0) || (numLayers < o.getListedMaterials().size()));
+	}
+
 	/**
 	 * Check if all the MpgMaterials have Materia
 	 */
@@ -201,7 +220,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public boolean isMaterialDataComplete() {
 		return getMaterials().values().stream().allMatch(mat -> mat.getNmdMaterialSpecs() != null);
 	}
-	
+
 	@Override
 	public List<String> getOrphanedMaterials() {
 		return orphanedMaterials;
@@ -219,7 +238,17 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public void setObjectGUIDsWithoutMaterial(List<String> objectGUIDsWithoutMaterial) {
 		this.objectGUIDsWithoutMaterial = objectGUIDsWithoutMaterial;
 	}
-	
+
+	@Override
+	public List<String> getObjectGUIDsWithRedundantMaterialSpecs() {
+		return objectGUIDsWithRedundantMats;
+	}
+
+	public void setObjectGUIDsWithRedundantMaterialSpecs(List<String> objectGUIDsWithRedundantMats) {
+		this.objectGUIDsWithRedundantMats = objectGUIDsWithRedundantMats;
+	}
+
+	@Override
 	public List<String> getObjectGuidsWithPartialMaterialDefinition() {
 		return objectGuidsWithPartialMaterialDefinition;
 	}
@@ -256,21 +285,17 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		System.out.println(" - total floor area : " + this.getTotalFloorArea());
 		System.out.println();
 
-		System.out.println("#Materials that do not link to any object : " + getOrphanedMaterials().size());
-		if (getOrphanedMaterials().size() > 0) {
-			System.out.println(String.join(",\n", getOrphanedMaterials()));
-		}
+		System.out.println("# Materials that do not link to any object : " + getOrphanedMaterials().size());
 		System.out.println();
-		System.out.println("#object groups that have no materials or objects linked: " + getObjectGUIDsWithoutMaterial().size());
-		if (getObjectGUIDsWithoutMaterial().size() > 0) {
-			System.out.println(String.join(",\n", getObjectGUIDsWithoutMaterial()));
-		}
+		System.out.println("# Objects that have no materials listed and no layers linked: "
+				+ getObjectGUIDsWithoutMaterial().size());
 		System.out.println();
-		
-		System.out.println("#object groups that have one or more missing material links: " + getObjectGuidsWithPartialMaterialDefinition().size());
-		if (getObjectGuidsWithPartialMaterialDefinition().size() > 0) {
-			System.out.println(String.join(",\n", getObjectGuidsWithPartialMaterialDefinition()));
-		}
+		System.out.println("# Objects that have redundant material definitions: "
+				+ getObjectGUIDsWithRedundantMaterialSpecs().size());
+		System.out.println();
+		System.out.println("# Objects that have one or more missing material links: "
+				+ getObjectGuidsWithPartialMaterialDefinition().size());
+
 		System.out.println();
 
 		System.out.println("End of Summary");

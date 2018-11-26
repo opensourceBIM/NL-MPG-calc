@@ -3,9 +3,6 @@ package org.opensourcebim.mpgcalculation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.stream.Collectors;
-
-import org.bimserver.shared.interfaces.async.AsyncPluginInterface.AddObjectIDMCallback;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.junit.After;
 import org.junit.Before;
@@ -77,7 +74,7 @@ public class mpgCalculatorTests {
 		
 	@Test
 	public void testResultsReturnSuccessStatusWhenCalculationsSucceed() {
-		addMaterialWithSpec("steel", 0.0, 0.0);
+		addMaterialWithproductCard("steel", 0.0, 0.0);
 		addUnitGroup("steel");
 		
 		startCalculations(1.0);
@@ -86,7 +83,7 @@ public class mpgCalculatorTests {
 	
 	@Test
 	public void testZeroDistanceToProducerResultsInNoTransportCost() {
-		addMaterialWithSpec("steel", 0.0, 0.0);
+		addMaterialWithproductCard("steel", 0.0, 0.0);
 		addUnitGroup("steel");
 		
 		startCalculations(1.0);
@@ -95,7 +92,7 @@ public class mpgCalculatorTests {
 	
 	@Test
 	public void testUnitDistanceToProducerResultsInTransportCostForDoubleTheDistance() {
-		addMaterialWithSpec("steel", 1.0, 0.0);
+		addMaterialWithproductCard("steel", 1.0, 0.0);
 		addUnitGroup("steel");
 		
 		startCalculations(1.0);
@@ -107,7 +104,7 @@ public class mpgCalculatorTests {
 	@Test
 	public void testLossFactorOfMaterialInducesExtraTransportCost() {
 		double loss = 0.5;
-		addMaterialWithSpec("steel", 1.0, loss);
+		addMaterialWithproductCard("steel", 1.0, loss);
 		addUnitGroup("steel");
 		
 		startCalculations(1.0);
@@ -131,19 +128,19 @@ public class mpgCalculatorTests {
 		this.results = calculator.getResults();
 	}
 	
-	private void addMaterialWithSpec(String matName, double producerDistance, double lossFactor) {
+	private void addMaterialWithproductCard(String matName, double producerDistance, double lossFactor) {
 		store.addMaterial(matName);
-		store.setSpecsForMaterial(matName, createUnitSpec(producerDistance, lossFactor));
+		store.setProductCardForMaterial(matName, createUnitProductCard(producerDistance, lossFactor));
 	}
 		
 	private void addUnitGroup(String material) {
 		MpgObject group = new MpgObjectImpl(1, "test", material + " element", "Slab", store);
 		MpgSubObject testObject = new MpgSubObjectImpl(1.0, "steel");
-		group.addObject(testObject);
+		group.addSubObject(testObject);
 		store.addObject(group);
 	}
 	
-	private NmdProductCard createUnitSpec(double transportDistance, double lossFactor) {
+	private NmdProductCard createUnitProductCard(double transportDistance, double lossFactor) {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
 		specs.setDistanceToProducer(transportDistance);
 		specs.setTransportProfile(createUnitProfile(NmdLifeCycleStage.TransportToSite));

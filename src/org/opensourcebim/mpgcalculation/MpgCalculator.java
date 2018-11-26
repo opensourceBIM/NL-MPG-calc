@@ -71,6 +71,8 @@ public class MpgCalculator {
 					specsMatSumKg += lifeTimeTotalMassKg;
 				}
 				
+				
+				// TODO: add correction factor for trasnport packign (standard 1)?
 				// TODO: determine disposal transport phase - determine composite recycling factor based on mayterial disposal factors.
 
 				// determine tranport costs per composed material in tonnes * km. 

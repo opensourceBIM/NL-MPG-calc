@@ -32,11 +32,13 @@ public interface MpgObjectStore {
 	boolean isIfcDataComplete();
 	List<String> getOrphanedMaterials();
 	List<String> getObjectGUIDsWithoutMaterial();
+	List<String> getObjectGUIDsWithRedundantMaterialSpecs();
 	List<String> getObjectGuidsWithPartialMaterialDefinition();
 	
 	void SummaryReport();
-	void setSpecsForMaterial(String string, NmdProductCard specs);
+	void setProductCardForMaterial(String string, NmdProductCard specs);
 	boolean isMaterialDataComplete();
+
 
 
 

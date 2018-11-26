@@ -1,10 +1,10 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
 import org.eclipse.emf.common.util.BasicEList;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -16,11 +16,14 @@ public class MpgObjectImpl implements MpgObject {
 	private String objectName;
 	private List<MpgSubObject> mpgSubObjects;
 	private String objectType;
-	
+
 	@JsonIgnore
 	private Supplier<MpgObjectStore> getStore;
-	
-	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, MpgObjectStore objectStore) {
+	private Set<String> listedMaterials;
+	private double volume;
+
+	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType,
+			MpgObjectStore objectStore) {
 		mpgSubObjects = new BasicEList<MpgSubObject>();
 		this.objectId = objectId;
 		this.setGlobalId(globalId);
@@ -28,15 +31,22 @@ public class MpgObjectImpl implements MpgObject {
 		objectType = objectType.replaceAll("Impl$", "");
 		objectType = objectType.replaceAll("^Ifc", "");
 		this.setObjectType(objectType);
-		
-		this.getStore = () -> {return objectStore;};
+
+		listedMaterials = new HashSet<String>();
+		this.getStore = () -> {
+			return objectStore;
+		};
 	}
-		
+
 	@Override
-	public void addObject(MpgSubObject mpgSubObject) {
+	public void addSubObject(MpgSubObject mpgSubObject) {
 		mpgSubObjects.add(mpgSubObject);
+		String matName = mpgSubObject.getMaterialName();
+		if(matName != null && !matName.equals("")) {
+			addListedMaterial(matName);
+		}
 	}
-	
+
 	@Override
 	public List<MpgSubObject> getSubObjects() {
 		return mpgSubObjects;
@@ -46,7 +56,7 @@ public class MpgObjectImpl implements MpgObject {
 	public long getObjectId() {
 		return objectId;
 	}
-	
+
 	@Override
 	public String getObjectType() {
 		return objectType;
@@ -55,16 +65,16 @@ public class MpgObjectImpl implements MpgObject {
 	public void setObjectType(String objectType) {
 		this.objectType = objectType == null ? "undefined type" : objectType;
 	}
-	
+
 	@Override
 	public String getObjectName() {
 		return this.objectName;
 	}
-	
+
 	private void setObjectName(String objectName) {
 		this.objectName = objectName == null ? "undefined name" : objectName;
 	}
-	
+
 	@Override
 	public String getGlobalId() {
 		return globalId;
@@ -73,24 +83,41 @@ public class MpgObjectImpl implements MpgObject {
 	public void setGlobalId(String globalId) {
 		this.globalId = globalId;
 	}
-	
+
+	@Override
+	public double getVolume() {
+		return this.volume;
+	}
+
+	public void setVolume(double value) {
+		this.volume = value;
+	}
+
 	@Override
 	public List<MpgMaterial> getMaterials() {
 		// gte material names
-		List<String> materialNames = this.getSubObjects().stream().map(obj -> obj.getMaterialName()).collect(Collectors.toList());
 		// retrieve the materials from the store
 		List<MpgMaterial> materials = new ArrayList<MpgMaterial>();
-		for(String matName : materialNames) {
+		for (String matName : this.getListedMaterials()) {
 			materials.add(this.getStore.get().getMaterialByName(matName));
 		}
 		return materials;
 	}
-	
-	
+
+	@Override
+	public Set<String> getListedMaterials() {
+		return this.listedMaterials;
+	}
+
+	@Override
+	public void addListedMaterial(String materialName) {
+		this.listedMaterials.add(materialName);
+	}
+
 	@Override
 	public String print() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(this.objectType + " : " + this.objectName +" with id:" + objectId);
+		sb.append(this.objectType + " : " + this.objectName + " with id:" + objectId);
 		sb.append(System.getProperty("line.separator"));
 		sb.append(">> GUID: " + this.getGlobalId());
 		sb.append(System.getProperty("line.separator"));

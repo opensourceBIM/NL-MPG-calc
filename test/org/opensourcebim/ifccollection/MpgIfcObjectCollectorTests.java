@@ -214,7 +214,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		factory.addProductToModel(ifcModel);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(1.0e9, collector.results().getObjects().get(0).getSubObjects().get(0).getVolume(), 1e-8);
+		assertEquals(1.0e9, collector.results().getObjects().get(0).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -225,7 +225,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.results().getObjects().get(0).getSubObjects().get(0).getVolume(), 1e-8);
+		assertEquals(3, collector.results().getObjects().get(0).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -240,7 +240,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.results().getObjects().get(0).getSubObjects().get(0).getVolume(), 1e-8);
+		assertEquals(3, collector.results().getObjects().get(0).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -308,7 +308,7 @@ public class MpgIfcObjectCollectorTests {
 	}
 	
 	@Test
-	public void testCollectorSetsVolumeToNaNForNonLayersWhenLayersArePresent()
+	public void testCollectorDoesOnlyAddSubObjectForLayers()
 	{
 		factory.setGeometry(factory.getGeometryInfoMock(1, 1));
 		factory.addMaterialLayer("brick", 1);
@@ -321,7 +321,7 @@ public class MpgIfcObjectCollectorTests {
 		assertEquals(.75,collector.results().getObjects().get(0).getSubObjects().get(1).getVolume(), 1e-8);
 		
 		// as there are layers present and this material is added separately we cannot assign a volume to it.
-		assertTrue(Double.isNaN(collector.results().getObjects().get(0).getSubObjects().get(2).getVolume()));
+		assertEquals(2, collector.results().getObjects().get(0).getSubObjects().size());
 	}
 	
 	@Test

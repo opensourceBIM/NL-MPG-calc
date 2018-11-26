@@ -24,44 +24,43 @@ public class BimBotTester {
 	private BimServerClientFactory bimServerClientFactory;
 	private UsernamePasswordAuthenticationInfo credentials;
 
-	public BimBotTester(Path basePath, BimServerClientFactory bimServerClientFactory, UsernamePasswordAuthenticationInfo credentials) {
+	public BimBotTester(Path basePath, BimServerClientFactory bimServerClientFactory,
+			UsernamePasswordAuthenticationInfo credentials) {
 		this.basePath = basePath;
 		this.bimServerClientFactory = bimServerClientFactory;
 		this.credentials = credentials;
 	}
-	
+
 	/**
-	 * @param args
-	 * 0: Local path to directory containing IFC files
-	 * 1: Address of BIMserver (including http(s):// and port)
-	 * 2: Username
-	 * 3: Password
+	 * @param args 0: Local path to directory containing IFC files 1: Address of
+	 *             BIMserver (including http(s):// and port) 2: Username 3: Password
 	 */
 	public static void main(String[] args) {
 		try {
-			BimBotTester bimBotTester = new BimBotTester(Paths.get(args[0]), new JsonBimServerClientFactory(args[1]), new UsernamePasswordAuthenticationInfo(args[2], args[3]));
+			BimBotTester bimBotTester = new BimBotTester(Paths.get(args[0]), new JsonBimServerClientFactory(args[1]),
+					new UsernamePasswordAuthenticationInfo(args[2], args[3]));
 			bimBotTester.start();
 		} catch (BimServerClientException e) {
 			LOGGER.error("", e);
 		}
 	}
-	
+
 	public void start() {
 		BimBotsServiceInterface bimBot = new IfcToMpgCollectionService();
-		
+
 		// Increment the first 2 to enable concurrent processing for faster processing
-		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.HOURS, new ArrayBlockingQueue<>(1000));
-		
-		try (DirectoryStream<Path> list = Files.newDirectoryStream(basePath)) {
-			for (Path path : list) {
-				if (path.getFileName().toString().toLowerCase().endsWith(".ifc")) {
-					threadPoolExecutor.submit(new BimBotTest(path, bimServerClientFactory, credentials, bimBot));
-				}
-			}
+		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.HOURS,
+				new ArrayBlockingQueue<>(1000));
+
+		try {
+			Files.walk(Paths.get(basePath.toUri()))
+				.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc")).forEach(p -> {
+					threadPoolExecutor.submit(new BimBotTest(p, bimServerClientFactory, credentials, bimBot));
+				});
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			e.printStackTrace();
 		}
-		
+
 		threadPoolExecutor.shutdown();
 		try {
 			threadPoolExecutor.awaitTermination(1, TimeUnit.HOURS);

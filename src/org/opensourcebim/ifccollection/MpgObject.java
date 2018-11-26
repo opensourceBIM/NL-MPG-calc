@@ -1,6 +1,7 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -12,10 +13,18 @@ public interface MpgObject {
 	String getObjectType();
 	String getGlobalId();
 	
+	double getVolume();
+	
 	@JsonIgnore
 	List<MpgMaterial> getMaterials();
 	
-	void addObject(MpgSubObject mpgObject);
+	Set<String> getListedMaterials();
+	
+	void addListedMaterial(String materialName);
+
+	void addSubObject(MpgSubObject mpgSubObject);
 	
 	String print();
+
+
 }
