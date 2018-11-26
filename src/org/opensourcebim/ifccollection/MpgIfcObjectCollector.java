@@ -124,7 +124,6 @@ public class MpgIfcObjectCollector {
 
 		EList<IfcRelAssociates> associates = ifcProduct.getHasAssociations();
 		if (associates != null) {
-
 			
 			List<Pair<String, Double>> productLayers = new ArrayList<Pair<String, Double>>();
 			List<String> productMaterials = new ArrayList<String>();
@@ -149,7 +148,6 @@ public class MpgIfcObjectCollector {
 					} else if (relatingMaterial instanceof IfcMaterialLayer) {
 						productLayers.addAll(GetMaterialLayer((IfcMaterialLayer) relatingMaterial));
 					}
-					
 				}
 			}
 

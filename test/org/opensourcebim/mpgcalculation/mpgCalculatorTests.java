@@ -66,7 +66,7 @@ public class mpgCalculatorTests {
 	public void testReturnIncompleteDataStatusWhenNMdDataIsIncomplete() {
 		// no material spec is added which should return a warning
 		store.addMaterial("steel");
-		this.addUnitGroup("steel");
+		this.addUnitObject("steel");
 				
 		startCalculations(1.0);
 		assertEquals(ResultStatus.IncompleteData, results.getStatus());
@@ -74,8 +74,8 @@ public class mpgCalculatorTests {
 		
 	@Test
 	public void testResultsReturnSuccessStatusWhenCalculationsSucceed() {
-		addMaterialWithproductCard("steel", 0.0, 0.0);
-		addUnitGroup("steel");
+		addMaterialWithproductCard("steel", 0.0, 0.0, 1);
+		addUnitObject("steel");
 		
 		startCalculations(1.0);
 		assertEquals(ResultStatus.Success, results.getStatus());
@@ -83,8 +83,8 @@ public class mpgCalculatorTests {
 	
 	@Test
 	public void testZeroDistanceToProducerResultsInNoTransportCost() {
-		addMaterialWithproductCard("steel", 0.0, 0.0);
-		addUnitGroup("steel");
+		addMaterialWithproductCard("steel", 0.0, 0.0, 1);
+		addUnitObject("steel");
 		
 		startCalculations(1.0);
 		assertEquals(0.0, results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
@@ -92,8 +92,8 @@ public class mpgCalculatorTests {
 	
 	@Test
 	public void testUnitDistanceToProducerResultsInTransportCostForDoubleTheDistance() {
-		addMaterialWithproductCard("steel", 1.0, 0.0);
-		addUnitGroup("steel");
+		addMaterialWithproductCard("steel", 1.0, 0.0, 1);
+		addUnitObject("steel");
 		
 		startCalculations(1.0);
 		// we have added a unit value for every ImpactFactor
@@ -104,8 +104,8 @@ public class mpgCalculatorTests {
 	@Test
 	public void testLossFactorOfMaterialInducesExtraTransportCost() {
 		double loss = 0.5;
-		addMaterialWithproductCard("steel", 1.0, loss);
-		addUnitGroup("steel");
+		addMaterialWithproductCard("steel", 1.0, loss, 1);
+		addUnitObject("steel");
 		
 		startCalculations(1.0);
 		assertEquals(2.0 * (double)(NmdImpactFactor.values().length) * (1.0 + loss) / 1000.0,
@@ -114,7 +114,12 @@ public class mpgCalculatorTests {
 	
 	@Test
 	public void testCategory3DataIncreasesTotalCost() {
+		addMaterialWithproductCard("steel", 1.0, 0.0, 3);
+		addUnitObject("steel");
 		
+		startCalculations(1.0);
+		assertEquals(2.0 * 1.3 * (double)(NmdImpactFactor.values().length),
+				results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite) / 1000, 1e-8);
 	}
 	
 	
@@ -128,20 +133,21 @@ public class mpgCalculatorTests {
 		this.results = calculator.getResults();
 	}
 	
-	private void addMaterialWithproductCard(String matName, double producerDistance, double lossFactor) {
+	private void addMaterialWithproductCard(String matName, double producerDistance, double lossFactor, int category) {
 		store.addMaterial(matName);
-		store.setProductCardForMaterial(matName, createUnitProductCard(producerDistance, lossFactor));
+		store.setProductCardForMaterial(matName, createUnitProductCard(producerDistance, lossFactor, category));
 	}
 		
-	private void addUnitGroup(String material) {
+	private void addUnitObject(String material) {
 		MpgObject group = new MpgObjectImpl(1, "test", material + " element", "Slab", store);
 		MpgSubObject testObject = new MpgSubObjectImpl(1.0, "steel");
 		group.addSubObject(testObject);
 		store.addObject(group);
 	}
 	
-	private NmdProductCard createUnitProductCard(double transportDistance, double lossFactor) {
+	private NmdProductCard createUnitProductCard(double transportDistance, double lossFactor, int category) {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
+		specs.setDataCategory(category);
 		specs.setDistanceToProducer(transportDistance);
 		specs.setTransportProfile(createUnitProfile(NmdLifeCycleStage.TransportToSite));
 		specs.addSpecification(createDummySpec(1.0, lossFactor));

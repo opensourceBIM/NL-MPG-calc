@@ -1,5 +1,6 @@
 package org.opensourcebim.nmd;
 
+import java.util.HashMap;
 import java.util.Set;
 
 import org.opensourcebim.mpgcalculation.MpgCostFactor;
@@ -21,5 +22,5 @@ public interface NmdBasisProfiel {
 
 	double getImpactFactor(NmdImpactFactor factor);
 
-	Set<MpgCostFactor> calculateFactors(double distanceFromProducer, String materialName);
+	Set<MpgCostFactor> calculateFactors(double cost, HashMap<NmdImpactFactor, Double> weightFactors , String materialName);
 }

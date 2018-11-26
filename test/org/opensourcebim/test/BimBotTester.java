@@ -52,6 +52,7 @@ public class BimBotTester {
 		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.HOURS,
 				new ArrayBlockingQueue<>(1000));
 
+		// walk recursively through all folders in 
 		try {
 			Files.walk(Paths.get(basePath.toUri()))
 				.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc")).forEach(p -> {
