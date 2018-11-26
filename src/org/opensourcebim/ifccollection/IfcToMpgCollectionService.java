@@ -46,7 +46,7 @@ public class IfcToMpgCollectionService extends BimBotAbstractService {
 
 	@Override
 	public String getOutputSchema() {
-		return "MPG_OBJECT_JSON_V0.0.2";
+		return "MPG_OBJECT_JSON_0_0_2";
 	}
 	
 	@Override
