@@ -39,8 +39,15 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 
 			// get data per material - run through services in order
 			for (MpgMaterial material : ifcResults.getMaterials().values()) {
-				MpgMaterial nmdMaterial = tryGetMaterialProperties(material);
-
+				NmdProductCard nmdMaterial = tryGetMaterialProperties(material);
+				
+				if (nmdMaterial == null)
+				{
+					
+				} else {
+					ifcResults.setProductCardForMaterial(material.getIfcName(), nmdMaterial);
+				}
+					
 			}
 
 		} catch (ArrayIndexOutOfBoundsException ex) {
@@ -56,8 +63,8 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 		return nmdResults;
 	}
 
-	private MpgMaterial tryGetMaterialProperties(MpgMaterial material) {
-		MpgMaterial retrievedMaterial = null;
+	private NmdProductCard tryGetMaterialProperties(MpgMaterial material) {
+		NmdProductCard retrievedMaterial = null;
 		for (NmdDataService nmdDataService : services) {
 			retrievedMaterial = nmdDataService.retrieveMaterial(material);
 			if (retrievedMaterial != null) {
