@@ -1,9 +1,7 @@
 package org.opensourcebim.ifccollection;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public interface MpgObject {
 	
@@ -13,19 +11,18 @@ public interface MpgObject {
 	String getObjectType();
 	String getGlobalId();
 	String getParentId();
+	void setParentId(String value);
 	
 	double getVolume();
 	
-	@JsonIgnore
-	List<MpgMaterial> getMaterials();
+	Collection<String> getListedMaterials();
 	
-	Set<String> getListedMaterials();
-	
-	void addListedMaterial(String materialName);
+	void addListedMaterial(String materialName, String GUID);
 
 	void addSubObject(MpgSubObject mpgSubObject);
 	
 	String print();
+	boolean hasDuplicateMaterialNames();
 
 
 }

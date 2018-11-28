@@ -9,6 +9,7 @@ public class MpgSubObjectImpl implements MpgSubObject {
 	private String materialName = null;
 	private double volume;
 	private double area;
+	private String id;
 
 	public MpgSubObjectImpl() {
 	}
@@ -19,9 +20,10 @@ public class MpgSubObjectImpl implements MpgSubObject {
 	 * @param volume Volume of object
 	 * @param mat    material of object
 	 */
-	public MpgSubObjectImpl(double volume, String mat) {
+	public MpgSubObjectImpl(double volume, String mat, String guid) {
 		this.setVolume(volume);
 		this.setMaterialName(mat);
+		this.id = guid;
 	}
 
 	/**
@@ -44,7 +46,12 @@ public class MpgSubObjectImpl implements MpgSubObject {
 	protected void setMaterialName(String mpgMaterial) {
 		this.materialName = mpgMaterial;
 	}
-
+	
+	@Override
+	public String getId() {
+		return id;
+	}
+	
 	@Override
 	public double getVolume() {
 		return volume;

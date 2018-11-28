@@ -49,8 +49,8 @@ public class MpgObjectStoreTests {
 	public void testChangingAMaterialWillChangeAnyRelatedObjectMaterials() {
 		objectStore.addMaterial("dummyMaterial");
 		
-		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addSubObject(new MpgSubObjectImpl(2, "dummyMaterial"));
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		group.addSubObject(new MpgSubObjectImpl(2, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
 		
 		objectStore.addObject(group);
 		objectStore.getMaterialByName("dummyMaterial").setBimBotIdentifier("some id");
@@ -67,9 +67,9 @@ public class MpgObjectStoreTests {
 	public void testVolumePerMaterialWithNoVolumesReturnZero() {
 		objectStore.addMaterial("dummyMaterial");
 		
-		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addSubObject(new MpgSubObjectImpl(0, "dummyMaterial"));
-		group.addSubObject(new MpgSubObjectImpl(0, "dummyMaterial"));
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		group.addSubObject(new MpgSubObjectImpl(0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
+		group.addSubObject(new MpgSubObjectImpl(0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
 		
 		objectStore.addObject(group);
 		assertEquals(0.0, objectStore.getTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
@@ -82,9 +82,9 @@ public class MpgObjectStoreTests {
 		objectStore.addMaterial("dummyMaterial");
 		objectStore.addMaterial("ignoredMaterial");
 		
-		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addSubObject(new MpgSubObjectImpl(10, "dummyMaterial"));
-		group.addSubObject(new MpgSubObjectImpl(10, "ignoredMaterial" ));
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		group.addSubObject(new MpgSubObjectImpl(10, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
+		group.addSubObject(new MpgSubObjectImpl(10, "ignoredMaterial", Integer.toString("ignoredMaterial".hashCode())));
 		
 		objectStore.addObject(group);
 		assertEquals(10, objectStore.getTotalVolumeOfMaterial("dummyMaterial"), 1e-8);
@@ -107,8 +107,8 @@ public class MpgObjectStoreTests {
 	public void testWarningCheckReturnsFalseOnOrphanMaterials() {
 		objectStore.addMaterial("orphan material");
 		objectStore.addMaterial("a linked material");
-		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addSubObject(new MpgSubObjectImpl(10, "a linked material"));
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		group.addSubObject(new MpgSubObjectImpl(10, "a linked material", Integer.toString("a linked material".hashCode())));
 		objectStore.addObject(group);
 		
 		assertFalse("warning checker did not find the ophan material",
@@ -117,8 +117,8 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterial() {
-		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
-		mpgObject.addSubObject(new MpgSubObjectImpl(10, null));
+		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		mpgObject.addSubObject(new MpgSubObjectImpl(10, null, null));
 		objectStore.addObject(mpgObject);
 		
 		assertFalse("warning checker did not find an object with no material linked",
@@ -128,8 +128,8 @@ public class MpgObjectStoreTests {
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterialAndOrphanMaterial() {
 		objectStore.addMaterial("orphan material");
-		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addSubObject(new MpgSubObjectImpl(10, null));
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		group.addSubObject(new MpgSubObjectImpl(10, null, null));
 		objectStore.addObject(group);
 		
 		assertFalse("warning checker did not find an object with no material linked",
@@ -138,9 +138,9 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithRedundantMaterials() {
-		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
-		mpgObject.addListedMaterial("steel");
-		mpgObject.addListedMaterial("brick");
+		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		mpgObject.addListedMaterial("steel", Integer.toString("steel".hashCode()));
+		mpgObject.addListedMaterial("brick", Integer.toString("brick".hashCode()));
 		objectStore.addObject(mpgObject);
 		
 		assertFalse("warning checker did not find an object with no material linked",
@@ -150,13 +150,13 @@ public class MpgObjectStoreTests {
 	@Test
 	public void testWarningCheckReturnsFalseOnPartiallyUndefinedMaterial() {
 		objectStore.addMaterial("steel");
-		MpgObject mpgObject1 = new MpgObjectImpl(1, "aaaa", "custom wall", "Wall", objectStore);
-		mpgObject1.addSubObject(new MpgSubObjectImpl(10, null));
-		mpgObject1.addSubObject(new MpgSubObjectImpl(10, "steel"));
+		MpgObject mpgObject1 = new MpgObjectImpl(1, "aaaa", "custom wall", "Wall", "", objectStore);
+		mpgObject1.addSubObject(new MpgSubObjectImpl(10, null, null));
+		mpgObject1.addSubObject(new MpgSubObjectImpl(10, "steel", Integer.toString("steel".hashCode())));
 		objectStore.addObject(mpgObject1);
 		
-		MpgObject mpgObject2 = new MpgObjectImpl(2, "bbbb", "custom wall", "Wall", objectStore);
-		mpgObject2.addSubObject(new MpgSubObjectImpl(10, "steel"));
+		MpgObject mpgObject2 = new MpgObjectImpl(2, "bbbb", "custom wall", "Wall", "", objectStore);
+		mpgObject2.addSubObject(new MpgSubObjectImpl(10, "steel", Integer.toString("steel".hashCode())));
 		objectStore.addObject(mpgObject2);
 		
 		assertFalse("warning checker did not find an object with no material linked",
@@ -169,8 +169,8 @@ public class MpgObjectStoreTests {
 		objectStore.addMaterial("test material");
 		objectStore.addSpace(new MpgSubObjectImpl(20, 60));
 
-		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", objectStore);
-		group.addSubObject(new MpgSubObjectImpl(10, "test material"));
+		MpgObject group = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		group.addSubObject(new MpgSubObjectImpl(10, "test material", Integer.toString("test material".hashCode())));
 		objectStore.addObject(group);
 		
 		assertTrue("warning found in objectstore while it should not be there.",

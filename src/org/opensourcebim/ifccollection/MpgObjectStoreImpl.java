@@ -53,7 +53,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public void addMaterial(String name) {
-		mpgMaterials.putIfAbsent(name, new MpgMaterial(name));
+		if (name != null && !name.isEmpty()) {
+			mpgMaterials.putIfAbsent(name, new MpgMaterial(name));
+		}
 	}
 
 	@Override
@@ -129,16 +131,16 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public List<MpgMaterial> getMaterialsByProductType(String productType) {
 		List<MpgObject> objectsByProductType = this.getObjectsByProductType(productType);
 
-		List<String> materialNames = objectsByProductType.stream().flatMap(g -> g.getSubObjects().stream())
-				.map(obj -> obj.getMaterialName()).distinct().collect(Collectors.toList());
+		List<String> materialNames = objectsByProductType.stream().flatMap(o -> o.getListedMaterials().stream())
+				.distinct().collect(Collectors.toList());
 
-		return mpgMaterials.values().stream().filter(mat -> materialNames.contains(mat.getIfcName()))
-				.collect(Collectors.toList());
+		return materialNames.stream().map(mat -> this.getMaterialByName(mat)).collect(Collectors.toList());
 	}
 
 	@Override
 	public double getTotalVolumeOfMaterial(String name) {
-		return getObjectsByMaterialName(name).stream().collect(Collectors.summingDouble(o -> o == null ? 0.0 : o.getVolume()));
+		return getObjectsByMaterialName(name).stream()
+				.collect(Collectors.summingDouble(o -> o == null ? 0.0 : o.getVolume()));
 	}
 
 	@Override
@@ -166,9 +168,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	public boolean isIfcDataComplete() {
 		// first: check if there are any orphaned materials
-		for (String key : this.getMaterials().keySet()) {
-			if (!(mpgObjects.stream().anyMatch(o -> o.getListedMaterials().contains(key)))) {
-				getOrphanedMaterials().add(key);
+		for (String materialName : this.getMaterials().keySet()) {
+			if (!(mpgObjects.stream().anyMatch(o -> o.getListedMaterials().contains(materialName)))) {
+				getOrphanedMaterials().add(materialName);
 			}
 		}
 
@@ -179,8 +181,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 		// check for materials without layers that have more than a single material
 		// added to them and as such cannot be resolved automatically
-		setObjectGUIDsWithRedundantMaterialSpecs(mpgObjects.stream().filter(o -> hasRedundantMaterialSpecs(o))
-				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
+		setObjectGUIDsWithRedundantMaterialSpecs(
+				mpgObjects.stream().filter(o -> hasRedundantMaterialSpecs(o) || o.hasDuplicateMaterialNames())
+						.map(o -> o.getGlobalId()).collect(Collectors.toList()));
 
 		// check for objects that have more than 0 materials linked, but are still
 		// missing 1 to n materials

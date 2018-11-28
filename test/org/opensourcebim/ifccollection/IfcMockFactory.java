@@ -6,10 +6,30 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.geometry.GeometryInfo;
-import org.bimserver.models.ifc2x3tc1.*;
+import org.bimserver.models.ifc2x3tc1.IfcBuildingElement;
+import org.bimserver.models.ifc2x3tc1.IfcMaterial;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialLayer;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialLayerSet;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialLayerSetUsage;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialList;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialSelect;
+import org.bimserver.models.ifc2x3tc1.IfcObjectDefinition;
+import org.bimserver.models.ifc2x3tc1.IfcProduct;
+import org.bimserver.models.ifc2x3tc1.IfcProject;
+import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
+import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesMaterial;
+import org.bimserver.models.ifc2x3tc1.IfcRelDecomposes;
+import org.bimserver.models.ifc2x3tc1.IfcSIPrefix;
+import org.bimserver.models.ifc2x3tc1.IfcSIUnit;
+import org.bimserver.models.ifc2x3tc1.IfcSpace;
+import org.bimserver.models.ifc2x3tc1.IfcUnit;
+import org.bimserver.models.ifc2x3tc1.IfcUnitAssignment;
+import org.bimserver.models.ifc2x3tc1.IfcUnitEnum;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
 
@@ -32,53 +52,61 @@ public class IfcMockFactory {
 	public IfcModelInterface getModelMock() {
 		IfcModelInterface model = mock(IfcModelInterface.class);
 		addIfcProjectMock(model);
-		when(model.getAllWithSubTypes(IfcProduct.class)).thenReturn(new ArrayList<IfcProduct>());
+		when(model.getAllWithSubTypes(IfcBuildingElement.class)).thenReturn(new ArrayList<IfcBuildingElement>());
 
 		return model;
 	}
-
-	public void addProductToModel(IfcModelInterface mockModel) {
-		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
-		products.add(addIfcProductToModel(null, null, null));
-		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
-	}
 	
-	public void addProductToModel(IfcModelInterface mockModel, String name) {
-		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
-		products.add(addIfcProductToModel(null, name, null));
-		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
-	}
-	
-	public void addProductToModel(IfcModelInterface mockModel, String name, String classShortName) {
-		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
-		products.add(addIfcProductToModel(null, name, classShortName));
-		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
+	public void addProductToModel(IfcModelInterface mockModel, String name, List<String> childIds) {
+		List<IfcBuildingElement> products = mockModel.getAllWithSubTypes(IfcBuildingElement.class);
+		
+		IfcBuildingElement newProduct = addIfcProductToModel(null, name);
+		
+		// for now don't add any children
+		EList<IfcObjectDefinition> childObjects;
+		if (childIds != null)
+		{
+			//for child object defs
+			childObjects = new BasicEList<IfcObjectDefinition>(mockModel.getAllWithSubTypes(IfcBuildingElement.class).stream()
+					.filter(o -> childIds.contains(o.getGlobalId())).collect(Collectors.toList()));
+			
+		} else
+		{
+			childObjects = new BasicEList<IfcObjectDefinition>();
+		}
+		IfcRelDecomposes mockRel = mock(IfcRelDecomposes.class);
+		when(mockRel.getRelatedObjects()).thenReturn(childObjects);
+		BasicEList<IfcRelDecomposes> relations = new BasicEList<IfcRelDecomposes>();
+		relations.add(mockRel);
+		when(newProduct.getDecomposes()).thenReturn(relations);
+		
+		products.add(newProduct);
+		when(mockModel.getAllWithSubTypes(IfcBuildingElement.class)).thenReturn(products);
 	}
 		
-	public void addSpaceToModel(IfcModelInterface mockModel) {
-		addGenericIfcProductToModel(mockModel, IfcSpace.class, null);
-	}
-	
 	public void addSpaceToModel(IfcModelInterface mockModel, IfcProduct parent) {
 		addGenericIfcProductToModel(mockModel, IfcSpace.class, parent);;
 	}
 
 	public <T extends IfcProduct> void addGenericIfcProductToModel(IfcModelInterface mockModel, Class<T> productClass,
-			IfcObjectDefinition parent) {
-		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
+			IfcProduct parent) {
+		List<T> products = mockModel.getAllWithSubTypes(productClass);
 		products.add(createGenericIfcProduct(productClass, parent));
-		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
+		when(mockModel.getAllWithSubTypes(productClass)).thenReturn(products);
 	}
 	
 	/**
 	 * Get Mock product with Geometry, the difference with the generic method is that products can be linked to materials.
 	 * @return a Mocked IfcProduct object
 	 */
-	private IfcProduct addIfcProductToModel(IfcObjectDefinition parent, String name, String classShortName) {
-		IfcProduct mockProduct = createGenericIfcProduct(IfcProduct.class, parent);
+	private IfcBuildingElement addIfcProductToModel(IfcObjectDefinition parent, String name) {
+		IfcBuildingElement mockProduct = createGenericIfcProduct(IfcBuildingElement.class, parent);
 		when(mockProduct.getHasAssociations()).thenReturn(associations);
-		when(mockProduct.getName()).thenReturn(name);
+		when(mockProduct.getName()).thenReturn(name == null ? "" : name);
 
+		String id = UUID.randomUUID().toString();
+		when(mockProduct.getGlobalId()).thenReturn(id);
+		
 		return mockProduct;
 	}
 
@@ -105,7 +133,6 @@ public class IfcMockFactory {
 		return mockProduct;
 	}
 	
-
 	/**
 	 * Adds an IfcRelAssociatesMaterial to the associates
 	 * @param mat Material object to add to the associates list
@@ -178,9 +205,15 @@ public class IfcMockFactory {
 	}
 
 	public IfcMaterial getIfcMaterialMock(String name) {
-		IfcMaterial mat = mock(IfcMaterial.class);
-		when(mat.getName()).thenReturn(name);
-		return mat;
+		if (name != null && !name.isEmpty()) 
+		{
+			IfcMaterial mat = mock(IfcMaterial.class);
+			when(mat.getName()).thenReturn(name);
+			long oid = Integer.toUnsignedLong(name.hashCode());
+			when(mat.getOid()).thenReturn(oid);
+			return mat;
+		}
+		return null;
 	}
 
 	public IfcMaterialList getIfcMaterialListMock(List<String> names) {
@@ -207,7 +240,9 @@ public class IfcMockFactory {
 
 		IfcMaterialLayerSet layerSet = mock(IfcMaterialLayerSet.class);
 		EList<IfcMaterialLayer> layerList = new BasicEList<IfcMaterialLayer>();
-		layers.forEach((layer) -> layerList.add(getIfcMaterialLayerMock(layer.getKey(), layer.getValue())));
+		layers.forEach((layer) -> {
+			layerList.add(getIfcMaterialLayerMock(layer.getKey() == null ? "" : layer.getKey(), layer.getValue()));
+		});
 
 		when(layerSet.getMaterialLayers()).thenReturn(layerList);
 		return layerSet;

@@ -18,6 +18,8 @@ public interface MpgSubObject {
 	
 	public double getArea();
 	
+	public String getId();
+	
 	public String print();
 
 

@@ -1,7 +1,6 @@
 package org.opensourcebim.mpgcalculation;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.junit.After;
@@ -11,7 +10,6 @@ import org.opensourcebim.ifccollection.MpgSubObject;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgSubObjectImpl;
-import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.nmd.MaterialSpecification;
 import org.opensourcebim.nmd.MaterialSpecificationImpl;
@@ -139,8 +137,8 @@ public class mpgCalculatorTests {
 	}
 		
 	private void addUnitObject(String material) {
-		MpgObject group = new MpgObjectImpl(1, "test", material + " element", "Slab", store);
-		MpgSubObject testObject = new MpgSubObjectImpl(1.0, "steel");
+		MpgObject group = new MpgObjectImpl(1, "test", material + " element", "Slab", "", store);
+		MpgSubObject testObject = new MpgSubObjectImpl(1.0, "steel", Integer.toString("steel".hashCode()));
 		group.addSubObject(testObject);
 		store.addObject(group);
 	}
