@@ -1,6 +1,7 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +21,7 @@ public interface MpgObjectStore {
 	List<MpgObject> getObjectsByProductType(String productType);
 	List<MpgObject> getObjectsByProductName(String productName);
 	List<MpgSubObject> getObjectsByMaterialName(String materialName);
+	List<MpgObject> getObjectsByGuids(HashSet<String> guids);
 	
 	void recreateParentChildMap(Map<String, String> childToParentMap);
 	Stream<MpgObject> getChildren(String parentGuid);
@@ -36,9 +38,10 @@ public interface MpgObjectStore {
 	
 	boolean isIfcDataComplete();
 	List<String> getOrphanedMaterials();
-	List<String> getObjectGUIDsWithoutMaterial();
-	List<String> getObjectGUIDsWithRedundantMaterialSpecs();
-	List<String> getObjectGuidsWithPartialMaterialDefinition();
+	GuidCollection getObjectGUIDsWithoutMaterial();
+	GuidCollection getObjectGUIDsWithoutGeometry();
+	GuidCollection getObjectGUIDsWithRedundantMaterialSpecs();
+	GuidCollection getObjectGuidsWithPartialMaterialDefinition();
 	
 	void SummaryReport();
 	void setProductCardForMaterial(String string, NmdProductCard specs);
