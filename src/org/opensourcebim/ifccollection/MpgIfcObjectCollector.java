@@ -167,8 +167,8 @@ public class MpgIfcObjectCollector {
 	 */
 	private void createMpgObjectFromIfcProduct(IfcProduct ifcProduct, double totalVolume) {
 
-		MpgObjectImpl mpgObject = new MpgObjectImpl(
-				ifcProduct.getOid(), ifcProduct.getGlobalId(), ifcProduct.getName(), ifcProduct.getClass().getSimpleName(), "", objectStore);
+		MpgObjectImpl mpgObject = new MpgObjectImpl(ifcProduct.getOid(), ifcProduct.getGlobalId(), ifcProduct.getName(),
+				ifcProduct.getClass().getSimpleName(), "", objectStore);
 		mpgObject.setVolume(totalVolume);
 
 		EList<IfcRelAssociates> associates = ifcProduct.getHasAssociations();
