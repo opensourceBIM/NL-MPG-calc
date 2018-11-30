@@ -55,7 +55,7 @@ public class MpgObjectImpl implements MpgObject {
 	}
 
 	@Override
-	public List<MpgSubObject> getSubObjects() {
+	public List<MpgSubObject> getLayers() {
 		return mpgSubObjects;
 	}
 
@@ -136,5 +136,58 @@ public class MpgObjectImpl implements MpgObject {
 	public boolean hasDuplicateMaterialNames() {
 		return this.listedMaterials.values().stream().distinct().collect(Collectors.toSet())
 				.size() < this.listedMaterials.size();
+	}
+
+	/**
+	 * Recursive check method to validate whether a material or any of its children
+	 * have undefined materials
+	 */
+	@Override
+	public boolean hasUndefinedMaterials(boolean includeChildren) {
+		long numLayers = this.getLayers().size();
+		boolean ownCheck = (numLayers + getListedMaterials().size()) == 0;
+
+		// anyMatch returns false on an empty list, so if children should be included,
+		// but no
+		// children are present it will still return false
+		boolean hasChildren = getStore.get().getChildren(this.getGlobalId()).count() > 0;
+		boolean childCheck = includeChildren && getStore.get().getChildren(this.getGlobalId())
+				.anyMatch(o -> o.hasUndefinedMaterials(includeChildren));
+
+		// if the own item has undefined items at least the children should have full
+		// definitions
+		return ownCheck && !hasChildren ? true : childCheck;
+	}
+
+	@Override
+	public boolean hasUndefinedVolume(boolean includeChildren) {
+		boolean ownCheck = getVolume() == 0;
+		boolean hasChildren = getStore.get().getChildren(this.getGlobalId()).count() > 0;
+		boolean childCheck = includeChildren
+				&& getStore.get().getChildren(this.getGlobalId()).anyMatch(o -> o.hasUndefinedVolume(includeChildren));
+
+		return ownCheck && !hasChildren ? true : childCheck;
+	}
+
+	@Override
+	public boolean hasRedundantMaterials(boolean includeChildren) {
+		long numLayers = getLayers().size();
+		boolean ownCheck = (numLayers == 0) && (getListedMaterials().size() > 1) || hasDuplicateMaterialNames();
+		boolean childCheck = includeChildren && getStore.get().getChildren(this.getGlobalId())
+				.anyMatch(o -> o.hasRedundantMaterials(includeChildren));
+		return ownCheck || childCheck;
+	}
+
+	@Override
+	public boolean hasUndefinedLayers(boolean includeChildren) {
+		long numLayers = getLayers().size();
+		long unresolvedLayers = getLayers().stream()
+				.filter(l -> l.getMaterialName() == "" || l.getMaterialName() == null).collect(Collectors.toList())
+				.size();
+
+		boolean ownCheck = (numLayers > 0) && ((unresolvedLayers > 0) || (numLayers < getListedMaterials().size()));
+		boolean childCheck = includeChildren
+				&& getStore.get().getChildren(this.getGlobalId()).anyMatch(o -> o.hasUndefinedLayers(includeChildren));
+		return ownCheck || childCheck;
 	}
 }

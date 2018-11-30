@@ -2,7 +2,9 @@ package org.opensourcebim.ifccollection;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.opensourcebim.nmd.NmdProductCard;
 
@@ -18,6 +20,9 @@ public interface MpgObjectStore {
 	List<MpgObject> getObjectsByProductType(String productType);
 	List<MpgObject> getObjectsByProductName(String productName);
 	List<MpgSubObject> getObjectsByMaterialName(String materialName);
+	
+	void recreateParentChildMap(Map<String, String> childToParentMap);
+	Stream<MpgObject> getChildren(String parentGuid);
 	
 	void addMaterial(String string);
 	Set<String> getAllMaterialNames();

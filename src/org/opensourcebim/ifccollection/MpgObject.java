@@ -6,7 +6,7 @@ import java.util.List;
 public interface MpgObject {
 	
 	long getObjectId();
-	List<MpgSubObject> getSubObjects();
+	List<MpgSubObject> getLayers();
 	String getObjectName();
 	String getObjectType();
 	String getGlobalId();
@@ -23,6 +23,10 @@ public interface MpgObject {
 	
 	String print();
 	boolean hasDuplicateMaterialNames();
-
+	
+	boolean hasUndefinedMaterials(boolean includeChildren);
+	boolean hasUndefinedVolume(boolean includeChildren);
+	boolean hasRedundantMaterials(boolean includeChildren);
+	boolean hasUndefinedLayers(boolean includeChildren);
 
 }
