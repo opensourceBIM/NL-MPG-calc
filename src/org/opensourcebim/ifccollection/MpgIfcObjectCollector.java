@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.MutableTriple;
@@ -20,10 +21,21 @@ import org.bimserver.models.ifc2x3tc1.IfcMaterialLayerSetUsage;
 import org.bimserver.models.ifc2x3tc1.IfcMaterialList;
 import org.bimserver.models.ifc2x3tc1.IfcMaterialSelect;
 import org.bimserver.models.ifc2x3tc1.IfcProduct;
+import org.bimserver.models.ifc2x3tc1.IfcProductDefinitionShape;
+import org.bimserver.models.ifc2x3tc1.IfcProductRepresentation;
+import org.bimserver.models.ifc2x3tc1.IfcPropertySetDefinition;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesMaterial;
 import org.bimserver.models.ifc2x3tc1.IfcRelDecomposes;
+import org.bimserver.models.ifc2x3tc1.IfcRelDefines;
+import org.bimserver.models.ifc2x3tc1.IfcRelDefinesByProperties;
+import org.bimserver.models.ifc2x3tc1.IfcRelDefinesByType;
+import org.bimserver.models.ifc2x3tc1.IfcRepresentation;
+import org.bimserver.models.ifc2x3tc1.IfcShapeAspect;
+import org.bimserver.models.ifc2x3tc1.IfcShapeRepresentation;
 import org.bimserver.models.ifc2x3tc1.IfcSpace;
+import org.bimserver.models.ifc2x3tc1.IfcTypeObject;
+import org.bimserver.models.ifc2x3tc1.IfcTypeProduct;
 import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.IfcUtils;
 import org.bimserver.utils.VolumeUnit;
@@ -80,63 +92,69 @@ public class MpgIfcObjectCollector {
 
 			// ToDo: include geometric check
 			boolean isIncludedGeometrically = false;
-			
+
 			Pair<Double, Double> geom = getGeometryFromProduct(space);
-			
+
 			if (!isIncludedGeometrically && !isIncludedSemantically) {
 				objectStore.getSpaces().add(new MpgSubObjectImpl(geom.getRight(), geom.getLeft()));
 			}
 		}
 
-		Map<String, String> childToParentMap = new HashMap<String,String>();
-		// loop through IfcBuildingElements recursively.
+		Map<String, String> childToParentMap = new HashMap<String, String>();
+		// loop through IfcBuildingElements.
 		for (IfcBuildingElement element : ifcModel.getAllWithSubTypes(IfcBuildingElement.class)) {
 
-			// manage child to parent mapping
-			element.getDecomposes().stream()
-				.map(rel -> rel.getRelatingObject()).filter(o -> o instanceof IfcBuildingElement)
-				.map(o -> (IfcBuildingElement)o)
-				.forEach(o -> {
-					if (!childToParentMap.containsKey(element.getGlobalId()) && o.getGlobalId() != element.getGlobalId()) {
-						childToParentMap.put(element.getGlobalId(), o.getGlobalId());
-					}else
-					{
-						if(o.getGlobalId() != element.getGlobalId()) {
-							System.out.println(">> " + element.getGlobalId() + ", " + o.getGlobalId());
+			// collect child to parent relations
+			element.getDecomposes().stream().map(rel -> rel.getRelatingObject())
+					.filter(o -> o instanceof IfcBuildingElement).map(o -> (IfcBuildingElement) o).forEach(o -> {
+						if (!childToParentMap.containsKey(element.getGlobalId())
+								&& o.getGlobalId() != element.getGlobalId()) {
+							childToParentMap.put(element.getGlobalId(), o.getGlobalId());
+						} else {
+							if (o.getGlobalId() != element.getGlobalId()) {
+								System.out.println(">> " + element.getGlobalId() + ", " + o.getGlobalId());
+							}
 						}
-					}
 
-				});
-			
+					});
+
 			Pair<Double, Double> geom = getGeometryFromProduct(element);
-			
+
 			// retrieve information and add found values to the various data objects
 			this.createMpgObjectFromIfcProduct(element, geom.getRight());
 		}
+
+		
 		
 		// set all parent child relations for elements
-		objectStore.getObjects().forEach(o -> {
-			if (childToParentMap.containsKey(o.getGlobalId())) {
-				o.setParentId(childToParentMap.get(o.getGlobalId()));
-			}
-		});
-		
+		objectStore.recreateParentChildMap(childToParentMap);
+
 		return objectStore;
 	}
-	
-	private Pair<Double, Double> getGeometryFromProduct(IfcProduct prod){
+
+	private Pair<Double, Double> getGeometryFromProduct(IfcProduct prod) {
 		GeometryInfo geometry = prod.getGeometry();
-		double area;
-		double volume;
+		double area = 0.0;
+		double volume = 0.0;
+
 		if (geometry != null) {
 			area = this.getAreaUnit().convert(geometry.getArea(), modelAreaUnit);
 			volume = this.getVolumeUnit().convert(geometry.getVolume(), modelVolumeUnit);
 		} else {
-			area = 0.0;
-			volume = 0.0;
+			if(prod.getIsDecomposedBy().size() > 0) {
+				Double totalVolume = prod.getIsDecomposedBy().stream().flatMap(rel -> rel.getRelatedObjects().stream())
+				.filter(o -> o instanceof IfcProduct)
+				.map(o -> ((IfcProduct)o).getGeometry())
+				.map(g -> (g != null) ? g.getVolume() : 0.0)
+				.collect(Collectors.summingDouble(v -> v));
+				
+				volume = this.getVolumeUnit().convert(totalVolume, modelVolumeUnit);
+			} else {
+				System.out.println(prod.getGlobalId());
+			}
 		}
-		return new ImmutablePair<Double, Double>(area,  volume);
-		
+
+		return new ImmutablePair<Double, Double>(area, volume);
 	}
 
 	/**
