@@ -78,7 +78,12 @@ public class MpgIfcObjectCollector {
 
 		// loop through IfcSpaces
 		for (IfcSpace space : ifcModel.getAllWithSubTypes(IfcSpace.class)) {
-
+			
+			// omit any eternal spaces.
+			if (space.getBoundedBy().size() == 0) {
+				continue;
+			}
+				
 			EList<IfcRelDecomposes> parentDecomposedProduct = space.getIsDecomposedBy();
 
 			// if there is any space that decomposes in this space we can omit the addition
