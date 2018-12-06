@@ -144,7 +144,7 @@ public class MpgIfcObjectCollector {
 				if(mpgObject.getProperties().containsKey("netvolume") && vol == null) {
 					vol = ((double)mpgObject.getProperties().get("netvolume"));
 				}
-				if (vol != null && mpgObject.getVolume() != 0.0) {
+				if (vol != null && mpgObject.getVolume() == 0.0) {
 					mpgObject.setVolume(vol);
 				}
 					
