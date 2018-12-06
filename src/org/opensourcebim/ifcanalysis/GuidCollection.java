@@ -1,9 +1,12 @@
-package org.opensourcebim.ifccollection;
+package org.opensourcebim.ifcanalysis;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.opensourcebim.ifccollection.MpgObject;
+import org.opensourcebim.ifccollection.MpgObjectStore;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -73,7 +76,7 @@ public class GuidCollection {
 		List<MpgObject> selectedObjects = store.getObjectsByGuids(guids);
 		types = selectedObjects.stream().map(o -> o.getObjectType()).distinct()
 				.collect(Collectors.toList());
-		materials = selectedObjects.stream().flatMap(o -> o.getListedMaterials().stream()).distinct()
+		materials = selectedObjects.stream().flatMap(o -> o.getMaterialNamesBySource(null).stream()).distinct()
 				.collect(Collectors.toList());
 		names = selectedObjects.stream().map(o -> o.getObjectName()).distinct()
 				.collect(Collectors.toList());
