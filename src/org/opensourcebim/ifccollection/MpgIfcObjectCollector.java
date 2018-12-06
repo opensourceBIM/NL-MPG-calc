@@ -1,11 +1,11 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.MutableTriple;
@@ -13,29 +13,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.geometry.GeometryInfo;
-import org.bimserver.models.ifc2x3tc1.IfcBuildingElement;
-import org.bimserver.models.ifc2x3tc1.IfcMaterial;
-import org.bimserver.models.ifc2x3tc1.IfcMaterialLayer;
-import org.bimserver.models.ifc2x3tc1.IfcMaterialLayerSet;
-import org.bimserver.models.ifc2x3tc1.IfcMaterialLayerSetUsage;
-import org.bimserver.models.ifc2x3tc1.IfcMaterialList;
-import org.bimserver.models.ifc2x3tc1.IfcMaterialSelect;
-import org.bimserver.models.ifc2x3tc1.IfcProduct;
-import org.bimserver.models.ifc2x3tc1.IfcProductDefinitionShape;
-import org.bimserver.models.ifc2x3tc1.IfcProductRepresentation;
-import org.bimserver.models.ifc2x3tc1.IfcPropertySetDefinition;
-import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
-import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesMaterial;
-import org.bimserver.models.ifc2x3tc1.IfcRelDecomposes;
-import org.bimserver.models.ifc2x3tc1.IfcRelDefines;
-import org.bimserver.models.ifc2x3tc1.IfcRelDefinesByProperties;
-import org.bimserver.models.ifc2x3tc1.IfcRelDefinesByType;
-import org.bimserver.models.ifc2x3tc1.IfcRepresentation;
-import org.bimserver.models.ifc2x3tc1.IfcShapeAspect;
-import org.bimserver.models.ifc2x3tc1.IfcShapeRepresentation;
-import org.bimserver.models.ifc2x3tc1.IfcSpace;
-import org.bimserver.models.ifc2x3tc1.IfcTypeObject;
-import org.bimserver.models.ifc2x3tc1.IfcTypeProduct;
+import org.bimserver.models.ifc2x3tc1.*;
 import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.IfcUtils;
 import org.bimserver.utils.VolumeUnit;
@@ -48,16 +26,22 @@ import org.eclipse.emf.common.util.EList;
  */
 public class MpgIfcObjectCollector {
 
-	private MpgObjectStore objectStore;
+	private MpgObjectStoreImpl objectStore;
+
+	private List<Class<? extends IfcProduct>> ignoredProducts;
 
 	// reporting units and imported units to help convert measurements
 	private AreaUnit areaUnit = AreaUnit.SQUARED_METER;
 	private VolumeUnit volumeUnit = VolumeUnit.CUBIC_METER;
 	private AreaUnit modelAreaUnit;
 	private VolumeUnit modelVolumeUnit;
-	
+
 	public MpgIfcObjectCollector() {
 		objectStore = new MpgObjectStoreImpl();
+
+		ignoredProducts = Arrays.asList(IfcSite.class, IfcBuilding.class,
+				IfcBuildingStorey.class, IfcFurnishingElement.class, IfcOpeningElement.class);
+
 	}
 
 	public MpgObjectStore results() {
@@ -71,7 +55,7 @@ public class MpgIfcObjectCollector {
 	 * @param ifcModel for now only a ifc2x3tc1 IfcModel object
 	 */
 	public MpgObjectStore collectIfcModelObjects(IfcModelInterface ifcModel) {
-		objectStore.Reset();
+		objectStore.reset();
 
 		// get project wide parameters
 		modelVolumeUnit = IfcUtils.getVolumeUnit(ifcModel);
@@ -101,37 +85,77 @@ public class MpgIfcObjectCollector {
 		}
 
 		Map<String, String> childToParentMap = new HashMap<String, String>();
-		// loop through IfcBuildingElements.
-		for (IfcBuildingElement element : ifcModel.getAllWithSubTypes(IfcBuildingElement.class)) {
 
-			// collect child to parent relations
-			element.getDecomposes().stream().map(rel -> rel.getRelatingObject())
-					.filter(o -> o instanceof IfcBuildingElement).map(o -> (IfcBuildingElement) o).forEach(o -> {
-						if (!childToParentMap.containsKey(element.getGlobalId())
-								&& o.getGlobalId() != element.getGlobalId()) {
-							childToParentMap.put(element.getGlobalId(), o.getGlobalId());
-						} else {
-							if (o.getGlobalId() != element.getGlobalId()) {
-								System.out.println(">> " + element.getGlobalId() + ", " + o.getGlobalId());
+		// loop through IfcProduct that constitute the physical building.
+		for (IfcProduct element : ifcModel.getAllWithSubTypes(IfcProduct.class)) {
+
+			// ignore any elements that are irrelevant for the mpg calculations
+			if (!this.ignoredProducts.contains(element.getClass())) {
+
+				// collect child to parent relations
+				element.getDecomposes().stream().map(rel -> rel.getRelatingObject())
+						.filter(o -> o instanceof IfcProduct).map(o -> (IfcProduct) o).forEach(o -> {
+							if (!childToParentMap.containsKey(element.getGlobalId())
+									&& o.getGlobalId() != element.getGlobalId()) {
+
+								childToParentMap.put(element.getGlobalId(), o.getGlobalId());
+
+							} else {
+								if (o.getGlobalId() != element.getGlobalId()) {
+									System.out.println(">> " + element.getGlobalId() + ", " + o.getGlobalId());
+								}
 							}
-						}
 
-					});
+						});
 
-			Pair<Double, Double> geom = getGeometryFromProduct(element);
+				MpgObjectImpl mpgObject = new MpgObjectImpl(element.getOid(), element.getGlobalId(), element.getName(),
+						element.getClass().getSimpleName(), "", objectStore);
 
-			// retrieve information and add found values to the various data objects
-			this.createMpgObjectFromIfcProduct(element, geom.getRight());
+				Pair<Double, Double> geom = getGeometryFromProduct(element);
+				mpgObject.setVolume(geom.getRight());
+
+				this.getPropertySetsFromIfcProduct(element, mpgObject);
+
+				// set volume if only defined in properties
+				Double vol = null;
+				if(mpgObject.getProperties().containsKey("volume")) {
+					vol = ((double)mpgObject.getProperties().get("volume"));
+				}
+				if(mpgObject.getProperties().containsKey("netvolume") && vol == null) {
+					vol = ((double)mpgObject.getProperties().get("netvolume"));
+				}
+				if (vol != null && mpgObject.getVolume() != 0.0) {
+					mpgObject.setVolume(vol);
+				}
+					
+				// set Pset materials
+				if (mpgObject.getProperties().containsKey("material")) {
+					String mat = (String)(mpgObject.getProperties().get("material"));
+					mpgObject.addMaterialSource(mat, null, "P_Set");
+				}
+				
+				// retrieve information and add found values to the various data objects
+				this.getMaterialsFromIfcProduct(element, mpgObject);
+
+				// all properties are set. add it to the store.
+				objectStore.getObjects().add(mpgObject);
+			}
 		}
 
-		
-		
 		// set all parent child relations for elements
 		objectStore.recreateParentChildMap(childToParentMap);
+		objectStore.validateIfcDataCollection();
 
 		return objectStore;
 	}
 
+	/**
+	 * retireve the volume of an element based on itself, the template type and any
+	 * decomposed elements
+	 * 
+	 * @param prod the product to evaluate
+	 * @return a Tuple with are and volume of the input product
+	 */
 	private Pair<Double, Double> getGeometryFromProduct(IfcProduct prod) {
 		GeometryInfo geometry = prod.getGeometry();
 		double area = 0.0;
@@ -141,38 +165,149 @@ public class MpgIfcObjectCollector {
 			area = this.getAreaUnit().convert(geometry.getArea(), modelAreaUnit);
 			volume = this.getVolumeUnit().convert(geometry.getVolume(), modelVolumeUnit);
 		} else {
-			if(prod.getIsDecomposedBy().size() > 0) {
-				Double totalVolume = prod.getIsDecomposedBy().stream().flatMap(rel -> rel.getRelatedObjects().stream())
-				.filter(o -> o instanceof IfcProduct)
-				.map(o -> ((IfcProduct)o).getGeometry())
-				.map(g -> (g != null) ? g.getVolume() : 0.0)
-				.collect(Collectors.summingDouble(v -> v));
-				
-				volume = this.getVolumeUnit().convert(totalVolume, modelVolumeUnit);
-			} else {
-				System.out.println(prod.getGlobalId());
-			}
+			// get volume of product by summing the volumes of its children
+//			if (prod.getIsDecomposedBy().size() > 0) {
+//				Double totalVolume = prod.getIsDecomposedBy().stream().flatMap(rel -> rel.getRelatedObjects().stream())
+//						.filter(o -> o instanceof IfcProduct).map(o -> ((IfcProduct) o).getGeometry())
+//						.map(g -> (g != null) ? g.getVolume() : 0.0).collect(Collectors.summingDouble(v -> v));
+//
+//				volume = this.getVolumeUnit().convert(totalVolume, modelVolumeUnit);
+//			} else {
+//				System.out.println(prod.getGlobalId());
+//			}
 		}
 
 		return new ImmutablePair<Double, Double>(area, volume);
 	}
 
 	/**
+	 * retrieve the property sets from the ifc product and any present templates
+	 * 
+	 * @param product
+	 * @param mpgObject
+	 */
+	private void getPropertySetsFromIfcProduct(IfcProduct product, MpgObjectImpl mpgObject) {
+		// try get the materials from the relating type
+		for (IfcRelDefines def : product.getIsDefinedBy()) {
+			if (def instanceof IfcRelDefinesByType) {
+				IfcRelDefinesByType typeDefRel = (IfcRelDefinesByType) def;
+				IfcTypeObject relatingType = typeDefRel.getRelatingType();
+				getPropertySetFromTypeObject(relatingType, mpgObject);
+			}
+			if (def instanceof IfcRelDefinesByProperties) {
+				IfcRelDefinesByProperties props = (IfcRelDefinesByProperties) def;
+				IfcPropertySetDefinition propSet = props.getRelatingPropertyDefinition();
+				addPropertiesFromPropertySetDefinition(propSet, mpgObject);
+			}
+		}
+	}
+
+	/**
+	 * Retrieve the Property sets from any linked IfcTypeObject and pass this on to
+	 * the Property collection method
+	 * 
+	 * @param typeObjecttemplate type to retrieve
+	 * @param targetObject mpgObject to add properties to
+	 */
+	private void getPropertySetFromTypeObject(IfcTypeObject typeObject, MpgObjectImpl targetObject) {
+		EList<IfcPropertySetDefinition> propertySets = typeObject.getHasPropertySets();
+		if (!propertySets.isEmpty()) {
+			for (IfcPropertySetDefinition propSet : propertySets) {
+				addPropertiesFromPropertySetDefinition(propSet, targetObject);
+			}
+		}
+	}
+
+	/**
+	 * Collect properties from a generic IFcPropertySetDefinition
+	 * @param defs IfcPropertySetDefinition to gather properties from
+	 * @param targetObject MpgObject to add properties to.
+	 */
+	private void addPropertiesFromPropertySetDefinition(IfcPropertySetDefinition defs, MpgObjectImpl targetObject) {
+
+		if (defs instanceof IfcElementQuantity) {
+			IfcElementQuantity quantities = (IfcElementQuantity) defs;
+			for (IfcPhysicalQuantity physQuant : quantities.getQuantities()) {
+				if (physQuant instanceof IfcPhysicalSimpleQuantity) {
+					IfcPhysicalSimpleQuantity simpleQuant = (IfcPhysicalSimpleQuantity) physQuant;
+					String name = simpleQuant.getName().toLowerCase();
+					Double value = 0.0;
+
+					if (simpleQuant instanceof IfcQuantityVolume) {
+						value = ((IfcQuantityVolume) simpleQuant).getVolumeValue();
+					} else if (simpleQuant instanceof IfcQuantityArea) {
+						value = ((IfcQuantityArea) simpleQuant).getAreaValue();
+					} else if (simpleQuant instanceof IfcQuantityLength) {
+						value = ((IfcQuantityLength) simpleQuant).getLengthValue();
+					}
+
+					if (value != 0.0) {
+						targetObject.addProperty(name, value);
+					}
+				}
+			}
+		}
+
+		if (defs instanceof IfcPropertySet) {
+			for (IfcProperty prop : ((IfcPropertySet) defs).getHasProperties()) {
+				if (prop instanceof IfcPropertySingleValue) {
+					IfcPropertySingleValue valProp = (IfcPropertySingleValue) prop;
+					String name = valProp.getName().toLowerCase();
+
+					IfcValue ifcValue = (valProp.getNominalValue());
+					String value = "";
+
+					if (ifcValue instanceof IfcBoolean) {
+						value = ((IfcBoolean) ifcValue).getWrappedValue().getLiteral();
+					} else if (ifcValue instanceof IfcLabel) {
+						value = ((IfcLabel) ifcValue).getWrappedValue();
+					} else if (ifcValue instanceof IfcIdentifier) {
+						value = ((IfcIdentifier) ifcValue).getWrappedValue();
+					} else if (ifcValue instanceof IfcThermalTransmittanceMeasure || ifcValue instanceof IfcPositiveRatioMeasure){
+						value = "";
+					} else {
+						value = "";
+					}
+
+					if (!value.isEmpty()) {
+						targetObject.addProperty(name, value);
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Retrieve the materials and layers from the IfcProduct object and store these
 	 * as MpgMaterial objects
 	 * 
-	 * @param ifcProduct  The ifcProduct object to retrieve the material names from
-	 * @param totalVolume The total volume of the product. used to determine ratios
-	 *                    of volume in case there are multiple materials defined
+	 * @param ifcProduct The ifcProduct object to retrieve the material names from
+	 * @param mpgObject  The object to add the found materials to.
 	 */
-	private void createMpgObjectFromIfcProduct(IfcProduct ifcProduct, double totalVolume) {
+	private void getMaterialsFromIfcProduct(IfcProduct ifcProduct, MpgObjectImpl mpgObject) {
 
-		MpgObjectImpl mpgObject = new MpgObjectImpl(ifcProduct.getOid(), ifcProduct.getGlobalId(), ifcProduct.getName(),
-				ifcProduct.getClass().getSimpleName(), "", objectStore);
-		mpgObject.setVolume(totalVolume);
+		// try get the materials directly from the product
+		getMaterialsFromObject(ifcProduct, mpgObject);
 
-		EList<IfcRelAssociates> associates = ifcProduct.getHasAssociations();
-		if (associates != null) {
+		// try get the materials from the relating type
+		for (IfcRelDefines def : ifcProduct.getIsDefinedBy()) {
+			if (def instanceof IfcRelDefinesByType) {
+				IfcRelDefinesByType typeDefRel = (IfcRelDefinesByType) def;
+				IfcTypeObject relatingType = typeDefRel.getRelatingType();
+				getMaterialsFromObject(relatingType, mpgObject);
+			}
+		}
+	}
+
+	private void getMaterialsFromObject(IfcObjectDefinition sourceObject, MpgObjectImpl targetObject) {
+
+		EList<IfcRelAssociates> associates = sourceObject.getHasAssociations();
+		if (!associates.isEmpty()) {
+
+			String matSource = null;
+			if (sourceObject instanceof IfcTypeProduct) {
+				matSource = "type";
+			}
 
 			List<Triple<String, String, Double>> productLayers = new ArrayList<Triple<String, String, Double>>();
 			Map<String, String> productMaterials = new HashMap<String, String>();
@@ -205,21 +340,21 @@ public class MpgIfcObjectCollector {
 			// adjust accordingly.
 			double totalThickness = productLayers.stream().collect(Collectors.summingDouble(o -> o.getRight()));
 
+			String matSourceDirect = (matSource != null) ? matSource : "direct";
 			// add separately listed materials
 			productMaterials.forEach((key, value) -> {
-				objectStore.addMaterial(value);
-				mpgObject.addListedMaterial(value, key);
+				targetObject.addMaterialSource(value, key, matSourceDirect);
 			});
+
+			String matSourceLayer = (matSource != null) ? matSource : "layer";
 			// add layers and any materials that have been found with those layers
 			productLayers.forEach(layer -> {
 				String materialName = layer.getLeft();
 				String materialGuid = layer.getMiddle();
-				double volumeRatio = layer.getRight() / totalThickness * totalVolume;
-				mpgObject.addSubObject(new MpgSubObjectImpl(volumeRatio, materialName, materialGuid));
-				objectStore.addMaterial(materialName);
+				double volumeRatio = layer.getRight() / totalThickness * targetObject.getVolume();
+				targetObject.addLayer(new MpgSubObjectImpl(volumeRatio, materialName, materialGuid));
+				targetObject.addMaterialSource(materialName, materialGuid, matSourceLayer);
 			});
-
-			objectStore.getObjects().add(mpgObject);
 		}
 	}
 

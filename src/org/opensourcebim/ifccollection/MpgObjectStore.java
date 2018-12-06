@@ -3,10 +3,11 @@ package org.opensourcebim.ifccollection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.opensourcebim.ifcanalysis.GuidCollection;
 import org.opensourcebim.nmd.NmdProductCard;
 
 public interface MpgObjectStore {
@@ -14,16 +15,18 @@ public interface MpgObjectStore {
 	HashMap<String, MpgMaterial> getMaterials();
 	List<MpgObject> getObjects();
 	List<MpgSubObject> getSpaces();
-	void Reset();
 	
-	void addObject(MpgObject group);
+	void reset();
+	
 	Set<String> getDistinctProductTypes();
+
+	void addObject(MpgObject mpgObject);
 	List<MpgObject> getObjectsByProductType(String productType);
 	List<MpgObject> getObjectsByProductName(String productName);
 	List<MpgSubObject> getObjectsByMaterialName(String materialName);
 	List<MpgObject> getObjectsByGuids(HashSet<String> guids);
+	Optional<MpgObject> getObjectByGuid(String guid);
 	
-	void recreateParentChildMap(Map<String, String> childToParentMap);
 	Stream<MpgObject> getChildren(String parentGuid);
 	
 	void addMaterial(String string);
@@ -37,17 +40,13 @@ public interface MpgObjectStore {
 	double getTotalFloorArea();
 	
 	boolean isIfcDataComplete();
-	List<String> getOrphanedMaterials();
 	GuidCollection getObjectGUIDsWithoutMaterial();
-	GuidCollection getObjectGUIDsWithoutGeometry();
+	GuidCollection getObjectGUIDsWithoutVolume();
 	GuidCollection getObjectGUIDsWithRedundantMaterialSpecs();
-	GuidCollection getObjectGuidsWithPartialMaterialDefinition();
+	GuidCollection getObjectGuidsWithUndefinedLayerMats();
 	
-	void SummaryReport();
 	void setProductCardForMaterial(String string, NmdProductCard specs);
 	boolean isMaterialDataComplete();
-
-
-
-
+	
+	void SummaryReport();
 }

@@ -1,7 +1,7 @@
 package org.opensourcebim.ifccollection;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface MpgObject {
 	
@@ -15,11 +15,12 @@ public interface MpgObject {
 	
 	double getVolume();
 	
-	Collection<String> getListedMaterials();
-	
-	void addListedMaterial(String materialName, String GUID);
+	void addMaterialSource(String name, String guid, String source);
+	List<String> getMaterialNamesBySource(String source);
 
-	void addSubObject(MpgSubObject mpgSubObject);
+	Map<String, Object> getProperties();
+	
+	void addLayer(MpgSubObject mpgSubObject);
 	
 	String print();
 	boolean hasDuplicateMaterialNames();
@@ -28,5 +29,8 @@ public interface MpgObject {
 	boolean hasUndefinedVolume(boolean includeChildren);
 	boolean hasRedundantMaterials(boolean includeChildren);
 	boolean hasUndefinedLayers(boolean includeChildren);
+	
+
+
 
 }
