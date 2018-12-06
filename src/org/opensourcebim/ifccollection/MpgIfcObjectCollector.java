@@ -14,6 +14,14 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.geometry.GeometryInfo;
 import org.bimserver.models.ifc2x3tc1.*;
+import org.bimserver.models.ifc2x3tc1.impl.IfcAnnotationImpl;
+import org.bimserver.models.ifc2x3tc1.impl.IfcBuildingImpl;
+import org.bimserver.models.ifc2x3tc1.impl.IfcBuildingStoreyImpl;
+import org.bimserver.models.ifc2x3tc1.impl.IfcFurnishingElementImpl;
+import org.bimserver.models.ifc2x3tc1.impl.IfcOpeningElementImpl;
+import org.bimserver.models.ifc2x3tc1.impl.IfcSiteImpl;
+import org.bimserver.models.ifc2x3tc1.impl.IfcSpaceImpl;
+import org.bimserver.models.ifc2x3tc1.impl.IfcVirtualElementImpl;
 import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.IfcUtils;
 import org.bimserver.utils.VolumeUnit;
@@ -28,6 +36,7 @@ public class MpgIfcObjectCollector {
 
 	private MpgObjectStoreImpl objectStore;
 
+	// products that should not be included in the material calculations.
 	private List<Class<? extends IfcProduct>> ignoredProducts;
 
 	// reporting units and imported units to help convert measurements
@@ -39,9 +48,15 @@ public class MpgIfcObjectCollector {
 	public MpgIfcObjectCollector() {
 		objectStore = new MpgObjectStoreImpl();
 
-		ignoredProducts = Arrays.asList(IfcSite.class, IfcBuilding.class,
-				IfcBuildingStorey.class, IfcFurnishingElement.class, IfcOpeningElement.class);
-
+		ignoredProducts = Arrays.asList(
+				IfcSite.class, IfcSiteImpl.class, 
+				IfcBuilding.class, IfcBuildingImpl.class,
+				IfcBuildingStorey.class, IfcBuildingStoreyImpl.class, 
+				IfcFurnishingElement.class, IfcFurnishingElementImpl.class,
+				IfcOpeningElement.class, IfcOpeningElementImpl.class, 
+				IfcVirtualElement.class, IfcVirtualElementImpl.class,
+				IfcSpace.class, IfcSpaceImpl.class,
+				IfcAnnotation.class, IfcAnnotationImpl.class);
 	}
 
 	public MpgObjectStore results() {
