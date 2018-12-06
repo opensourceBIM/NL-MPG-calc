@@ -113,20 +113,20 @@ public class MpgIfcObjectCollector {
 			if (!this.ignoredProducts.contains(element.getClass())) {
 
 				// collect child to parent relations
-				element.getDecomposes().stream().map(rel -> rel.getRelatingObject())
-						.filter(o -> o instanceof IfcProduct).map(o -> (IfcProduct) o).forEach(o -> {
-							if (!childToParentMap.containsKey(element.getGlobalId())
-									&& o.getGlobalId() != element.getGlobalId()) {
+				element.getDecomposes().stream()
+					.map(rel -> rel.getRelatingObject())
+					.filter(o -> o instanceof IfcProduct).map(o -> (IfcProduct) o).forEach(o -> {
+						if (!childToParentMap.containsKey(element.getGlobalId())
+								&& o.getGlobalId() != element.getGlobalId()) {
 
-								childToParentMap.put(element.getGlobalId(), o.getGlobalId());
+							childToParentMap.put(element.getGlobalId(), o.getGlobalId());
 
-							} else {
-								if (o.getGlobalId() != element.getGlobalId()) {
-									System.out.println(">> " + element.getGlobalId() + ", " + o.getGlobalId());
-								}
+						} else {
+							if (o.getGlobalId() != element.getGlobalId()) {
+								System.out.println(">> " + element.getGlobalId() + ", " + o.getGlobalId());
 							}
-
-						});
+						}
+					});
 
 				MpgObjectImpl mpgObject = new MpgObjectImpl(element.getOid(), element.getGlobalId(), element.getName(),
 						element.getClass().getSimpleName(), "", objectStore);
