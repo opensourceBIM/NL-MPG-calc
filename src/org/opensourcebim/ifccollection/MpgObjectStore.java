@@ -10,6 +10,8 @@ import java.util.stream.Stream;
 import org.opensourcebim.ifcanalysis.GuidCollection;
 import org.opensourcebim.nmd.NmdProductCard;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public interface MpgObjectStore {
 
 	HashMap<String, MpgMaterial> getMaterials();
@@ -40,13 +42,18 @@ public interface MpgObjectStore {
 	double getTotalFloorArea();
 	
 	boolean isIfcDataComplete();
-	GuidCollection getObjectGUIDsWithoutMaterial();
-	GuidCollection getObjectGUIDsWithoutVolume();
-	GuidCollection getObjectGUIDsWithRedundantMaterialSpecs();
-	GuidCollection getObjectGuidsWithUndefinedLayerMats();
+	@JsonIgnore
+	GuidCollection getGuidsWithoutMaterial();
+	GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials();
+	@JsonIgnore
+	GuidCollection getGuidsWithoutVolume();
+	GuidCollection getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes();
+	GuidCollection getGuidsWithRedundantMaterials();
+	GuidCollection getGuidsWithUndefinedLayerMats();
 	
 	void setProductCardForMaterial(String string, NmdProductCard specs);
 	boolean isMaterialDataComplete();
 	
 	void SummaryReport();
+
 }

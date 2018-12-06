@@ -33,11 +33,7 @@ public class GuidCollection {
 		this.guids = new HashSet<String>(guids);
 		update();
 	}
-	
-	public void addToCollection(Set<String> guids) {
-		this.guids.addAll(guids);
-	}
-	
+		
 	public int getSize() {
 		return guids.size();
 	}
