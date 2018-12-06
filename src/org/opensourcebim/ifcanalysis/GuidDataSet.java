@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.emf.common.util.BasicEList;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectStore;
@@ -13,7 +14,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class GuidDataSet {
 	
+	@JsonIgnore
 	private HashSet<String> columnDefinitions;
+	
 	private HashMap<String, GuidPropertyRecord> records;
 		
 	public GuidDataSet(MpgObjectStore store) {
@@ -23,6 +26,9 @@ public class GuidDataSet {
 		
 		for (MpgObject obj : store.getObjects()) {
 			String guid = obj.getGlobalId();
+			if(StringUtils.isBlank(guid)) {
+				continue;
+			}
 
 			this.addRecord(guid);
 			this.setRecordValue(guid, "name", obj.getObjectName());
@@ -56,29 +62,17 @@ public class GuidDataSet {
 
 	}
 	
-	public GuidPropertyRecord getRecordByGuid(String guid) {
-		return this.records.getOrDefault(guid, null);
-	}
-	
-	@JsonIgnore
-	public HashSet<String> getColumnDefinitions() {
-		return columnDefinitions;
-	}
-	
 	public HashMap<String, GuidPropertyRecord> getRecords() {
 		return records;
 	}
 	
-	public void addRecord(String guid) {
-		this.records.putIfAbsent(guid, createNewRecord());
+	public GuidPropertyRecord getRecordByGuid(String guid) {
+		return this.records.getOrDefault(guid, null);
 	}
 	
-	public void addColumn(String title) {
-		this.columnDefinitions.add(title);
-		// add the new column for all records that already exist
-		for (GuidPropertyRecord record : records.values()) {
-			record.addOrSetColumn(title, null);
-		}
+	
+	public void addRecord(String guid) {
+		this.records.putIfAbsent(guid, createNewRecord());
 	}
 	
 	private GuidPropertyRecord createNewRecord() {
@@ -89,6 +83,7 @@ public class GuidDataSet {
 		return rec;
 	}
 	
+	
 	public void setRecordValue(String guid, String columnTitle, Object value) {
 		
 		if (!columnDefinitions.contains(columnTitle)) {
@@ -97,7 +92,20 @@ public class GuidDataSet {
 		
 		this.records.get(guid).addOrSetColumn(columnTitle, value);
 	}
-
+	
+	@JsonIgnore
+	public HashSet<String> getColumnDefinitions() {
+		return columnDefinitions;
+	}
+	
+	public void addColumn(String title) {
+		this.columnDefinitions.add(title);
+		// add the new column for all records that already exist
+		for (GuidPropertyRecord record : records.values()) {
+			record.addOrSetColumn(title, null);
+		}
+	}
+	
 	public void reset() {
 		getRecords().clear();
 		getColumnDefinitions().clear();

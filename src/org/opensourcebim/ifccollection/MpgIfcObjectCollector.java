@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Pair;
@@ -112,6 +113,11 @@ public class MpgIfcObjectCollector {
 			// ignore any elements that are irrelevant for the mpg calculations
 			if (!this.ignoredProducts.contains(element.getClass())) {
 
+				String guid = element.getGlobalId();
+				if (StringUtils.isBlank(guid)) {
+					continue;
+				}
+				
 				// collect child to parent relations
 				element.getDecomposes().stream()
 					.map(rel -> rel.getRelatingObject())
