@@ -42,8 +42,14 @@ public class MpgSpaceImpl implements MpgSpace {
 
 	@Override
 	public String print() {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(">> Volume: " + getVolume());
+		sb.append(System.getProperty("line.separator"));
+		sb.append(">> Area: " + "TBD");
+		sb.append(System.getProperty("line.separator"));
+		
+		return sb.toString();
 	}
 
 

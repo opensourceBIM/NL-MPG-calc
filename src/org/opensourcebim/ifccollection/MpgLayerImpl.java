@@ -1,8 +1,7 @@
 package org.opensourcebim.ifccollection;
 
 /**
- * Class to store geometric and material data of objects found in IFC files.
- * This object can be a layer of a MpgObject or a representation of a IfcSpace (no material, just volume and area)
+ * Store layer information such as material and volume.
  * @author vijj
  */
 public class MpgLayerImpl extends MpgSpaceImpl implements MpgLayer {
@@ -15,7 +14,7 @@ public class MpgLayerImpl extends MpgSpaceImpl implements MpgLayer {
 	 * @param mat    material of object
 	 */
 	public MpgLayerImpl(double volume, String mat, String guid) {
-		super(volume, 0.0);
+		super(volume, 0.0); // TODO: what to do with area?
 		this.setVolume(volume);
 		this.setMaterialName(mat);
 		this.id = guid;
@@ -40,10 +39,7 @@ public class MpgLayerImpl extends MpgSpaceImpl implements MpgLayer {
 		StringBuilder sb = new StringBuilder();
 		sb.append("- " + materialName + " sub object");
 		sb.append(System.getProperty("line.separator"));
-		sb.append(">> Volume: " + getVolume());
-		sb.append(System.getProperty("line.separator"));
-		sb.append(">> Area: " + "TBD");
-		sb.append(System.getProperty("line.separator"));
+		sb.append(super.print());
 
 		return sb.toString();
 	}

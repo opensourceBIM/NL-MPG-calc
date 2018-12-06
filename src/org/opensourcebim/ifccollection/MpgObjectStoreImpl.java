@@ -18,6 +18,13 @@ import org.opensourcebim.nmd.NmdProductCard;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/**
+ * Storage container for collected ifc objects. Only data relevant for Mpg
+ * calculations should be stored here
+ * 
+ * @author vijj
+ *
+ */
 public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	private HashMap<String, MpgMaterial> mpgMaterials;
@@ -61,6 +68,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		setObjects(new BasicEList<MpgObject>());
 		setSpaces(new BasicEList<MpgSpace>());
 
+		// TODO: add filter function to constructor and all collections to list?
 		setObjectGUIDsWithoutMaterial(new GuidCollection(this, "# of objects that have missing materials"));
 		setObjectGUIDsWithoutVolume(new GuidCollection(this, "# of objects that have missing volumes"));
 		setObjectGuidsWithUndefinedLayerMats(new GuidCollection(this, "# of objects that have undefined layers"));
