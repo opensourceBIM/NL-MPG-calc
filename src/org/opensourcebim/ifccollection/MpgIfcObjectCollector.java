@@ -217,7 +217,7 @@ public class MpgIfcObjectCollector {
 			if (def instanceof IfcRelDefinesByProperties) {
 				IfcRelDefinesByProperties props = (IfcRelDefinesByProperties) def;
 				IfcPropertySetDefinition propSet = props.getRelatingPropertyDefinition();
-				addPropertiesFromPropertySetDefinition(propSet, mpgObject);
+				resolvePropertySetAndAddProperties(propSet, mpgObject);
 			}
 		}
 	}
@@ -227,71 +227,69 @@ public class MpgIfcObjectCollector {
 	 * the Property collection method
 	 * 
 	 * @param typeObjecttemplate type to retrieve
-	 * @param targetObject mpgObject to add properties to
+	 * @param mpgObject mpgObject to add properties to
 	 */
-	private void getPropertySetFromTypeObject(IfcTypeObject typeObject, MpgObjectImpl targetObject) {
+	private void getPropertySetFromTypeObject(IfcTypeObject typeObject, MpgObjectImpl mpgObject) {
 		EList<IfcPropertySetDefinition> propertySets = typeObject.getHasPropertySets();
 		if (!propertySets.isEmpty()) {
 			for (IfcPropertySetDefinition propSet : propertySets) {
-				addPropertiesFromPropertySetDefinition(propSet, targetObject);
+				resolvePropertySetAndAddProperties(propSet, mpgObject);
 			}
 		}
 	}
+	
+	private void resolvePropertySetAndAddProperties(IfcPropertySetDefinition propSet, MpgObjectImpl mpgObject) {
+		if (propSet instanceof IfcElementQuantity) {
+			addPropertiesFromPropertySetDefinition((IfcElementQuantity)propSet, mpgObject);
+		} else if (propSet instanceof IfcPropertySet) {
+			addPropertiesFromPropertySetDefinition((IfcPropertySet)propSet, mpgObject);
+		} else {
+			//System.out.println("found unidentified propertyset definition");
+		}
+	}
 
-	/**
-	 * Collect properties from a generic IFcPropertySetDefinition
-	 * @param defs IfcPropertySetDefinition to gather properties from
-	 * @param targetObject MpgObject to add properties to.
-	 */
-	private void addPropertiesFromPropertySetDefinition(IfcPropertySetDefinition defs, MpgObjectImpl targetObject) {
+	private void addPropertiesFromPropertySetDefinition(IfcElementQuantity quantities, MpgObjectImpl mpgObject) {
+		for (IfcPhysicalQuantity physQuant : quantities.getQuantities()) {
+			if (physQuant instanceof IfcPhysicalSimpleQuantity) {
+				IfcPhysicalSimpleQuantity simpleQuant = (IfcPhysicalSimpleQuantity) physQuant;
+				String name = simpleQuant.getName().toLowerCase();
+				Object value = null;
 
-		if (defs instanceof IfcElementQuantity) {
-			IfcElementQuantity quantities = (IfcElementQuantity) defs;
-			for (IfcPhysicalQuantity physQuant : quantities.getQuantities()) {
-				if (physQuant instanceof IfcPhysicalSimpleQuantity) {
-					IfcPhysicalSimpleQuantity simpleQuant = (IfcPhysicalSimpleQuantity) physQuant;
-					String name = simpleQuant.getName().toLowerCase();
-					Double value = 0.0;
+				if (simpleQuant instanceof IfcQuantityVolume) {
+					value = ((IfcQuantityVolume) simpleQuant).getVolumeValue();
+				} else if (simpleQuant instanceof IfcQuantityArea) {
+					value = ((IfcQuantityArea) simpleQuant).getAreaValue();
+				} else if (simpleQuant instanceof IfcQuantityLength) {
+					value = ((IfcQuantityLength) simpleQuant).getLengthValue();
+				}
 
-					if (simpleQuant instanceof IfcQuantityVolume) {
-						value = ((IfcQuantityVolume) simpleQuant).getVolumeValue();
-					} else if (simpleQuant instanceof IfcQuantityArea) {
-						value = ((IfcQuantityArea) simpleQuant).getAreaValue();
-					} else if (simpleQuant instanceof IfcQuantityLength) {
-						value = ((IfcQuantityLength) simpleQuant).getLengthValue();
-					}
-
-					if (value != 0.0) {
-						targetObject.addProperty(name, value);
-					}
+				if (value != null) {
+					mpgObject.addProperty(name, value);
 				}
 			}
 		}
+	}
+	
+	private void addPropertiesFromPropertySetDefinition(IfcPropertySet defs, MpgObjectImpl mpgObject) {
 
-		if (defs instanceof IfcPropertySet) {
-			for (IfcProperty prop : ((IfcPropertySet) defs).getHasProperties()) {
-				if (prop instanceof IfcPropertySingleValue) {
-					IfcPropertySingleValue valProp = (IfcPropertySingleValue) prop;
-					String name = valProp.getName().toLowerCase();
+		for (IfcProperty prop : defs.getHasProperties()) {
+			if (prop instanceof IfcPropertySingleValue) {
+				IfcPropertySingleValue valProp = (IfcPropertySingleValue) prop;
+				String name = valProp.getName().toLowerCase();
 
-					IfcValue ifcValue = (valProp.getNominalValue());
-					String value = "";
+				IfcValue ifcValue = (valProp.getNominalValue());
+				Object value = null;
 
-					if (ifcValue instanceof IfcBoolean) {
-						value = ((IfcBoolean) ifcValue).getWrappedValue().getLiteral();
-					} else if (ifcValue instanceof IfcLabel) {
-						value = ((IfcLabel) ifcValue).getWrappedValue();
-					} else if (ifcValue instanceof IfcIdentifier) {
-						value = ((IfcIdentifier) ifcValue).getWrappedValue();
-					} else if (ifcValue instanceof IfcThermalTransmittanceMeasure || ifcValue instanceof IfcPositiveRatioMeasure){
-						value = "";
-					} else {
-						value = "";
-					}
-
-					if (!value.isEmpty()) {
-						targetObject.addProperty(name, value);
-					}
+				if (ifcValue instanceof IfcBoolean) {
+					value = ((IfcBoolean) ifcValue).getWrappedValue().getLiteral();
+				} else if (ifcValue instanceof IfcLabel) {
+					value = ((IfcLabel) ifcValue).getWrappedValue();
+				} else if (ifcValue instanceof IfcIdentifier) {
+					value = ((IfcIdentifier) ifcValue).getWrappedValue();
+				}
+				
+				if (value != null) {
+					mpgObject.addProperty(name, value);
 				}
 			}
 		}
