@@ -1,6 +1,5 @@
 package org.opensourcebim.ifccollection;
 
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,14 +15,14 @@ public class MpgObjectImpl implements MpgObject {
 	private long objectId;
 	private String globalId;
 	private String objectName;
-	private List<MpgSubObject> mpgLayers;
+	private List<MpgLayer> mpgLayers;
 	private String objectType;
 	private String parentId;
 	
 	private Map<String, Object> properties;
 
 	@JsonIgnore
-	private Supplier<MpgObjectStore> getStore;
+	private Supplier<MpgObjectStore> store;
 	private List<MaterialSource> listedMaterials;
 
 	private double volume;
@@ -31,7 +30,7 @@ public class MpgObjectImpl implements MpgObject {
 	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId,
 			MpgObjectStore objectStore) {
 
-		mpgLayers = new BasicEList<MpgSubObject>();
+		mpgLayers = new BasicEList<MpgLayer>();
 		this.objectId = objectId;
 		this.setGlobalId(globalId);
 		this.setObjectName(objectName);
@@ -45,18 +44,23 @@ public class MpgObjectImpl implements MpgObject {
 		properties = new HashMap<String, Object>();
 		listedMaterials = new BasicEList<MaterialSource>();
 
-		this.getStore = () -> {
+		this.store = () -> {
 			return objectStore;
 		};
 	}
+	
+	@JsonIgnore
+	private MpgObjectStore getStore() {
+		return this.store.get();
+	}
 
 	@Override
-	public void addLayer(MpgSubObject mpgLayer) {
+	public void addLayer(MpgLayer mpgLayer) {
 		mpgLayers.add(mpgLayer);
 	}
 
 	@Override
-	public List<MpgSubObject> getLayers() {
+	public List<MpgLayer> getLayers() {
 		return mpgLayers;
 	}
 
@@ -125,7 +129,7 @@ public class MpgObjectImpl implements MpgObject {
 	@Override
 	public void addMaterialSource(String materialName, String materialGuid, String source) {
 		this.listedMaterials.add(new MaterialSource(materialGuid, materialName, source));
-		this.getStore.get().addMaterial(materialName);
+		this.getStore().addMaterial(materialName);
 	}
 	
 	@Override
@@ -165,8 +169,8 @@ public class MpgObjectImpl implements MpgObject {
 		// anyMatch returns false on an empty list, so if children should be included,
 		// but no
 		// children are present it will still return false
-		boolean hasChildren = getStore.get().getChildren(this.getGlobalId()).count() > 0;
-		boolean childCheck = includeChildren && getStore.get().getChildren(this.getGlobalId())
+		boolean hasChildren = getStore().getChildren(this.getGlobalId()).count() > 0;
+		boolean childCheck = includeChildren && getStore().getChildren(this.getGlobalId())
 				.anyMatch(o -> o.hasUndefinedMaterials(includeChildren));
 
 		// if the own item has undefined items at least the children should have full
@@ -177,9 +181,9 @@ public class MpgObjectImpl implements MpgObject {
 	@Override
 	public boolean hasUndefinedVolume(boolean includeChildren) {
 		boolean ownCheck = getVolume() == 0;
-		boolean hasChildren = getStore.get().getChildren(this.getGlobalId()).count() > 0;
+		boolean hasChildren = getStore().getChildren(this.getGlobalId()).count() > 0;
 		boolean childCheck = includeChildren
-				&& getStore.get().getChildren(this.getGlobalId()).anyMatch(o -> o.hasUndefinedVolume(includeChildren));
+				&& getStore().getChildren(this.getGlobalId()).anyMatch(o -> o.hasUndefinedVolume(includeChildren));
 
 		return ownCheck && !hasChildren ? true : childCheck;
 	}
@@ -188,7 +192,7 @@ public class MpgObjectImpl implements MpgObject {
 	public boolean hasRedundantMaterials(boolean includeChildren) {
 		long numLayers = getLayers().size();
 		boolean ownCheck = (numLayers == 0) && (getMaterialNamesBySource(null).size() > 1) || hasDuplicateMaterialNames();
-		boolean childCheck = includeChildren && getStore.get().getChildren(this.getGlobalId())
+		boolean childCheck = includeChildren && getStore().getChildren(this.getGlobalId())
 				.anyMatch(o -> o.hasRedundantMaterials(includeChildren));
 		return ownCheck || childCheck;
 	}
@@ -202,7 +206,7 @@ public class MpgObjectImpl implements MpgObject {
 
 		boolean ownCheck = (numLayers > 0) && (unresolvedLayers > 0);
 		boolean childCheck = includeChildren
-				&& getStore.get().getChildren(this.getGlobalId()).anyMatch(o -> o.hasUndefinedLayers(includeChildren));
+				&& getStore().getChildren(this.getGlobalId()).anyMatch(o -> o.hasUndefinedLayers(includeChildren));
 		return ownCheck || childCheck;
 	}
 }

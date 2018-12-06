@@ -6,7 +6,7 @@ import java.util.Map;
 public interface MpgObject {
 	
 	long getObjectId();
-	List<MpgSubObject> getLayers();
+	List<MpgLayer> getLayers();
 	String getObjectName();
 	String getObjectType();
 	String getGlobalId();
@@ -20,7 +20,7 @@ public interface MpgObject {
 
 	Map<String, Object> getProperties();
 	
-	void addLayer(MpgSubObject mpgSubObject);
+	void addLayer(MpgLayer layer);
 	
 	String print();
 	boolean hasDuplicateMaterialNames();

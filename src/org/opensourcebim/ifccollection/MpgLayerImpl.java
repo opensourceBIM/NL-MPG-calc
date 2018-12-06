@@ -1,18 +1,12 @@
 package org.opensourcebim.ifccollection;
 
 /**
- * Class to store data of objects found in IFC files.
- * For many IFC objects a single object can contain many subObjects (insulated walls etc.)
+ * Class to store geometric and material data of objects found in IFC files.
+ * This object can be a layer of a MpgObject or a representation of a IfcSpace (no material, just volume and area)
  * @author vijj
  */
-public class MpgSubObjectImpl implements MpgSubObject {
+public class MpgLayerImpl extends MpgSpaceImpl implements MpgLayer {
 	private String materialName = null;
-	private double volume;
-	private double area;
-	private String id;
-
-	public MpgSubObjectImpl() {
-	}
 
 	/**
 	 * constructor for physical layers of an MpgObject
@@ -20,22 +14,11 @@ public class MpgSubObjectImpl implements MpgSubObject {
 	 * @param volume Volume of object
 	 * @param mat    material of object
 	 */
-	public MpgSubObjectImpl(double volume, String mat, String guid) {
+	public MpgLayerImpl(double volume, String mat, String guid) {
+		super(volume, 0.0);
 		this.setVolume(volume);
 		this.setMaterialName(mat);
 		this.id = guid;
-	}
-
-	/**
-	 * Object constructor for spaces
-	 * 
-	 * @param volume Volume of space
-	 * @param area   Floor area of space
-	 */
-	public MpgSubObjectImpl(double volume, double area) {
-		this.setArea(area);
-		this.setVolume(volume);
-		this.setMaterialName(null);
 	}
 
 	@Override
@@ -50,24 +33,6 @@ public class MpgSubObjectImpl implements MpgSubObject {
 	@Override
 	public String getId() {
 		return id;
-	}
-	
-	@Override
-	public double getVolume() {
-		return volume;
-	}
-
-	protected void setVolume(double volume) {
-		this.volume = volume;
-	}
-
-	@Override
-	public double getArea() {
-		return area;
-	}
-
-	public void setArea(double area) {
-		this.area = area;
 	}
 
 	@Override

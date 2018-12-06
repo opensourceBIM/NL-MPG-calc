@@ -14,7 +14,7 @@ public interface MpgObjectStore {
 
 	HashMap<String, MpgMaterial> getMaterials();
 	List<MpgObject> getObjects();
-	List<MpgSubObject> getSpaces();
+	List<MpgSpace> getSpaces();
 	
 	void reset();
 	
@@ -23,7 +23,7 @@ public interface MpgObjectStore {
 	void addObject(MpgObject mpgObject);
 	List<MpgObject> getObjectsByProductType(String productType);
 	List<MpgObject> getObjectsByProductName(String productName);
-	List<MpgSubObject> getObjectsByMaterialName(String materialName);
+	List<MpgSpace> getObjectsByMaterialName(String materialName);
 	List<MpgObject> getObjectsByGuids(HashSet<String> guids);
 	Optional<MpgObject> getObjectByGuid(String guid);
 	
@@ -36,7 +36,7 @@ public interface MpgObjectStore {
 	double getTotalVolumeOfMaterial(String name);
 	double getTotalVolumeOfProductType(String productType);
 	
-	void addSpace(MpgSubObject space);
+	void addSpace(MpgSpace space);
 	double getTotalFloorArea();
 	
 	boolean isIfcDataComplete();

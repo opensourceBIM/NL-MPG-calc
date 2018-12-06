@@ -24,7 +24,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	
 	private List<MpgObject> mpgObjects;
 	
-	private List<MpgSubObject> spaces;
+	private List<MpgSpace> spaces;
 	
 	/**
 	 * stores which object GUIDs have no material or no layers and have
@@ -59,7 +59,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public MpgObjectStoreImpl() {
 		setMaterials(new HashMap<>());
 		setObjects(new BasicEList<MpgObject>());
-		setSpaces(new BasicEList<MpgSubObject>());
+		setSpaces(new BasicEList<MpgSpace>());
 
 		setObjectGUIDsWithoutMaterial(new GuidCollection(this, "# of objects that have missing materials"));
 		setObjectGUIDsWithoutVolume(new GuidCollection(this, "# of objects that have missing volumes"));
@@ -110,11 +110,11 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public List<MpgSubObject> getSpaces() {
+	public List<MpgSpace> getSpaces() {
 		return spaces;
 	}
 
-	private void setSpaces(List<MpgSubObject> spaces) {
+	private void setSpaces(List<MpgSpace> spaces) {
 		this.spaces = spaces;
 	}
 
@@ -139,7 +139,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public List<MpgSubObject> getObjectsByMaterialName(String materialName) {
+	public List<MpgSpace> getObjectsByMaterialName(String materialName) {
 		return mpgObjects.stream().flatMap(g -> g.getLayers().stream()).filter(o -> o.getMaterialName() != null)
 				.filter(o -> o.getMaterialName().equals(materialName)).collect(Collectors.toList());
 	}
@@ -187,7 +187,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void addSpace(MpgSubObject space) {
+	public void addSpace(MpgSpace space) {
 		spaces.add(space);
 	}
 
@@ -214,43 +214,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 				.map(o -> new ImmutablePair<String, MpgObject>(o.getParentId(), o)).collect(Collectors.toList());
 	}
 		
-
-	/**
-	 * Do a general check over all objects to check whether there are floating
-	 * materials (not linked to any MpgObject) or if there are MpgObjects that do no
-	 * match with any material
-	 * 
-	 * @return
-	 */
-	public void validateIfcDataCollection() {
-		// check for objects that have not a single material defined or objects without
-		// layers and multiple materials
-		getObjectGUIDsWithoutMaterial().setCollection(mpgObjects.stream().filter(o -> o.hasUndefinedMaterials(false))
-				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
-
-		// some objects might not have a volume defined. check whether any object or any
-		// of its children have undefined volumes.
-		getObjectGUIDsWithoutVolume().setCollection(mpgObjects.stream().filter(o -> o.hasUndefinedVolume(false))
-				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
-
-		// check for materials without layers that have more than a single material
-		// added to them and as such cannot be resolved automatically
-		getObjectGUIDsWithRedundantMaterialSpecs().setCollection(mpgObjects.stream().filter(o -> o.hasRedundantMaterials(false))
-				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
-
-		// check for objects that have more than 0 materials linked, but are still
-		// missing 1 to n materials
-		getObjectGuidsWithUndefinedLayerMats().setCollection(mpgObjects.stream().filter(o -> o.hasUndefinedLayers(false))
-				.map(g -> g.getGlobalId()).collect(Collectors.toList()));
-	}
-	
-	@Override
-	public boolean isIfcDataComplete() {
-		return getObjectGUIDsWithoutMaterial().getSize() == 0
-				&& getObjectGUIDsWithoutVolume().getSize() == 0 && getObjectGUIDsWithRedundantMaterialSpecs().getSize() == 0
-				&& getObjectGuidsWithUndefinedLayerMats().getSize() == 0;
-	}
-
 	@Override
 	public Stream<MpgObject> getChildren(String parentGuid) {
 		if (this.decomposedRelations != null) {
@@ -303,6 +266,43 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	public void setObjectGuidsWithUndefinedLayerMats(GuidCollection coll) {
 		this.objectGuidsWithUndefinedLayerMats = coll;
+	}
+	
+
+	/**
+	 * Do a general check over all objects to check whether there are floating
+	 * materials (not linked to any MpgObject) or if there are MpgObjects that do no
+	 * match with any material
+	 * 
+	 * @return
+	 */
+	public void validateIfcDataCollection() {
+		// check for objects that have not a single material defined or objects without
+		// layers and multiple materials
+		getObjectGUIDsWithoutMaterial().setCollection(mpgObjects.stream().filter(o -> o.hasUndefinedMaterials(false))
+				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
+
+		// some objects might not have a volume defined. check whether any object or any
+		// of its children have undefined volumes.
+		getObjectGUIDsWithoutVolume().setCollection(mpgObjects.stream().filter(o -> o.hasUndefinedVolume(false))
+				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
+
+		// check for materials without layers that have more than a single material
+		// added to them and as such cannot be resolved automatically
+		getObjectGUIDsWithRedundantMaterialSpecs().setCollection(mpgObjects.stream().filter(o -> o.hasRedundantMaterials(false))
+				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
+
+		// check for objects that have more than 0 materials linked, but are still
+		// missing 1 to n materials
+		getObjectGuidsWithUndefinedLayerMats().setCollection(mpgObjects.stream().filter(o -> o.hasUndefinedLayers(false))
+				.map(g -> g.getGlobalId()).collect(Collectors.toList()));
+	}
+	
+	@Override
+	public boolean isIfcDataComplete() {
+		return getObjectGUIDsWithoutMaterial().getSize() == 0
+				&& getObjectGUIDsWithoutVolume().getSize() == 0 && getObjectGUIDsWithRedundantMaterialSpecs().getSize() == 0
+				&& getObjectGuidsWithUndefinedLayerMats().getSize() == 0;
 	}
 
 	@Override

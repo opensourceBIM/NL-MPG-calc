@@ -1,19 +1,11 @@
 package org.opensourcebim.ifccollection;
 
 /**
- * class to store a layer of the MpgObject
+ * class to store a space
  * @author vijj
  */
-public interface MpgSubObject {
-	/**
-	 * Reference to a MpgMaterial object
-	 */
-	public String getMaterialName();
+public interface MpgSpace {
 	
-	/**
-	 * The volume of the object
-	 * @return
-	 */
 	public double getVolume(); // volume calculated based on layer ratios etc.
 	
 	public double getArea();

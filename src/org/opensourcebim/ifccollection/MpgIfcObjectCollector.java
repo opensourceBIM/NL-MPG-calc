@@ -61,7 +61,7 @@ public class MpgIfcObjectCollector {
 		modelVolumeUnit = IfcUtils.getVolumeUnit(ifcModel);
 		modelAreaUnit = IfcUtils.getAreaUnit(ifcModel);
 
-		// loop through IFcSpaces
+		// loop through IfcSpaces
 		for (IfcSpace space : ifcModel.getAllWithSubTypes(IfcSpace.class)) {
 
 			EList<IfcRelDecomposes> parentDecomposedProduct = space.getIsDecomposedBy();
@@ -80,7 +80,7 @@ public class MpgIfcObjectCollector {
 			Pair<Double, Double> geom = getGeometryFromProduct(space);
 
 			if (!isIncludedGeometrically && !isIncludedSemantically) {
-				objectStore.getSpaces().add(new MpgSubObjectImpl(geom.getRight(), geom.getLeft()));
+				objectStore.getSpaces().add(new MpgSpaceImpl(geom.getRight(), geom.getLeft()));
 			}
 		}
 
@@ -352,7 +352,7 @@ public class MpgIfcObjectCollector {
 				String materialName = layer.getLeft();
 				String materialGuid = layer.getMiddle();
 				double volumeRatio = layer.getRight() / totalThickness * targetObject.getVolume();
-				targetObject.addLayer(new MpgSubObjectImpl(volumeRatio, materialName, materialGuid));
+				targetObject.addLayer(new MpgLayerImpl(volumeRatio, materialName, materialGuid));
 				targetObject.addMaterialSource(materialName, materialGuid, matSourceLayer);
 			});
 		}
