@@ -100,7 +100,7 @@ public class MpgIfcObjectCollector {
 			Pair<Double, Double> geom = getGeometryFromProduct(space);
 
 			if (!isIncludedGeometrically && !isIncludedSemantically) {
-				objectStore.getSpaces().add(new MpgSpaceImpl(geom.getRight(), geom.getLeft()));
+				objectStore.getSpaces().add(new MpgSpaceImpl(space.getGlobalId(), geom.getRight(), geom.getLeft()));
 			}
 		}
 

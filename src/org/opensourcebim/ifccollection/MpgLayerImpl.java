@@ -14,10 +14,8 @@ public class MpgLayerImpl extends MpgSpaceImpl implements MpgLayer {
 	 * @param mat    material of object
 	 */
 	public MpgLayerImpl(double volume, String mat, String guid) {
-		super(volume, 0.0); // TODO: what to do with area?
-		this.setVolume(volume);
+		super(guid, volume, 0.0); // TODO: what to do with area?
 		this.setMaterialName(mat);
-		this.id = guid;
 	}
 
 	@Override
@@ -29,11 +27,6 @@ public class MpgLayerImpl extends MpgSpaceImpl implements MpgLayer {
 		this.materialName = mpgMaterial;
 	}
 	
-	@Override
-	public String getId() {
-		return id;
-	}
-
 	@Override
 	public String print() {		
 		StringBuilder sb = new StringBuilder();

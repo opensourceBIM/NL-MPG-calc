@@ -12,7 +12,8 @@ public class MpgSpaceImpl implements MpgSpace {
 	 * @param volume Volume of space
 	 * @param area   Floor area of space
 	 */
-	public MpgSpaceImpl(double volume, double area) {
+	public MpgSpaceImpl(String id, double volume, double area) {
+		this.setId(id);
 		this.setArea(area);
 		this.setVolume(volume);
 	}
@@ -38,6 +39,10 @@ public class MpgSpaceImpl implements MpgSpace {
 	@Override
 	public String getId() {
 		return this.id;
+	}
+	
+	private void setId(String id) {
+		this.id = id;
 	}
 
 	@Override
