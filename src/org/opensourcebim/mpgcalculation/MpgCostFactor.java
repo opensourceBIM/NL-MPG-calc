@@ -24,7 +24,7 @@ public class MpgCostFactor {
 	public String getProductName() {
 		return this.productName;
 	}
-
+	
 	public void setProductName(String product) {
 		this.productName = product;
 	}
@@ -32,7 +32,7 @@ public class MpgCostFactor {
 	public double getValue() {
 		return value;
 	}
-
+	
 	public String getSpecName() {
 		return specName;
 	}
@@ -51,15 +51,12 @@ public class MpgCostFactor {
 		}
 		MpgCostFactor testFactor = (MpgCostFactor) otherFactor;
 
-		return testFactor.getFactor() == this.getFactor() 
-				&& testFactor.getStage() == this.getStage()
-				&& testFactor.getProductName() == this.getProductName()
-				&& testFactor.getSpecName() == this.getSpecName();
+		return testFactor.getFactor() == this.getFactor() && testFactor.getStage() == this.getStage()
+				&& testFactor.getProductName() == this.getProductName();
 	}
 
 	@Override
 	public int hashCode() {
-		return (this.getFactor().toString() + this.getStage().toString() + this.getProductName()).hashCode()
-				+ this.getSpecName().hashCode();
+		return (this.getFactor().toString() + this.getStage().toString() + this.getProductName()).hashCode();
 	}
 }
