@@ -19,6 +19,7 @@ public class MpgObjectImpl implements MpgObject {
 	private String objectType;
 	private String parentId;
 	
+	@JsonIgnore
 	private Map<String, Object> properties;
 
 	@JsonIgnore
@@ -116,6 +117,7 @@ public class MpgObjectImpl implements MpgObject {
 
 	}
 	
+	@JsonIgnore
 	@Override
 	public Map<String, Object> getProperties() {
 		return this.properties;
@@ -164,18 +166,15 @@ public class MpgObjectImpl implements MpgObject {
 	@Override
 	public boolean hasUndefinedMaterials(boolean includeChildren) {
 		long numLayers = this.getLayers().size();
-		boolean ownCheck = (numLayers + getMaterialNamesBySource(null).size()) == 0;
+		boolean thisIsUndefined = (numLayers + getMaterialNamesBySource(null).size()) == 0;
 
 		// anyMatch returns false on an empty list, so if children should be included,
-		// but no
-		// children are present it will still return false
+		// but no children are present it will still return false
 		boolean hasChildren = getStore().getChildren(this.getGlobalId()).count() > 0;
-		boolean childCheck = includeChildren && getStore().getChildren(this.getGlobalId())
+		boolean childrenAreUndefined = includeChildren && getStore().getChildren(this.getGlobalId())
 				.anyMatch(o -> o.hasUndefinedMaterials(includeChildren));
 
-		// if the own item has undefined items at least the children should have full
-		// definitions
-		return ownCheck && !hasChildren ? true : childCheck;
+		return thisIsUndefined && !hasChildren ? thisIsUndefined : childrenAreUndefined;
 	}
 
 	@Override

@@ -29,8 +29,4 @@ public interface MpgObject {
 	boolean hasUndefinedVolume(boolean includeChildren);
 	boolean hasRedundantMaterials(boolean includeChildren);
 	boolean hasUndefinedLayers(boolean includeChildren);
-	
-
-
-
 }
