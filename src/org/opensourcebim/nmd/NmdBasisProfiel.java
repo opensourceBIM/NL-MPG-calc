@@ -22,5 +22,5 @@ public interface NmdBasisProfiel {
 
 	double getImpactFactor(NmdImpactFactor factor);
 
-	Set<MpgCostFactor> calculateFactors(double cost, HashMap<NmdImpactFactor, Double> weightFactors , String materialName);
+	Set<MpgCostFactor> calculateFactors(double cost, HashMap<NmdImpactFactor, Double> weightFactors);
 }

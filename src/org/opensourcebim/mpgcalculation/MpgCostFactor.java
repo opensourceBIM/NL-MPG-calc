@@ -3,13 +3,13 @@ package org.opensourcebim.mpgcalculation;
 public class MpgCostFactor {
 	private NmdLifeCycleStage stage;
 	private NmdImpactFactor factor;
-	private String materialName;
+	private String productName;
+	private String specName;
 	private double value;
 
-	public MpgCostFactor(NmdLifeCycleStage stage, NmdImpactFactor factor, String materialName, double value) {
+	public MpgCostFactor(NmdLifeCycleStage stage, NmdImpactFactor factor, double value) {
 		this.stage = stage;
 		this.factor = factor;
-		this.materialName = materialName;
 		this.value = value;
 	}
 
@@ -21,12 +21,24 @@ public class MpgCostFactor {
 		return this.factor;
 	}
 
-	public String getMaterialName() {
-		return this.materialName;
+	public String getProductName() {
+		return this.productName;
+	}
+
+	public void setProductName(String product) {
+		this.productName = product;
 	}
 
 	public double getValue() {
 		return value;
+	}
+
+	public String getSpecName() {
+		return specName;
+	}
+
+	public void setSpecName(String specName) {
+		this.specName = specName;
 	}
 
 	/**
@@ -39,13 +51,15 @@ public class MpgCostFactor {
 		}
 		MpgCostFactor testFactor = (MpgCostFactor) otherFactor;
 
-		return testFactor.getFactor() == this.getFactor() && testFactor.getStage() == this.getStage()
-				&& testFactor.getMaterialName() == this.getMaterialName();
+		return testFactor.getFactor() == this.getFactor() 
+				&& testFactor.getStage() == this.getStage()
+				&& testFactor.getProductName() == this.getProductName()
+				&& testFactor.getSpecName() == this.getSpecName();
 	}
 
 	@Override
 	public int hashCode() {
-		return (this.getFactor().toString() + this.getStage().toString() + this.getMaterialName()).hashCode();
+		return (this.getFactor().toString() + this.getStage().toString() + this.getProductName()).hashCode()
+				+ this.getSpecName().hashCode();
 	}
-
 }

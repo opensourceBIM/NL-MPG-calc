@@ -41,10 +41,10 @@ public class NmdBasisProfielImpl implements NmdBasisProfiel {
 	}
 
 	@Override
-	public Set<MpgCostFactor> calculateFactors(double cost, HashMap<NmdImpactFactor, Double> weightFactors, String material) {
+	public Set<MpgCostFactor> calculateFactors(double cost, HashMap<NmdImpactFactor, Double> weightFactors) {
 		Set<MpgCostFactor> results = new HashSet<MpgCostFactor>();
 		for (Entry<NmdImpactFactor, Double> entry : factors.entrySet()) {
-			results.add(new MpgCostFactor(this.stage, entry.getKey(), material, entry.getValue() * cost * weightFactors.get(entry.getKey())));
+			results.add(new MpgCostFactor(this.stage, entry.getKey(), entry.getValue() * cost * weightFactors.get(entry.getKey())));
 		}
 		return results;
 	}

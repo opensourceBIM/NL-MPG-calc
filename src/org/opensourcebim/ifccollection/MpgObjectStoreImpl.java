@@ -252,7 +252,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 */
 	@Override
 	public boolean isMaterialDataComplete() {
-		return getMaterials().values().stream().allMatch(mat -> mat.getNmdMaterialSpecs() != null);
+		return getMaterials().values().stream().allMatch(mat -> mat.getNmdProductCard() != null);
 	}
 
 	@Override

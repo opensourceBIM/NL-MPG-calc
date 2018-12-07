@@ -18,10 +18,22 @@ public class MpgCalculationResults {
 
 	private ResultStatus status;
 	private Set<MpgCostFactor> costFactors;
+	private double totalFloorArea;
+	private double totalLifeTime;
 
 	public MpgCalculationResults() {
 		status = ResultStatus.NotRun;
 		costFactors = new HashSet<MpgCostFactor>();
+		totalFloorArea = 1.0;
+		totalLifeTime = 1.0;
+	}
+	
+	public void setTotalLifeTime(double designLife) {
+		this.totalLifeTime = designLife;
+	}
+
+	public void setTotalFloorArea(double totalFloorArea) {
+		this.totalFloorArea = totalFloorArea;
 	}
 
 	public void SetResultsStatus(ResultStatus status) {
@@ -35,6 +47,14 @@ public class MpgCalculationResults {
 	public double getTotalCost() {
 		return costFactors.stream().collect(Collectors.summingDouble(f -> f.getValue()));
 	}
+	
+	/**
+	 * Total cost corrected for floor area and total lifetime
+	 * @return
+	 */
+	public double getTotalCorrectedCost() {
+		return getTotalCost() / totalFloorArea / totalLifeTime;
+	}
 
 	public double getCostPerLifeCycle(NmdLifeCycleStage stage) {
 		return costFactors.stream().filter(f -> f.getStage() == stage)
@@ -46,8 +66,13 @@ public class MpgCalculationResults {
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
-	public double getCosPerMaterialName(String name) {
-		return costFactors.stream().filter(f -> f.getMaterialName().equals(name))
+	public double getCostPerProductName(String name) {
+		return costFactors.stream().filter(f -> name.equals(f.getProductName()))
+				.collect(Collectors.summingDouble(f -> f.getValue()));
+	}
+	
+	public Double getCostPerSpecification(String specName) {
+		return costFactors.stream().filter(f -> specName.equals(f.getSpecName()))
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
@@ -57,16 +82,24 @@ public class MpgCalculationResults {
 	 * 
 	 * @param newFactors Collection of CostFactors
 	 */
-	public void addCostFactors(Set<MpgCostFactor> newFactors) {
+	public void addCostFactors(Set<MpgCostFactor> newFactors, String product) {
 		for (MpgCostFactor costFactor : newFactors) {
-			this.addCostFactor(costFactor);
+			this.addCostFactor(costFactor, product, "");
+		}
+	}
+	
+	public void addCostFactors(Set<MpgCostFactor> newFactors, String product, String specName) {
+		for (MpgCostFactor costFactor : newFactors) {
+			this.addCostFactor(costFactor, product, specName);
 		}
 	}
 
-	public void addCostFactor(MpgCostFactor mpgCostFactor) {
+	public void addCostFactor(MpgCostFactor mpgCostFactor, String product, String specName) {
 		if (costFactors.contains(mpgCostFactor)) {
 			throw new KeyAlreadyExistsException("Cannot add a cost factor that already exists");
 		}
+		mpgCostFactor.setProductName(product);
+		mpgCostFactor.setSpecName(specName);
 		costFactors.add(mpgCostFactor);
 	}
 
