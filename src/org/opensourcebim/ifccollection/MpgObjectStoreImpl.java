@@ -167,7 +167,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public Optional<MpgObject> getObjectByGuid(String guidId) {
-		return mpgObjects.stream().filter(o -> o.getGlobalId().equals(guidId)).findFirst();
+		return mpgObjects.stream().filter(o -> guidId.equals(o.getGlobalId())).findFirst();
 	}
 
 	@Override
