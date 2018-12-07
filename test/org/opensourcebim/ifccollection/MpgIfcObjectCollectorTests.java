@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.bimserver.emf.IfcModelInterface;
-import org.bimserver.models.ifc2x3tc1.IfcBuildingElement;
 import org.bimserver.models.ifc2x3tc1.IfcFurnishingElement;
 import org.bimserver.models.ifc2x3tc1.IfcOpeningElement;
+import org.bimserver.models.ifc2x3tc1.IfcProduct;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
 import org.bimserver.models.ifc2x3tc1.IfcSIPrefix;
 import org.bimserver.models.ifc2x3tc1.IfcSpace;
@@ -79,12 +79,16 @@ public class MpgIfcObjectCollectorTests {
 	
 	@Test 
 	public void testCollectorWillGatherParentChildRelations() {
-		factory.addProductToModel(ifcModel, null, null);
-		IfcBuildingElement element = ifcModel.getAllWithSubTypes(IfcBuildingElement.class).get(0);
-		factory.addProductToModel(ifcModel, "parent", Arrays.asList(element.getGlobalId()));
-		IfcBuildingElement parent = ifcModel.getAllWithSubTypes(IfcBuildingElement.class).get(1);
+
+		factory.addProductToModel(ifcModel, "a", null);
+		IfcProduct parent = ifcModel.getAllWithSubTypes(IfcProduct.class).get(0);
+		
+		
+		factory.addProductToModel(ifcModel, "b", parent.getGlobalId());
+		IfcProduct element = ifcModel.getAllWithSubTypes(IfcProduct.class).get(1);
+		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(parent.getGlobalId(), collector.results().getObjects().get(0).getParentId());
+		assertEquals(parent.getGlobalId(), collector.results().getObjects().get(1).getParentId());
 	}
 		
 	@Test
@@ -252,8 +256,8 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(.25, collector.results().getObjects().get(0).getSubObjects().get(0).getVolume(), 1e-8);
-		assertEquals(.75, collector.results().getObjects().get(0).getSubObjects().get(1).getVolume(), 1e-8);
+		assertEquals(.25, collector.results().getObjects().get(0).getLayers().get(0).getVolume(), 1e-8);
+		assertEquals(.75, collector.results().getObjects().get(0).getLayers().get(1).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -274,12 +278,12 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(.25, collector.results().getObjects().get(0).getSubObjects().get(0).getVolume(), 1e-8);
-		assertEquals(.75, collector.results().getObjects().get(0).getSubObjects().get(1).getVolume(), 1e-8);
+		assertEquals(.25, collector.results().getObjects().get(0).getLayers().get(0).getVolume(), 1e-8);
+		assertEquals(.75, collector.results().getObjects().get(0).getLayers().get(1).getVolume(), 1e-8);
 
-		assertEquals(2.5, collector.results().getObjects().get(1).getSubObjects().get(0).getVolume(), 1e-8);
-		assertEquals(5.0, collector.results().getObjects().get(1).getSubObjects().get(1).getVolume(), 1e-8);
-		assertEquals(2.5, collector.results().getObjects().get(1).getSubObjects().get(2).getVolume(), 1e-8);
+		assertEquals(2.5, collector.results().getObjects().get(1).getLayers().get(0).getVolume(), 1e-8);
+		assertEquals(5.0, collector.results().getObjects().get(1).getLayers().get(1).getVolume(), 1e-8);
+		assertEquals(2.5, collector.results().getObjects().get(1).getLayers().get(2).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -303,7 +307,7 @@ public class MpgIfcObjectCollectorTests {
 		collector.collectIfcModelObjects(ifcModel);
 		
 		// material names of layers are null
-		assertTrue(collector.results().getObjects().get(0).getListedMaterials().size() == 0);
+		assertTrue(collector.results().getObjects().get(0).getMaterialNamesBySource(null).size() == 0);
 	}
 	
 	@Test
@@ -316,11 +320,11 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(.25,collector.results().getObjects().get(0).getSubObjects().get(0).getVolume(), 1e-8);
-		assertEquals(.75,collector.results().getObjects().get(0).getSubObjects().get(1).getVolume(), 1e-8);
+		assertEquals(.25,collector.results().getObjects().get(0).getLayers().get(0).getVolume(), 1e-8);
+		assertEquals(.75,collector.results().getObjects().get(0).getLayers().get(1).getVolume(), 1e-8);
 		
 		// as there are layers present and this material is added separately we cannot assign a volume to it.
-		assertEquals(2, collector.results().getObjects().get(0).getSubObjects().size());
+		assertEquals(2, collector.results().getObjects().get(0).getLayers().size());
 	}
 	
 	@Test

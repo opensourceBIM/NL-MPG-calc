@@ -57,31 +57,26 @@ public class IfcMockFactory {
 		return model;
 	}
 	
-	public void addProductToModel(IfcModelInterface mockModel, String name, List<String> childIds) {
-		List<IfcBuildingElement> products = mockModel.getAllWithSubTypes(IfcBuildingElement.class);
+	public void addProductToModel(IfcModelInterface mockModel, String name, String parentId) {
+		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
 		
-		IfcBuildingElement newProduct = addIfcProductToModel(null, name);
-		
-		// for now don't add any children
-		EList<IfcObjectDefinition> childObjects;
-		if (childIds != null)
-		{
-			//for child object defs
-			childObjects = new BasicEList<IfcObjectDefinition>(mockModel.getAllWithSubTypes(IfcBuildingElement.class).stream()
-					.filter(o -> childIds.contains(o.getGlobalId())).collect(Collectors.toList()));
-			
-		} else
-		{
-			childObjects = new BasicEList<IfcObjectDefinition>();
-		}
-		IfcRelDecomposes mockRel = mock(IfcRelDecomposes.class);
-		when(mockRel.getRelatedObjects()).thenReturn(childObjects);
+		IfcProduct newProduct = addIfcProductToModel(null, name);
 		BasicEList<IfcRelDecomposes> relations = new BasicEList<IfcRelDecomposes>();
-		relations.add(mockRel);
+		// add potential children as decomposed elements
+		if (parentId != null)
+		{
+			IfcObjectDefinition parentObject = mockModel.getAllWithSubTypes(IfcProduct.class).stream()
+					.filter(o -> o.getGlobalId().equals(parentId)).collect(Collectors.toList()).get(0);
+			
+			IfcRelDecomposes mockRel = mock(IfcRelDecomposes.class);
+			when(mockRel.getRelatingObject()).thenReturn(parentObject);
+			relations.add(mockRel);
+		}
+
 		when(newProduct.getDecomposes()).thenReturn(relations);
 		
 		products.add(newProduct);
-		when(mockModel.getAllWithSubTypes(IfcBuildingElement.class)).thenReturn(products);
+		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
 	}
 		
 	public void addSpaceToModel(IfcModelInterface mockModel, IfcProduct parent) {
@@ -99,8 +94,8 @@ public class IfcMockFactory {
 	 * Get Mock product with Geometry, the difference with the generic method is that products can be linked to materials.
 	 * @return a Mocked IfcProduct object
 	 */
-	private IfcBuildingElement addIfcProductToModel(IfcObjectDefinition parent, String name) {
-		IfcBuildingElement mockProduct = createGenericIfcProduct(IfcBuildingElement.class, parent);
+	private IfcProduct addIfcProductToModel(IfcObjectDefinition parent, String name) {
+		IfcProduct mockProduct = createGenericIfcProduct(IfcBuildingElement.class, parent);
 		when(mockProduct.getHasAssociations()).thenReturn(associations);
 		when(mockProduct.getName()).thenReturn(name == null ? "" : name);
 
