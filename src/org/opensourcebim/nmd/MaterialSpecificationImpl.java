@@ -13,6 +13,7 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 	private double massPerUnit;
 	private double productLifeTime;
 	private double constructionLossFactor;
+	private double disposalDistance;
 	private HashMap<NmdLifeCycleStage, Double> disposalRatios;
 	private HashMap<NmdLifeCycleStage, NmdBasisProfiel> profiles;
 
@@ -22,6 +23,9 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 		this.disposalRatios.put(NmdLifeCycleStage.Incineration, 0.0);
 		this.disposalRatios.put(NmdLifeCycleStage.Recycling, 0.0);
 		this.disposalRatios.put(NmdLifeCycleStage.Reuse, 0.0);
+		this.disposalRatios.put(NmdLifeCycleStage.OwnDisposalProfile, 0.0);
+		
+		this.setDisposalDistance(0.0);
 		
 		this.profiles = new HashMap<NmdLifeCycleStage, NmdBasisProfiel>();
 	}
@@ -89,10 +93,11 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 	}
 
 	@Override
-	public HashMap<NmdLifeCycleStage, Double> GetDisposalRatios() {
+	public HashMap<NmdLifeCycleStage, Double> getDisposalRatios() {
 		return this.disposalRatios;
 	}
 
+	@Override
 	public void setDisposalRatio(NmdLifeCycleStage stage, double value) throws InvalidInputException {
 		if (!disposalRatios.containsKey(stage)) {
 			throw new InvalidInputException("lifecycleStage has to be a disposal stage");
@@ -118,6 +123,15 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 	@Override
 	public Set<NmdLifeCycleStage> getDefinedProfiles() {
 		return profiles.keySet();
+	}
+
+	@Override
+	public double getDisposalDistance() {
+		return disposalDistance;
+	}
+
+	public void setDisposalDistance(double disposalDistance) {
+		this.disposalDistance = disposalDistance;
 	}
 
 

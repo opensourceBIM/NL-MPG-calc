@@ -202,9 +202,33 @@ public class mpgCalculatorTests {
 		Double totalCost = results.getTotalCost();
 		
 		Optional<MaterialSpecification> spec = store.getMaterialByName("steel").getNmdProductCard().getMaterials().stream().findFirst();
-		for (Entry<NmdLifeCycleStage, Double> entry : spec.get().GetDisposalRatios().entrySet()) {
+		for (Entry<NmdLifeCycleStage, Double> entry : spec.get().getDisposalRatios().entrySet()) {
 			assertEquals(totalCost * entry.getValue(), results.getCostPerLifeCycle(entry.getKey()), 1e-8);
 		}
+	}
+	
+	@Test
+	public void testMaterialWithEqualDisposalRatiosSplitBetweenToDisposalTypes() {
+		addMaterialsWithDisposalProductCard("steel", "Stainless Steel", 0.0,  1);
+		addUnitObject("steel");
+		
+		// set some disposal ratios and leave all other items empty (no production or tranport cost)
+		MaterialSpecification mat = store.getMaterialByName("steel").getNmdProductCard().getMaterials().iterator().next();
+		try {
+			mat.setDisposalRatio(NmdLifeCycleStage.Disposal, 0.5);
+			mat.setDisposalRatio(NmdLifeCycleStage.Incineration, 0.5);
+		} catch (InvalidInputException e) {
+			e.printStackTrace();
+		}
+		
+		startCalculations(1);
+		
+		Double totalCost = results.getTotalCost();
+		// test that the disposal stages have the correct values.
+		assertEquals(0.5 * totalCost, results.getCostPerLifeCycle(NmdLifeCycleStage.Disposal), 1e-8);
+		assertEquals(0.5 * totalCost, results.getCostPerLifeCycle(NmdLifeCycleStage.Incineration), 1e-8);
+		assertEquals(0.0, results.getCostPerLifeCycle(NmdLifeCycleStage.Recycling), 1e-8);
+		assertEquals(0.0, results.getCostPerLifeCycle(NmdLifeCycleStage.Reuse), 1e-8);
 	}
 	
 	
