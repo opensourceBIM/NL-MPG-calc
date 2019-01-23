@@ -9,7 +9,7 @@
 	<groupId>org.opensourcebim</groupId>
 	<artifactId>bouwbesluitmaterials</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>bouw besluit matereials</name>
+	<name>bouw besluit materials</name>
 	<description>BIM plugin for checking BIM models versus the environment norms of the Dutch government Bouwbesluit</description>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
