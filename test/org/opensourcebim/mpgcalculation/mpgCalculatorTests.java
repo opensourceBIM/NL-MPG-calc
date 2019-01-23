@@ -311,9 +311,9 @@ public class mpgCalculatorTests {
 			spec.addBasisProfiel(NmdLifeCycleStage.Incineration, createUnitProfile(NmdLifeCycleStage.Incineration));
 			spec.addBasisProfiel(NmdLifeCycleStage.Recycling, createUnitProfile(NmdLifeCycleStage.Recycling));
 			spec.addBasisProfiel(NmdLifeCycleStage.Reuse, createUnitProfile(NmdLifeCycleStage.Reuse));
-			spec.addBasisProfiel(NmdLifeCycleStage.Production, createUnitProfile(NmdLifeCycleStage.Production));
+			spec.addBasisProfiel(NmdLifeCycleStage.OwnDisposalProfile, createUnitProfile(NmdLifeCycleStage.OwnDisposalProfile));
+			spec.addBasisProfiel(NmdLifeCycleStage.TransportForRemoval, createUnitProfile(NmdLifeCycleStage.TransportForRemoval));
 			spec.addBasisProfiel(NmdLifeCycleStage.Operation, createUnitProfile(NmdLifeCycleStage.Operation));
-			spec.addBasisProfiel(NmdLifeCycleStage.CyclicMaintenance, createUnitProfile(NmdLifeCycleStage.CyclicMaintenance));
 		} catch (InvalidInputException e) {
 			// do nothing as we should be able not to mess it up ourselves
 			System.out.println("test input is incorrect.");
@@ -338,9 +338,9 @@ public class mpgCalculatorTests {
 			spec.addBasisProfiel(NmdLifeCycleStage.Incineration, createUnitProfile(NmdLifeCycleStage.Incineration));
 			spec.addBasisProfiel(NmdLifeCycleStage.Recycling, createUnitProfile(NmdLifeCycleStage.Recycling));
 			spec.addBasisProfiel(NmdLifeCycleStage.Reuse, createUnitProfile(NmdLifeCycleStage.Reuse));
-			spec.addBasisProfiel(NmdLifeCycleStage.Production, createZeroProfile(NmdLifeCycleStage.Production));
+			spec.addBasisProfiel(NmdLifeCycleStage.OwnDisposalProfile, createUnitProfile(NmdLifeCycleStage.OwnDisposalProfile));
+			spec.addBasisProfiel(NmdLifeCycleStage.TransportForRemoval, createUnitProfile(NmdLifeCycleStage.TransportForRemoval));
 			spec.addBasisProfiel(NmdLifeCycleStage.Operation, createZeroProfile(NmdLifeCycleStage.Operation));
-			spec.addBasisProfiel(NmdLifeCycleStage.CyclicMaintenance, createZeroProfile(NmdLifeCycleStage.CyclicMaintenance));
 		} catch (InvalidInputException e) {
 			// do nothing as we should be able not to mess it up ourselves
 			System.out.println("test input is incorrect.");
