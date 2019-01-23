@@ -18,8 +18,12 @@ import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
  */
 public interface NmdBasisProfiel {
 
+	String getDescription();
+	
 	NmdLifeCycleStage getStage();
 
+	NmdUnit getUnit();
+	
 	double getImpactFactor(NmdImpactFactor factor);
 
 	Set<MpgCostFactor> calculateFactors(double cost, HashMap<NmdImpactFactor, Double> weightFactors);

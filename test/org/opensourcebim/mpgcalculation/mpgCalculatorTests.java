@@ -24,9 +24,9 @@ import org.opensourcebim.nmd.NmdBasisProfiel;
 import org.opensourcebim.nmd.NmdBasisProfielImpl;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProductCardImpl;
+import org.opensourcebim.nmd.NmdUnit;
 
 import com.fasterxml.jackson.annotation.ObjectIdGenerators.UUIDGenerator;
-
 
 public class mpgCalculatorTests {
 
@@ -364,7 +364,7 @@ public class mpgCalculatorTests {
 	}
 	
 	private NmdBasisProfiel createConstantValueProfile(NmdLifeCycleStage stage, Double constantValue) {
-		NmdBasisProfielImpl profile = new NmdBasisProfielImpl(stage);
+		NmdBasisProfielImpl profile = new NmdBasisProfielImpl(stage, NmdUnit.Kg);
 		profile.setAll(constantValue);
 		return profile;
 	}

@@ -11,19 +11,28 @@ import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 
 public class NmdBasisProfielImpl implements NmdBasisProfiel {
 
+	private String description;
 	private HashMap<NmdImpactFactor, Double> factors;
 	private NmdLifeCycleStage stage;
+	private NmdUnit unit;
 	
-	public NmdBasisProfielImpl(NmdLifeCycleStage stage) {
+	public NmdBasisProfielImpl(NmdLifeCycleStage stage, NmdUnit unit) {
 		factors = new HashMap<NmdImpactFactor, Double>();
 		this.setAll(0);
 		this.stage = stage;
+		this.unit = unit;
 	}
 	
 	public void setAll(double value) {
 		for (NmdImpactFactor factor : NmdImpactFactor.values()) {
 			setImpactFactor(factor, value);
 		}
+	}
+	
+
+	@Override
+	public String getDescription() {
+		return this.description;
 	}
 	
 	@Override
@@ -39,6 +48,11 @@ public class NmdBasisProfielImpl implements NmdBasisProfiel {
 	public NmdLifeCycleStage getStage() {
 		return this.stage;
 	}
+	
+	@Override
+	public NmdUnit getUnit() {
+		return this.unit;
+	}
 
 	@Override
 	public Set<MpgCostFactor> calculateFactors(double cost, HashMap<NmdImpactFactor, Double> weightFactors) {
@@ -48,5 +62,4 @@ public class NmdBasisProfielImpl implements NmdBasisProfiel {
 		}
 		return results;
 	}
-
 }
