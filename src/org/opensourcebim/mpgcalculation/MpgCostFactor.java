@@ -51,12 +51,11 @@ public class MpgCostFactor {
 		}
 		MpgCostFactor testFactor = (MpgCostFactor) otherFactor;
 
-		return testFactor.getFactor() == this.getFactor() && testFactor.getStage() == this.getStage()
-				&& testFactor.getProductName() == this.getProductName();
+		return testFactor.getFactor() == this.getFactor() 
+				&& testFactor.getStage() == this.getStage()
+				&& testFactor.getProductName() == this.getProductName() 
+				&& testFactor.getSpecName() == this.getSpecName();
 	}
 
-	@Override
-	public int hashCode() {
-		return (this.getFactor().toString() + this.getStage().toString() + this.getProductName()).hashCode();
-	}
+
 }

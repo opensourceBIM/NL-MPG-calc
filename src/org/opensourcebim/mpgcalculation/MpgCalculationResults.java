@@ -95,11 +95,14 @@ public class MpgCalculationResults {
 	}
 
 	public void addCostFactor(MpgCostFactor mpgCostFactor, String product, String specName) {
-		if (costFactors.contains(mpgCostFactor)) {
-			throw new KeyAlreadyExistsException("Cannot add a cost factor that already exists");
-		}
+		
 		mpgCostFactor.setProductName(product);
 		mpgCostFactor.setSpecName(specName);
+		
+		if (costFactors.stream().anyMatch(f -> f.equals(mpgCostFactor))) {
+			throw new KeyAlreadyExistsException("Cannot add a cost factor that already exists");
+		}
+
 		costFactors.add(mpgCostFactor);
 	}
 
