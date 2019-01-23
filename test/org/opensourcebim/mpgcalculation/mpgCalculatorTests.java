@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -97,13 +98,13 @@ public class mpgCalculatorTests {
 	}
 	
 	@Test
-	public void testUnitDistanceToProducerResultsInTransportCostForDoubleTheDistance() {
+	public void testUnitDistanceToProducerResultsInNonZeroTransportCost() {
 		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 1);
 		addUnitObject("steel");
 		
 		startCalculations(1.0);
 		// we have added a unit value for every ImpactFactor
-		assertEquals(2.0 * (double)(NmdImpactFactor.values().length) / 1000.0,
+		assertEquals((double)(NmdImpactFactor.values().length) / 1000.0,
 				results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
 	}
 	
@@ -114,7 +115,7 @@ public class mpgCalculatorTests {
 		addUnitObject("steel");
 		
 		startCalculations(1.0);
-		assertEquals(2.0 * (double)(NmdImpactFactor.values().length) * (1.0 + loss) / 1000.0,
+		assertEquals((double)(NmdImpactFactor.values().length) * (1.0 + loss) / 1000.0,
 				results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
 	}
 	
@@ -124,7 +125,7 @@ public class mpgCalculatorTests {
 		addUnitObject("steel");
 		
 		startCalculations(1.0);
-		assertEquals(2.0 * 1.3 * (double)(NmdImpactFactor.values().length) / 1000.0,
+		assertEquals(1.3 * (double)(NmdImpactFactor.values().length) / 1000.0,
 				results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
 	}
 	
@@ -160,7 +161,6 @@ public class mpgCalculatorTests {
 		Double factor = 10.0;
 		addSpace(factor);
 		startCalculations(factor);
-
 		assertEquals(results.getTotalCost() / (factor * factor), results.getTotalCorrectedCost(), 1e-8);
 	}
 	
@@ -260,7 +260,6 @@ public class mpgCalculatorTests {
 			Double density = productCard.getDensityOfSpec(spec.getName());
 			assertEquals(totalCost * density / totalWeight, specCost, 1e-8);
 		}
-
 	}
 	
 	/**

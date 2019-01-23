@@ -106,7 +106,7 @@ public class MpgObjectStoreTests {
 		mpgObject.addLayer(new MpgLayerImpl(10, "a linked material", Integer.toString("a linked material".hashCode())));
 		objectStore.addObject(mpgObject);
 		
-		assertFalse("warning checker did not find the ophan material",
+		assertFalse("warning checker did not find the orphan material",
 				objectStore.isIfcDataComplete());
 	}
 	

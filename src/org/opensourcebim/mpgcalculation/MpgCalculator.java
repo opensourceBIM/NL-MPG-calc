@@ -47,54 +47,72 @@ public class MpgCalculator {
 
 			// for each building material found:
 			for (MpgMaterial mpgMaterial : objectStore.getMaterials().values()) {
+
+				// this total volume can be in m3 or possible also in kWh depending on the unit
+				// in the product card
 				double totalVolume = objectStore.getTotalVolumeOfMaterial(mpgMaterial.getIfcName());
 				NmdProductCard specs = mpgMaterial.getNmdProductCard();
 
 				// category 3 data requires a 30% penalty
 				double categoryMultiplier = specs.getDataCategory() == 3 ? 1.3 : 1.0;
 
-				// calculate the # of replacements required
-				double replacements = this.calculateReplacements(designLife, specs.getLifeTime());
-				double specsDensity = specs.getDensity();
-
 				// a single building material can be composed of individual materials.
 				double specsMatSumKg = 0.0;
-				
+
 				for (MaterialSpecification matSpec : specs.getMaterials()) {
+
+					// Determine replacements required.
+					// this is usually 1 for regular materials and > 1 for cyclic maintenance
+					// materials
+					// TODO: in order to check for cyclic maintenance we need to reduce the
+					// replacements with 1, but how do we know when it sia cyclic maintenace
+					// materialspec? as of Sep 2016 the minimum should always be 1 (so MAX(2, replLife) - 1;)
+					double replacements = this.calculateReplacements(designLife, matSpec.getProductLifeTime());
+
 					// calculate total mass taking into account construction losses and replacements
-					// TODO: do we need to include volume ratio or are the product cards designed to give mass per unit volume?
+					// TODO: how does the current approach tackle issues with palte materials etc.?
 					double lifeTimeVolumePerSpec = replacements * totalVolume;
 					double lifeTimeMassPerSpec = lifeTimeVolumePerSpec * matSpec.getMassPerUnit();
 					double lifeTimeTotalMassKg = lifeTimeMassPerSpec * (1 + matSpec.getConstructionLosses());
 
-					// ----- CONSTRUCTION ----
-					results.addCostFactors(matSpec.getBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
-							.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier, costWeightFactors),
+					// ----- Production ----
+					results.addCostFactors(
+							matSpec.getBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
+									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier, costWeightFactors),
 							specs.getName(), matSpec.getName());
 
 					// ----- DISPOSAL ----
-					for (Entry<NmdLifeCycleStage, Double> entry : matSpec.GetDisposalRatios().entrySet()) {
-						double cost = lifeTimeTotalMassKg * entry.getValue() * categoryMultiplier;
+					// assumptions are the the category multiplioer does not need to be applied for
+					// disposal stages
+					// see: Rekenregels_materiaalgebonden_milieuprestatie_gebouwen.pdf for more info
+					for (Entry<NmdLifeCycleStage, Double> entry : matSpec.getDisposalRatios().entrySet()) {
+						double cost = lifeTimeTotalMassKg * entry.getValue();
 
 						results.addCostFactors(
 								matSpec.getBasisProfiel(entry.getKey()).calculateFactors(cost, costWeightFactors),
 								specs.getName(), matSpec.getName());
 					}
 
-					// ----- CYCLIC MAINTENANCE ----- apply different replacement factor
+					// DISPOSALTRANSPORT - done per individual material rather than per product
+					results.addCostFactors(
+							matSpec.getBasisProfiel(NmdLifeCycleStage.TransportForRemoval)
+									.calculateFactors(lifeTimeTotalMassKg / 1000 * categoryMultiplier
+											* matSpec.getDisposalDistance(), costWeightFactors),
+							specs.getName(), matSpec.getName());
 
-					// ----- OPERATION COST ---- - apply different units
-					// of measure
+					// ----- OPERATION COST ---- - apply different units of measure (l / m3 / kWh
+					// etc.)
 
 					// add the individual material to the composite material mass for transport
 					// calculations
 					specsMatSumKg += lifeTimeTotalMassKg;
 				}
 
-				// TODO: add correction factor for trasnport packign (standard 1)?
-				// determine tranport costs per composed material in tonnes * km.
+				// TODO: add correction factor for volume transport (standard 1)?
+				// determine tranport costs per composed material in tonnes * km .
+				// the factor 2 has been removed since May 2015
 				results.addCostFactors(specs.getTransportProfile().calculateFactors(
-						categoryMultiplier * 2 * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0),
+						categoryMultiplier * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0),
 						costWeightFactors), specs.getName());
 			}
 
