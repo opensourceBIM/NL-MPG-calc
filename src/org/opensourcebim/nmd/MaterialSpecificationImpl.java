@@ -13,8 +13,13 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 	private double massPerUnit;
 	private double productLifeTime;
 	private double constructionLossFactor;
-	private double disposalDistance;
+	private HashMap<NmdLifeCycleStage, Double> disposalDistances;
 	private HashMap<NmdLifeCycleStage, Double> disposalRatios;
+	
+	/**
+	 * NmdBasisProfiles available for this material specification.
+	 * Can be different for specs within the same productcard
+	 */
 	private HashMap<NmdLifeCycleStage, NmdBasisProfiel> profiles;
 
 	public MaterialSpecificationImpl() {
@@ -25,7 +30,16 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 		this.disposalRatios.put(NmdLifeCycleStage.Reuse, 0.0);
 		this.disposalRatios.put(NmdLifeCycleStage.OwnDisposalProfile, 0.0);
 		
-		this.setDisposalDistance(0.0);
+		this.disposalDistances = new HashMap<NmdLifeCycleStage, Double>();
+		try {
+			this.setDisposalDistance(NmdLifeCycleStage.Disposal, 100.0);
+			this.setDisposalDistance(NmdLifeCycleStage.Incineration, 150.0);
+			this.setDisposalDistance(NmdLifeCycleStage.Recycling, 15.0);
+			this.setDisposalDistance(NmdLifeCycleStage.Reuse, 0.0);
+			this.setDisposalDistance(NmdLifeCycleStage.OwnDisposalProfile, 100.0);
+		} catch (InvalidInputException e) {
+			e.printStackTrace();
+		}
 		
 		this.profiles = new HashMap<NmdLifeCycleStage, NmdBasisProfiel>();
 	}
@@ -126,12 +140,19 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 	}
 
 	@Override
-	public double getDisposalDistance() {
-		return disposalDistance;
+	public double getDisposalDistance(NmdLifeCycleStage stage) {
+		return disposalDistances.getOrDefault(stage, 0.0);
 	}
 
-	public void setDisposalDistance(double disposalDistance) {
-		this.disposalDistance = disposalDistance;
+	@Override
+	public void setDisposalDistance(NmdLifeCycleStage lifeCycleStage, double disposalDistance) throws InvalidInputException {
+		if (!disposalRatios.containsKey(lifeCycleStage)) {
+			throw new InvalidInputException("lifecycleStage has to be a disposal stage");
+		}
+		if (disposalDistance < 0) {
+			throw new InvalidInputException("disposal distance has to be larger than 0");
+		}
+		disposalDistances.put(lifeCycleStage, disposalDistance);
 	}
 
 

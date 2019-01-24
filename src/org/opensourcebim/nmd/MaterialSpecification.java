@@ -20,8 +20,6 @@ public interface MaterialSpecification {
 
 	String getUnit();
 	
-	double getDisposalDistance();
-
 	/**
 	 * Unlike density this is the mass per construction unit. (mass per wall area or mass per meter piping)
 	 * @return the mass per volume, area or unit length of construction material
@@ -40,7 +38,11 @@ public interface MaterialSpecification {
 	
 	void setDisposalRatio(NmdLifeCycleStage stage, double ratio) throws InvalidInputException;
 
+	double getDisposalDistance(NmdLifeCycleStage stage);
+	
 	NmdBasisProfiel getBasisProfiel(NmdLifeCycleStage lifeCycleStage);
 
 	Set<NmdLifeCycleStage> getDefinedProfiles();
+
+	void setDisposalDistance(NmdLifeCycleStage lifeCycleStage, double disposalDistance) throws InvalidInputException;
 }

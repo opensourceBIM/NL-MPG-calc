@@ -91,14 +91,17 @@ public class MpgCalculator {
 						results.addCostFactors(
 								matSpec.getBasisProfiel(entry.getKey()).calculateFactors(cost, costWeightFactors),
 								specs.getName(), matSpec.getName());
-					}
-
-					// DISPOSALTRANSPORT - done per individual material rather than per product
-					results.addCostFactors(
-							matSpec.getBasisProfiel(NmdLifeCycleStage.TransportForRemoval)
-									.calculateFactors(lifeTimeTotalMassKg / 1000 * categoryMultiplier
-											* matSpec.getDisposalDistance(), costWeightFactors),
+						
+						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than per product
+						results.incrementCostFactors(matSpec.getBasisProfiel(NmdLifeCycleStage.TransportForRemoval)
+							.calculateFactors(
+								cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey()), costWeightFactors),
 							specs.getName(), matSpec.getName());
+					}
+					
+					// DISPOSALTRANSPORT - done per individual material rather than per product
+					
+
 
 					// ----- OPERATION COST ---- - apply different units of measure (l / m3 / kWh
 					// etc.)

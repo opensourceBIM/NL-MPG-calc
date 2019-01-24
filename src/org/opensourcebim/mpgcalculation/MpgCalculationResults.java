@@ -1,6 +1,7 @@
 package org.opensourcebim.mpgcalculation;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,7 @@ public class MpgCalculationResults {
 		totalFloorArea = 1.0;
 		totalLifeTime = 1.0;
 	}
-	
+
 	public void setTotalLifeTime(double designLife) {
 		this.totalLifeTime = designLife;
 	}
@@ -47,9 +48,10 @@ public class MpgCalculationResults {
 	public double getTotalCost() {
 		return costFactors.stream().collect(Collectors.summingDouble(f -> f.getValue()));
 	}
-	
+
 	/**
 	 * Total cost corrected for floor area and total lifetime
+	 * 
 	 * @return
 	 */
 	public double getTotalCorrectedCost() {
@@ -70,7 +72,7 @@ public class MpgCalculationResults {
 		return costFactors.stream().filter(f -> name.equals(f.getProductName()))
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
-	
+
 	public Double getCostPerSpecification(String specName) {
 		return costFactors.stream().filter(f -> specName.equals(f.getSpecName()))
 				.collect(Collectors.summingDouble(f -> f.getValue()));
@@ -87,7 +89,7 @@ public class MpgCalculationResults {
 			this.addCostFactor(costFactor, product, "");
 		}
 	}
-	
+
 	public void addCostFactors(Set<MpgCostFactor> newFactors, String product, String specName) {
 		for (MpgCostFactor costFactor : newFactors) {
 			this.addCostFactor(costFactor, product, specName);
@@ -95,15 +97,41 @@ public class MpgCalculationResults {
 	}
 
 	public void addCostFactor(MpgCostFactor mpgCostFactor, String product, String specName) {
-		
+
 		mpgCostFactor.setProductName(product);
 		mpgCostFactor.setSpecName(specName);
-		
+
 		if (costFactors.stream().anyMatch(f -> f.equals(mpgCostFactor))) {
 			throw new KeyAlreadyExistsException("Cannot add a cost factor that already exists");
 		}
 
 		costFactors.add(mpgCostFactor);
+	}
+
+	public void incrementCostFactors(Set<MpgCostFactor> factors, String product, String specName) {
+		for (MpgCostFactor costFactor : factors) {
+			this.incrementCostFactor(costFactor, product, specName);
+		}
+	}
+
+	/**
+	 * increment the value fo a costfactor if it is present in the current set
+	 * 
+	 * @param mpgCostFactor the value to add
+	 * @param product       product card name of the factor
+	 * @param specName      material spec name of the factor
+	 */
+	private void incrementCostFactor(MpgCostFactor mpgCostFactor, String product, String specName) {
+
+		mpgCostFactor.setProductName(product);
+		mpgCostFactor.setSpecName(specName);
+
+		Optional<MpgCostFactor> foundFactor = costFactors.stream().filter(f -> f.equals(mpgCostFactor)).findFirst();
+		if (foundFactor.isPresent()) {
+			foundFactor.get().setValue(foundFactor.get().getValue() + mpgCostFactor.getValue());
+		} else {
+			costFactors.add(mpgCostFactor);
+		}
 	}
 
 	public Set<MpgCostFactor> getCostFactors() {

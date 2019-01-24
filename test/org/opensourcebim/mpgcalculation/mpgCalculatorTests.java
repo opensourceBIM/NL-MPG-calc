@@ -1,6 +1,8 @@
 package org.opensourcebim.mpgcalculation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -208,7 +210,7 @@ public class mpgCalculatorTests {
 	}
 	
 	@Test
-	public void testMaterialWithEqualDisposalRatiosSplitBetweenToDisposalTypes() {
+	public void testMaterialWithEqualDisposalRatiosSplitBetweenTwoDisposalTypes() {
 		addMaterialsWithDisposalProductCard("steel", "Stainless Steel", 0.0,  1);
 		addUnitObject("steel");
 		
@@ -229,6 +231,55 @@ public class mpgCalculatorTests {
 		assertEquals(0.5 * totalCost, results.getCostPerLifeCycle(NmdLifeCycleStage.Incineration), 1e-8);
 		assertEquals(0.0, results.getCostPerLifeCycle(NmdLifeCycleStage.Recycling), 1e-8);
 		assertEquals(0.0, results.getCostPerLifeCycle(NmdLifeCycleStage.Reuse), 1e-8);
+	}
+	
+	@Test
+	public void testMaterialWithZeroDisposalRatiosHasNoDisposalTransportCost() {
+		addMaterialWithproductCard("steel", "Stainless Steel", 0.0, 0.0, 1);
+		addUnitObject("steel");
+		
+		// set some disposal ratios and leave all other items empty (no production or tranport cost)
+		MaterialSpecification mat = store.getMaterialByName("steel").getNmdProductCard().getMaterials().iterator().next();
+		try {
+			mat.setDisposalRatio(NmdLifeCycleStage.Disposal, 0.0);
+		} catch (InvalidInputException e) {
+			e.printStackTrace();
+		}
+		
+		startCalculations(1);
+		assertEquals(0, results.getCostPerLifeCycle(NmdLifeCycleStage.TransportForRemoval), 1e-8);
+	}
+	
+	@Test
+	public void testMaterialWithOnlyReuseHasNoDisposalTransportCost() {
+		addMaterialWithproductCard("steel", "Stainless Steel", 0.0, 0.0,  1);
+		addUnitObject("steel");
+		
+		// set some disposal ratios and leave all other items empty (no production or tranport cost)
+		MaterialSpecification mat = store.getMaterialByName("steel").getNmdProductCard().getMaterials().iterator().next();
+		try {
+			mat.setDisposalRatio(NmdLifeCycleStage.Disposal, 0.0);
+			mat.setDisposalRatio(NmdLifeCycleStage.Reuse, 1.0);
+		} catch (InvalidInputException e) {
+			e.printStackTrace();
+		}
+		
+		startCalculations(1);
+		assertTrue(0 < results.getTotalCost());
+		assertEquals(0, results.getCostPerLifeCycle(NmdLifeCycleStage.TransportForRemoval), 1e-8);
+	}
+	
+	@Test
+	public void testMaterialWithNonReuseHasNonZeroDisposalTransportCost() {
+		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 1);
+		addUnitObject("steel");
+		
+		// set some disposal ratios and leave all other items empty (no production or tranport cost)
+		MaterialSpecification mat = store.getMaterialByName("steel").getNmdProductCard().getMaterials().iterator().next();
+		
+		startCalculations(1);
+		double dispTranspCost = results.getCostPerLifeCycle(NmdLifeCycleStage.TransportForRemoval);
+		assertTrue(0.0 < dispTranspCost);
 	}
 	
 	
@@ -280,7 +331,6 @@ public class mpgCalculatorTests {
 	private void addMaterialsWithDisposalProductCard(String ifcMatName, String nmdMatName, double producerDistance,int category) {
 		store.addMaterial(ifcMatName);
 		store.setProductCardForMaterial(ifcMatName, createDisposalProductCard(nmdMatName, producerDistance, category));
-		
 	}
 		
 	private void addUnitObject(String material) {
@@ -362,7 +412,7 @@ public class mpgCalculatorTests {
 			spec.addBasisProfiel(NmdLifeCycleStage.Recycling, createUnitProfile(NmdLifeCycleStage.Recycling));
 			spec.addBasisProfiel(NmdLifeCycleStage.Reuse, createUnitProfile(NmdLifeCycleStage.Reuse));
 			spec.addBasisProfiel(NmdLifeCycleStage.OwnDisposalProfile, createUnitProfile(NmdLifeCycleStage.OwnDisposalProfile));
-			spec.addBasisProfiel(NmdLifeCycleStage.TransportForRemoval, createUnitProfile(NmdLifeCycleStage.TransportForRemoval));
+			spec.addBasisProfiel(NmdLifeCycleStage.TransportForRemoval, createZeroProfile(NmdLifeCycleStage.TransportForRemoval));
 			spec.addBasisProfiel(NmdLifeCycleStage.Operation, createZeroProfile(NmdLifeCycleStage.Operation));
 		} catch (InvalidInputException e) {
 			// do nothing as we should be able not to mess it up ourselves
@@ -375,7 +425,6 @@ public class mpgCalculatorTests {
 		spec.setName("unitMaterialSpec");
 
 		return spec;
-		
 	}
 	
 	private NmdBasisProfiel createUnitProfile(NmdLifeCycleStage stage) {
