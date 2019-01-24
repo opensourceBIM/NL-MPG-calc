@@ -8,4 +8,5 @@ public enum NmdUnit {
 	l, // liter
 	m2, // square meter
 	m3, // cubic meter
+	Pcs, // pieces
 }
