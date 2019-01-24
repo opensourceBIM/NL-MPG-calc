@@ -1,30 +1,32 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.List;
-import java.util.Set;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Map;
 
 public interface MpgObject {
 	
 	long getObjectId();
-	List<MpgSubObject> getSubObjects();
+	List<MpgLayer> getLayers();
 	String getObjectName();
 	String getObjectType();
 	String getGlobalId();
+	String getParentId();
+	void setParentId(String value);
 	
 	double getVolume();
 	
-	@JsonIgnore
-	List<MpgMaterial> getMaterials();
-	
-	Set<String> getListedMaterials();
-	
-	void addListedMaterial(String materialName);
+	void addMaterialSource(String name, String guid, String source);
+	List<String> getMaterialNamesBySource(String source);
 
-	void addSubObject(MpgSubObject mpgSubObject);
+	Map<String, Object> getProperties();
+	
+	void addLayer(MpgLayer layer);
 	
 	String print();
-
-
+	boolean hasDuplicateMaterialNames();
+	
+	boolean hasUndefinedMaterials(boolean includeChildren);
+	boolean hasUndefinedVolume(boolean includeChildren);
+	boolean hasRedundantMaterials(boolean includeChildren);
+	boolean hasUndefinedLayers(boolean includeChildren);
 }

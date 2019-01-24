@@ -1,7 +1,6 @@
 package org.opensourcebim.test;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,7 +13,7 @@ import org.bimserver.client.json.JsonBimServerClientFactory;
 import org.bimserver.shared.BimServerClientFactory;
 import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.shared.exceptions.BimServerClientException;
-import org.opensourcebim.ifccollection.IfcToMpgCollectionService;
+import org.opensourcebim.services.IfcToMpgCollectionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +22,8 @@ public class BimBotTester {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BimBotTester.class);
 	private BimServerClientFactory bimServerClientFactory;
 	private UsernamePasswordAuthenticationInfo credentials;
-
+	private Integer timeoutHours = 6;
+	
 	public BimBotTester(Path basePath, BimServerClientFactory bimServerClientFactory,
 			UsernamePasswordAuthenticationInfo credentials) {
 		this.basePath = basePath;
@@ -49,9 +49,10 @@ public class BimBotTester {
 		BimBotsServiceInterface bimBot = new IfcToMpgCollectionService();
 
 		// Increment the first 2 to enable concurrent processing for faster processing
-		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.HOURS,
+		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, timeoutHours, TimeUnit.HOURS,
 				new ArrayBlockingQueue<>(1000));
 
+		// walk recursively through all folders in 
 		try {
 			Files.walk(Paths.get(basePath.toUri()))
 				.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc")).forEach(p -> {
@@ -63,7 +64,7 @@ public class BimBotTester {
 
 		threadPoolExecutor.shutdown();
 		try {
-			threadPoolExecutor.awaitTermination(1, TimeUnit.HOURS);
+			threadPoolExecutor.awaitTermination(timeoutHours, TimeUnit.HOURS);
 		} catch (InterruptedException e) {
 			LOGGER.error("", e);
 		}

@@ -13,8 +13,7 @@ public class MpgMaterial {
 	private String nmdIdentifier;
 	private String BimBotIdentifier;
 	
-	// properties relevant from 
-	private NmdProductCard nmdMaterialSpecs;
+	private NmdProductCard nmdProductCard;
 	
 	public MpgMaterial(String name)
 	{
@@ -63,11 +62,11 @@ public class MpgMaterial {
 		return sb.toString();
 	}
 
-	public NmdProductCard getNmdMaterialSpecs() {
-		return nmdMaterialSpecs;
+	public NmdProductCard getNmdProductCard() {
+		return nmdProductCard;
 	}
 
-	public void setMaterialSpecs(NmdProductCard nmdMaterialSpecs) {
-		this.nmdMaterialSpecs = nmdMaterialSpecs;
+	public void setMaterialSpecs(NmdProductCard productCard) {
+		this.nmdProductCard = productCard;
 	}
 }

@@ -1,10 +1,11 @@
 package org.opensourcebim.ifccollection;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
 import org.eclipse.emf.common.util.BasicEList;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -14,42 +15,54 @@ public class MpgObjectImpl implements MpgObject {
 	private long objectId;
 	private String globalId;
 	private String objectName;
-	private List<MpgSubObject> mpgSubObjects;
+	private List<MpgLayer> mpgLayers;
 	private String objectType;
+	private String parentId;
+	
+	@JsonIgnore
+	private Map<String, Object> properties;
 
 	@JsonIgnore
-	private Supplier<MpgObjectStore> getStore;
-	private Set<String> listedMaterials;
+	private Supplier<MpgObjectStore> store;
+	private List<MaterialSource> listedMaterials;
+
 	private double volume;
 
-	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType,
+	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId,
 			MpgObjectStore objectStore) {
-		mpgSubObjects = new BasicEList<MpgSubObject>();
+
+		mpgLayers = new BasicEList<MpgLayer>();
 		this.objectId = objectId;
 		this.setGlobalId(globalId);
 		this.setObjectName(objectName);
-		objectType = objectType.replaceAll("Impl$", "");
-		objectType = objectType.replaceAll("^Ifc", "");
-		this.setObjectType(objectType);
+		if (objectType != null) {
+			objectType = objectType.replaceAll("Impl$", "");
+			objectType = objectType.replaceAll("^Ifc", "");
+			this.setObjectType(objectType);
+		}
+		this.parentId = parentId;
 
-		listedMaterials = new HashSet<String>();
-		this.getStore = () -> {
+		properties = new HashMap<String, Object>();
+		listedMaterials = new BasicEList<MaterialSource>();
+
+		this.store = () -> {
 			return objectStore;
 		};
 	}
-
-	@Override
-	public void addSubObject(MpgSubObject mpgSubObject) {
-		mpgSubObjects.add(mpgSubObject);
-		String matName = mpgSubObject.getMaterialName();
-		if(matName != null && !matName.equals("")) {
-			addListedMaterial(matName);
-		}
+	
+	@JsonIgnore
+	private MpgObjectStore getStore() {
+		return this.store.get();
 	}
 
 	@Override
-	public List<MpgSubObject> getSubObjects() {
-		return mpgSubObjects;
+	public void addLayer(MpgLayer mpgLayer) {
+		mpgLayers.add(mpgLayer);
+	}
+
+	@Override
+	public List<MpgLayer> getLayers() {
+		return mpgLayers;
 	}
 
 	@Override
@@ -94,24 +107,39 @@ public class MpgObjectImpl implements MpgObject {
 	}
 
 	@Override
-	public List<MpgMaterial> getMaterials() {
-		// gte material names
-		// retrieve the materials from the store
-		List<MpgMaterial> materials = new ArrayList<MpgMaterial>();
-		for (String matName : this.getListedMaterials()) {
-			materials.add(this.getStore.get().getMaterialByName(matName));
-		}
-		return materials;
+	public String getParentId() {
+		return this.parentId;
 	}
 
 	@Override
-	public Set<String> getListedMaterials() {
-		return this.listedMaterials;
+	public void setParentId(String value) {
+		this.parentId = value;
+
+	}
+	
+	@JsonIgnore
+	@Override
+	public Map<String, Object> getProperties() {
+		return this.properties;
+	}
+	
+	public void addProperty(String name, Object value) {
+		this.properties.put(name, value);
+		
 	}
 
 	@Override
-	public void addListedMaterial(String materialName) {
-		this.listedMaterials.add(materialName);
+	public void addMaterialSource(String materialName, String materialGuid, String source) {
+		this.listedMaterials.add(new MaterialSource(materialGuid, materialName, source));
+		this.getStore().addMaterial(materialName);
+	}
+	
+	@Override
+	public List<String> getMaterialNamesBySource(String source) {
+		return this.listedMaterials.stream()
+				.filter(m -> source == null ? true : m.getSource() == source)
+				.map(m -> m.getName())
+				.collect(Collectors.toList());
 	}
 
 	@Override
@@ -121,7 +149,63 @@ public class MpgObjectImpl implements MpgObject {
 		sb.append(System.getProperty("line.separator"));
 		sb.append(">> GUID: " + this.getGlobalId());
 		sb.append(System.getProperty("line.separator"));
-		mpgSubObjects.forEach(o -> sb.append(o.print()));
+		mpgLayers.forEach(o -> sb.append(o.print()));
 		return sb.toString();
+	}
+
+	@Override
+	public boolean hasDuplicateMaterialNames() {
+		return this.listedMaterials.stream().distinct().collect(Collectors.toSet())
+				.size() < this.listedMaterials.size();
+	}
+
+	/**
+	 * Recursive check method to validate whether a material or any of its children
+	 * have undefined materials
+	 */
+	@Override
+	public boolean hasUndefinedMaterials(boolean includeChildren) {
+		long numLayers = this.getLayers().size();
+		boolean thisIsUndefined = (numLayers + getMaterialNamesBySource(null).size()) == 0;
+
+		// anyMatch returns false on an empty list, so if children should be included,
+		// but no children are present it will still return false
+		boolean hasChildren = getStore().getChildren(this.getGlobalId()).count() > 0;
+		boolean childrenAreUndefined = includeChildren && getStore().getChildren(this.getGlobalId())
+				.anyMatch(o -> o.hasUndefinedMaterials(includeChildren));
+
+		return thisIsUndefined && !hasChildren ? thisIsUndefined : childrenAreUndefined;
+	}
+
+	@Override
+	public boolean hasUndefinedVolume(boolean includeChildren) {
+		boolean ownCheck = getVolume() == 0;
+		boolean hasChildren = getStore().getChildren(this.getGlobalId()).count() > 0;
+		boolean childCheck = includeChildren
+				&& getStore().getChildren(this.getGlobalId()).anyMatch(o -> o.hasUndefinedVolume(includeChildren));
+
+		return ownCheck && !hasChildren ? true : childCheck;
+	}
+
+	@Override
+	public boolean hasRedundantMaterials(boolean includeChildren) {
+		long numLayers = getLayers().size();
+		boolean ownCheck = (numLayers == 0) && (getMaterialNamesBySource(null).size() > 1) || hasDuplicateMaterialNames();
+		boolean childCheck = includeChildren && getStore().getChildren(this.getGlobalId())
+				.anyMatch(o -> o.hasRedundantMaterials(includeChildren));
+		return ownCheck || childCheck;
+	}
+
+	@Override
+	public boolean hasUndefinedLayers(boolean includeChildren) {
+		long numLayers = getLayers().size();
+		long unresolvedLayers = getLayers().stream()
+				.filter(l -> l.getMaterialName() == "" || l.getMaterialName() == null).collect(Collectors.toList())
+				.size();
+
+		boolean ownCheck = (numLayers > 0) && (unresolvedLayers > 0);
+		boolean childCheck = includeChildren
+				&& getStore().getChildren(this.getGlobalId()).anyMatch(o -> o.hasUndefinedLayers(includeChildren));
+		return ownCheck || childCheck;
 	}
 }

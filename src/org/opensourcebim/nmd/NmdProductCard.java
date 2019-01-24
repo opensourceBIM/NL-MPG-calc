@@ -1,5 +1,6 @@
 package org.opensourcebim.nmd;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,12 @@ public interface NmdProductCard {
 	default double getDensity() {
 		return getMaterials().stream().collect(Collectors.summingDouble(mat -> mat.getMassPerUnit()));
 	}
+	
+	default double getDensityOfSpec(String specName) {
+		Optional<MaterialSpecification> foundSpec = getMaterials().stream().filter(spec -> specName.equals(spec.getName())).findFirst();
+		return foundSpec.isPresent() ? foundSpec.get().getMassPerUnit() : 0.0;
+	}
+
 
 	String getUnit();
 

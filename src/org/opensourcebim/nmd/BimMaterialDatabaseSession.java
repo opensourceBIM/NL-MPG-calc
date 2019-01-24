@@ -23,7 +23,7 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	}
 
 	@Override
-	public MpgMaterial retrieveMaterial(MpgMaterial material) {
+	public NmdProductCard retrieveMaterial(MpgMaterial material) {
 		// TODO Auto-generated method stub
 		return null;
 	}

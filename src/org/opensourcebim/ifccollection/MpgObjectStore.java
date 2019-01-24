@@ -1,23 +1,35 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
+import org.opensourcebim.ifcanalysis.GuidCollection;
 import org.opensourcebim.nmd.NmdProductCard;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public interface MpgObjectStore {
 
 	HashMap<String, MpgMaterial> getMaterials();
 	List<MpgObject> getObjects();
-	List<MpgSubObject> getSpaces();
-	void Reset();
+	List<MpgSpace> getSpaces();
 	
-	void addObject(MpgObject group);
+	void reset();
+	
 	Set<String> getDistinctProductTypes();
+
+	void addObject(MpgObject mpgObject);
 	List<MpgObject> getObjectsByProductType(String productType);
 	List<MpgObject> getObjectsByProductName(String productName);
-	List<MpgSubObject> getObjectsByMaterialName(String materialName);
+	List<MpgSpace> getObjectsByMaterialName(String materialName);
+	List<MpgObject> getObjectsByGuids(HashSet<String> guids);
+	Optional<MpgObject> getObjectByGuid(String guid);
+	
+	Stream<MpgObject> getChildren(String parentGuid);
 	
 	void addMaterial(String string);
 	Set<String> getAllMaterialNames();
@@ -26,20 +38,22 @@ public interface MpgObjectStore {
 	double getTotalVolumeOfMaterial(String name);
 	double getTotalVolumeOfProductType(String productType);
 	
-	void addSpace(MpgSubObject space);
+	void addSpace(MpgSpace space);
 	double getTotalFloorArea();
 	
 	boolean isIfcDataComplete();
-	List<String> getOrphanedMaterials();
-	List<String> getObjectGUIDsWithoutMaterial();
-	List<String> getObjectGUIDsWithRedundantMaterialSpecs();
-	List<String> getObjectGuidsWithPartialMaterialDefinition();
+	@JsonIgnore
+	GuidCollection getGuidsWithoutMaterial();
+	GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials();
+	@JsonIgnore
+	GuidCollection getGuidsWithoutVolume();
+	GuidCollection getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes();
+	GuidCollection getGuidsWithRedundantMaterials();
+	GuidCollection getGuidsWithUndefinedLayerMats();
 	
-	void SummaryReport();
 	void setProductCardForMaterial(String string, NmdProductCard specs);
 	boolean isMaterialDataComplete();
-
-
-
+	
+	void SummaryReport();
 
 }

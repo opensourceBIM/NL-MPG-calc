@@ -14,6 +14,6 @@ public interface NmdDataService {
 
 	void stop();
 
-	MpgMaterial retrieveMaterial(MpgMaterial material);
+	NmdProductCard retrieveMaterial(MpgMaterial material);
 
 }

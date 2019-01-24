@@ -9,7 +9,7 @@
 	<groupId>org.opensourcebim</groupId>
 	<artifactId>bouwbesluitmaterials</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>bouw besluit matereials</name>
+	<name>bouw besluit materials</name>
 	<description>BIM plugin for checking BIM models versus the environment norms of the Dutch government Bouwbesluit</description>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -29,7 +29,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>pluginbase</artifactId>
-			<version>1.5.117</version>
+			<version>1.5.121-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
@@ -39,7 +39,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimserverclientlib</artifactId>
-			<version>1.5.117</version>
+			<version>1.5.121-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

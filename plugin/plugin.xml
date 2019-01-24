@@ -2,8 +2,15 @@
 <PluginDescriptor>
 	<JavaPlugin>
 		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
-		<implementationClass>org.opensourcebim.ifccollection.IfcToMpgCollectionService</implementationClass>
+		<implementationClass>org.opensourcebim.services.IfcToMpgCollectionService</implementationClass>
 		<name>Ifc Object Collection for MPG Calculation</name>
-		<description>Collects all IFC objects that are required for MPG calculations</description>
+		<description>Collects all IFC objects that are required for MPG
+			calculations</description>
+	</JavaPlugin>
+		<JavaPlugin>
+		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
+		<implementationClass>org.opensourcebim.services.IfcToJsonDatasetService</implementationClass>
+		<name>Ifc Object collection with selection of properties per guid</name>
+		<description>Returns a Json dataset that can easily be represented in COTS analysis tools</description>
 	</JavaPlugin>
 </PluginDescriptor>

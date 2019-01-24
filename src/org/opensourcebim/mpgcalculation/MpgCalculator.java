@@ -1,10 +1,12 @@
 package org.opensourcebim.mpgcalculation;
 
+import java.util.HashMap;
 import java.util.Map.Entry;
 
 import org.opensourcebim.ifccollection.MpgMaterial;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.nmd.MaterialSpecification;
+import org.opensourcebim.nmd.NmdBasisProfiel;
 import org.opensourcebim.nmd.NmdProductCard;
 
 /**
@@ -18,9 +20,13 @@ public class MpgCalculator {
 
 	private MpgObjectStore objectStore = null;
 	private MpgCalculationResults results;
+	private HashMap<NmdImpactFactor, Double> costWeightFactors = new HashMap<NmdImpactFactor, Double>();
 
 	public MpgCalculator() {
 		setResults(new MpgCalculationResults());
+		for (NmdImpactFactor nmdImpactFactor : NmdImpactFactor.values()) {
+			costWeightFactors.put(nmdImpactFactor, 1.0);
+		}
 	}
 
 	public MpgCalculationResults calculate(double designLife) {
@@ -36,48 +42,78 @@ public class MpgCalculator {
 		}
 
 		try {
+			results.setTotalLifeTime(designLife);
+			results.setTotalFloorArea(objectStore.getTotalFloorArea());
+
 			// for each building material found:
 			for (MpgMaterial mpgMaterial : objectStore.getMaterials().values()) {
-				double totalVolume = objectStore.getTotalVolumeOfMaterial(mpgMaterial.getIfcName());
-				NmdProductCard specs = mpgMaterial.getNmdMaterialSpecs();
 
-				// calculate the # of replacements required
-				double replacements = this.calculateReplacements(designLife, specs.getLifeTime());
-				double specsDensity = specs.getDensity();
+				// this total volume can be in m3 or possible also in kWh depending on the unit
+				// in the product card
+				double totalVolume = objectStore.getTotalVolumeOfMaterial(mpgMaterial.getIfcName());
+				NmdProductCard specs = mpgMaterial.getNmdProductCard();
+
+				// category 3 data requires a 30% penalty
+				double categoryMultiplier = specs.getDataCategory() == 3 ? 1.3 : 1.0;
 
 				// a single building material can be composed of individual materials.
 				double specsMatSumKg = 0.0;
+
 				for (MaterialSpecification matSpec : specs.getMaterials()) {
+
+					// Determine replacements required.
+					// this is usually 1 for regular materials and > 1 for cyclic maintenance
+					// materials
+					double replacements = this.calculateReplacements(designLife, matSpec.getProductLifeTime(),
+							matSpec.getIsMaintenanceSpec());
+
 					// calculate total mass taking into account construction losses and replacements
-					double lifeTimeDesignVolume = replacements * totalVolume * matSpec.getMassPerUnit() / specsDensity;
-					double lifeTimeDesignMassKg = lifeTimeDesignVolume * matSpec.getMassPerUnit();
-					double lifeTimeTotalMassKg = lifeTimeDesignMassKg * (1 + matSpec.getConstructionLosses());
-					
-					// per individual material define construction factors
-					results.addCostFactors(matSpec.getBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
-								.calculateFactors(lifeTimeTotalMassKg, matSpec.getName()));
-					
-					// disposal impact factors have to be adjusted for disposal ratios
-					for (Entry<NmdLifeCycleStage, Double> entry : matSpec.GetDisposalRatios().entrySet()) {
-						results.addCostFactors(matSpec.getBasisProfiel(entry.getKey())
-								.calculateFactors(lifeTimeTotalMassKg * entry.getValue(), matSpec.getName()));
-					}					
-					
-					// TODO: calculate cyclic maintenance stage - apply different replacement factor
-					
-					// TODO: calculate energy and water use impact factors - apply different units of measure
-					
-					// add the individual material to the composite material mass for transport calculations
+					// TODO: how does the current approach tackle issues with plate materials etc.?
+					double lifeTimeVolumePerSpec = replacements * totalVolume;
+					double lifeTimeMassPerSpec = lifeTimeVolumePerSpec * matSpec.getMassPerUnit();
+					double lifeTimeTotalMassKg = lifeTimeMassPerSpec * (1 + matSpec.getConstructionLosses());
+
+					// ----- Production ----
+					results.incrementCostFactors(
+							matSpec.getBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
+									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier, costWeightFactors),
+							specs.getName(), matSpec.getName());
+
+					// ----- DISPOSAL ----
+					// assumptions are the the category multiplioer does not need to be applied for
+					// disposal stages
+					// see: Rekenregels_materiaalgebonden_milieuprestatie_gebouwen.pdf for more info
+					for (Entry<NmdLifeCycleStage, Double> entry : matSpec.getDisposalRatios().entrySet()) {
+						double cost = lifeTimeTotalMassKg * entry.getValue();
+
+						results.incrementCostFactors(
+								matSpec.getBasisProfiel(entry.getKey()).calculateFactors(cost, costWeightFactors),
+								specs.getName(), matSpec.getName());
+
+						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than
+						// per product
+						results.incrementCostFactors(
+								matSpec.getBasisProfiel(NmdLifeCycleStage.TransportForRemoval).calculateFactors(
+										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey()), costWeightFactors),
+								specs.getName(), matSpec.getName());
+					}
+
+					// DISPOSALTRANSPORT - done per individual material rather than per product
+
+					// ----- OPERATION COST ---- - apply different units of measure (l / m3 / kWh
+					// etc.)
+
+					// add the individual material to the composite material mass for transport
+					// calculations
 					specsMatSumKg += lifeTimeTotalMassKg;
 				}
-				
-				
-				// TODO: add correction factor for trasnport packign (standard 1)?
-				// TODO: determine disposal transport phase - determine composite recycling factor based on mayterial disposal factors.
 
-				// determine tranport costs per composed material in tonnes * km. 
-				results.addCostFactors(specs.getTransportProfile()
-						.calculateFactors(2 * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0), mpgMaterial.getIfcName()));
+				// TODO: add correction factor for volume transport (standard 1)?
+				// determine tranport costs per composed material in tonnes * km .
+				// the factor 2 has been removed since May 2015
+				results.incrementCostFactors(specs.getTransportProfile().calculateFactors(
+						categoryMultiplier * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0),
+						costWeightFactors), specs.getName());
 			}
 
 			results.SetResultsStatus(ResultStatus.Success);
@@ -97,16 +133,20 @@ public class MpgCalculator {
 	}
 
 	/**
-	 * Calculate the number of replacements required during the building design life
-	 * source:
+	 * Calculate the number of replacements required during the building design
+	 * life. Omit the initial application for Maintenance materials. source:
 	 * https://www.milieudatabase.nl/imgcms/20141125_SBK_BepMeth_vs_2_0_inclusief_Wijzigingsblad_1_juni_2017_&_1_augustus_2017.pdf
 	 * 
 	 * @param designLife  total duration that building should be usable in years
 	 * @param productLife design life of the material in years
 	 * @return number of replacements. number is alsways larger or equal to 1
 	 */
-	private double calculateReplacements(double designLife, double productLife) {
-		return Math.max(1.0, designLife / Math.max(1.0, productLife) - 1.0);
+	private double calculateReplacements(double designLife, double productLife, boolean isMaintenanceMaterial) {
+		if (isMaintenanceMaterial) {
+			return Math.max(2.0, designLife / Math.max(1.0, productLife) - 1.0) - 1.0;
+		} else {
+			return Math.max(1.0, designLife / Math.max(1.0, productLife));
+		}
 	}
 
 	public MpgCalculationResults getResults() {

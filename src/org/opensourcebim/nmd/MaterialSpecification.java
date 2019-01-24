@@ -3,6 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 
 /**
@@ -18,7 +19,7 @@ public interface MaterialSpecification {
 	String getCode();
 
 	String getUnit();
-
+	
 	/**
 	 * Unlike density this is the mass per construction unit. (mass per wall area or mass per meter piping)
 	 * @return the mass per volume, area or unit length of construction material
@@ -33,9 +34,19 @@ public interface MaterialSpecification {
 	 */
 	double getConstructionLosses();
 
-	HashMap<NmdLifeCycleStage, Double> GetDisposalRatios();
+	HashMap<NmdLifeCycleStage, Double> getDisposalRatios();
+	
+	void setDisposalRatio(NmdLifeCycleStage stage, double ratio) throws InvalidInputException;
 
+	double getDisposalDistance(NmdLifeCycleStage stage);
+	
 	NmdBasisProfiel getBasisProfiel(NmdLifeCycleStage lifeCycleStage);
 
 	Set<NmdLifeCycleStage> getDefinedProfiles();
+
+	void setDisposalDistance(NmdLifeCycleStage lifeCycleStage, double disposalDistance) throws InvalidInputException;
+
+	Boolean getIsMaintenanceSpec();
+
+	void setIsMaintenanceSpec(boolean b);
 }

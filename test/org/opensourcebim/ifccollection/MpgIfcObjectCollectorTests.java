@@ -15,11 +15,11 @@ import org.bimserver.models.ifc2x3tc1.IfcOpeningElement;
 import org.bimserver.models.ifc2x3tc1.IfcProduct;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
 import org.bimserver.models.ifc2x3tc1.IfcSIPrefix;
+import org.bimserver.models.ifc2x3tc1.IfcSpace;
 import org.eclipse.emf.common.util.BasicEList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
 
 public class MpgIfcObjectCollectorTests {
 
@@ -50,11 +50,11 @@ public class MpgIfcObjectCollectorTests {
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(0, collector.results().getMaterials().size());
 	}
-	
+		
 	@Test
 	public void testParseModelWithoutMaterialAssociatesWillNotThrowError() {		
 		factory.setAssociations(null);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(0, collector.results().getMaterials().size());
 	}
@@ -62,7 +62,7 @@ public class MpgIfcObjectCollectorTests {
 	@Test
 	public void testParseModelWithoutGeometryWillNotThrowError() {
 		factory.setGeometry(null);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 		
 		assertEquals(0, collector.results().getMaterials().size());
@@ -71,26 +71,30 @@ public class MpgIfcObjectCollectorTests {
 	@Test
 	public void testCollectObjectsWillGatherObjectNamesofProduct() {
 		String name = "a structural beam";
-		factory.addProductToModel(ifcModel, name);
+		factory.addProductToModel(ifcModel, name, null);
 		collector.collectIfcModelObjects(ifcModel);
 		
 		assertEquals(name, collector.results().getObjects().get(0).getObjectName());
 	}
 	
-	@Test
-	public void testCollectObjectsWillGatherObjectTypeOfProduct() {
-		String type = "Door";
-		factory.addProductToModel(ifcModel, null, type);
-		collector.collectIfcModelObjects(ifcModel);
+	@Test 
+	public void testCollectorWillGatherParentChildRelations() {
+
+		factory.addProductToModel(ifcModel, "a", null);
+		IfcProduct parent = ifcModel.getAllWithSubTypes(IfcProduct.class).get(0);
 		
-		// as getClass() is a final method it cannot be mocked to return 'Door'.
-		assertTrue(collector.results().getObjects().get(0).getObjectType().contains("Mockito"));
+		
+		factory.addProductToModel(ifcModel, "b", parent.getGlobalId());
+		IfcProduct element = ifcModel.getAllWithSubTypes(IfcProduct.class).get(1);
+		
+		collector.collectIfcModelObjects(ifcModel);
+		assertEquals(parent.getGlobalId(), collector.results().getObjects().get(1).getParentId());
 	}
-	
+		
 	@Test
 	public void testCanParseModelWithSingleMaterial() {
 		factory.addMaterial("aluminium");
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(1, collector.results().getMaterials().size());
@@ -100,7 +104,7 @@ public class MpgIfcObjectCollectorTests {
 	public void testCanParseModelWithDuplicateMaterial() {
 		factory.addMaterial("aluminium");
 		factory.addMaterial("aluminium");
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
 		// if the materials are the same we should only store it once.
@@ -110,13 +114,13 @@ public class MpgIfcObjectCollectorTests {
 	@Test
 	public void testCanParseModelWithMaterialsInDifferentProducts() {
 		factory.addMaterial("aluminium");
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		// first clean the associates to avoid adding aluminium twice.
 		factory.setAssociations(new BasicEList<>());
 		factory.setGeometry(factory.getGeometryInfoMock(2, 2));
 		factory.addMaterial("steel");
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
 		// if the materials are the same we should only store it once.
@@ -124,20 +128,20 @@ public class MpgIfcObjectCollectorTests {
 	}
 	
 	@Test
-	public void testOmitMaterialsThatAreNotLinkedToGeometry() {
+	public void testAddMaterialsThatAreNotLinkedToGeometry() {
 		factory.addMaterial("aluminium");		
 		factory.addMaterial("steel");
 		factory.setGeometry(null);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		// if the materials are the same we should only store it once.
-		assertEquals(0, collector.results().getMaterials().size());
+
+		assertEquals(2, collector.results().getMaterials().size());
 	}
 	
 	@Test
 	public void testCanParseModelWithMaterialList() {
 		factory.addMaterialList(Arrays.asList("Steel", "Aluminium", "Aluminium"));
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(2, collector.results().getMaterials().size());
 	}
@@ -145,7 +149,7 @@ public class MpgIfcObjectCollectorTests {
 	@Test
 	public void testCanParseModelWithEmptyMaterialList() {
 		factory.addMaterialList(new ArrayList<String>());
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(0, collector.results().getMaterials().size());
 	}
@@ -153,7 +157,7 @@ public class MpgIfcObjectCollectorTests {
 	@Test
 	public void testCanParseModelWithMaterialLayer() {
 		factory.addMaterialLayer("brick", 0.15);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(1, collector.results().getMaterials().size());
 	}
@@ -168,7 +172,7 @@ public class MpgIfcObjectCollectorTests {
 		layers.add(new AbstractMap.SimpleEntry<>("brick", 0.15));
 		
 		factory.addMaterialLayerSet(layers);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(3, collector.results().getMaterials().size());
 	}
@@ -183,7 +187,7 @@ public class MpgIfcObjectCollectorTests {
 		layers.add(new AbstractMap.SimpleEntry<>("brick", 0.15));
 		
 		factory.addMaterialLayerSetUsage(layers);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(3, collector.results().getMaterials().size());
 	}
@@ -200,7 +204,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterial("steel");
 		factory.addMaterialLayer("styrofoam", .3);
 		
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(4, collector.results().getMaterials().size());
 	}
@@ -212,9 +216,9 @@ public class MpgIfcObjectCollectorTests {
 		ifcModel = factory.getModelMock();
 		factory.addMaterial("aluminium");
 		
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(1.0e9, collector.results().getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(1.0e-9, collector.results().getObjects().get(0).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -222,7 +226,7 @@ public class MpgIfcObjectCollectorTests {
 	{
 		factory.setGeometry(factory.getGeometryInfoMock(1, 3));
 		factory.addMaterial("brick");
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(3, collector.results().getObjects().get(0).getVolume(), 1e-8);
@@ -233,11 +237,11 @@ public class MpgIfcObjectCollectorTests {
 	{
 		factory.setGeometry(factory.getGeometryInfoMock(1, 3));
 		factory.addMaterial("brick");
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 
 		// add another product with a different geometry
 		factory.setGeometry(factory.getGeometryInfoMock(1, 2));
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(3, collector.results().getObjects().get(0).getVolume(), 1e-8);
@@ -246,14 +250,14 @@ public class MpgIfcObjectCollectorTests {
 	@Test
 	public void testCollectorDeterminesVolumeOnLayerThicknessRatio()
 	{
-		factory.setGeometry(factory.getGeometryInfoMock(1, 1));
-		factory.addMaterialLayer("brick", 1);
-		factory.addMaterialLayer("rockwool", 3);
-		factory.addProductToModel(ifcModel);
+		factory.setGeometry(factory.getGeometryInfoMock(1.0, 1.0));
+		factory.addMaterialLayer("brick", 1.0);
+		factory.addMaterialLayer("rockwool", 3.0);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(.25, collector.results().getObjects().get(0).getSubObjects().get(0).getVolume(), 1e-8);
-		assertEquals(.75, collector.results().getObjects().get(0).getSubObjects().get(1).getVolume(), 1e-8);
+		assertEquals(.25, collector.results().getObjects().get(0).getLayers().get(0).getVolume(), 1e-8);
+		assertEquals(.75, collector.results().getObjects().get(0).getLayers().get(1).getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -262,7 +266,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.setGeometry(factory.getGeometryInfoMock(1, 1));
 		factory.addMaterialLayer("brick", 1);
 		factory.addMaterialLayer("rockwool", 3);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		factory.setGeometry(factory.getGeometryInfoMock(1, 10));
 		factory.setAssociations(new BasicEList<IfcRelAssociates>());
@@ -271,40 +275,39 @@ public class MpgIfcObjectCollectorTests {
 		layers.add(new AbstractMap.SimpleEntry<>("rockwool", 0.5));
 		layers.add(new AbstractMap.SimpleEntry<>("brick", 0.25));
 		factory.addMaterialLayerSet(layers);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(.25, collector.results().getObjects().get(0).getSubObjects().get(0).getVolume(), 1e-8);
-		assertEquals(.75, collector.results().getObjects().get(0).getSubObjects().get(1).getVolume(), 1e-8);
+		assertEquals(.25, collector.results().getObjects().get(0).getLayers().get(0).getVolume(), 1e-8);
+		assertEquals(.75, collector.results().getObjects().get(0).getLayers().get(1).getVolume(), 1e-8);
 
-		assertEquals(2.5, collector.results().getObjects().get(1).getSubObjects().get(0).getVolume(), 1e-8);
-		assertEquals(5.0, collector.results().getObjects().get(1).getSubObjects().get(1).getVolume(), 1e-8);
-		assertEquals(2.5, collector.results().getObjects().get(1).getSubObjects().get(2).getVolume(), 1e-8);
+		assertEquals(2.5, collector.results().getObjects().get(1).getLayers().get(0).getVolume(), 1e-8);
+		assertEquals(5.0, collector.results().getObjects().get(1).getLayers().get(1).getVolume(), 1e-8);
+		assertEquals(2.5, collector.results().getObjects().get(1).getLayers().get(2).getVolume(), 1e-8);
 	}
 	
 	@Test
-	public void testMaterialLayerSetWithoutMaterialDefinitionsReturnsNullMaterial()
+	public void testMaterialLayerSetWithoutMaterialDefinitionsReturnsNoMaterials()
 	{
-		factory.setGeometry(factory.getGeometryInfoMock(1, 10));
-		factory.setAssociations(new BasicEList<IfcRelAssociates>());
-		
 		// add a materiallayerset without materials, just the thicknesses
 		List<Entry<String, Double>> layers = new ArrayList<Entry<String, Double>>();
 		layers.add(new AbstractMap.SimpleEntry<>(null, 0.25));
 		layers.add(new AbstractMap.SimpleEntry<>(null, 0.5));
 		layers.add(new AbstractMap.SimpleEntry<>(null, 0.25));
 		factory.addMaterialLayerSet(layers);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
+		
+		factory.setGeometry(factory.getGeometryInfoMock(1, 10));
+		factory.setAssociations(new BasicEList<IfcRelAssociates>());
 		
 		// add a materialList with just two materials
 		factory.addMaterialList(Arrays.asList("Steel", "Brick"));
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
 		
 		// material names of layers are null
-		assertEquals(null, collector.results().getObjects().get(0).getMaterials().get(0).getIfcName());
-		assertEquals(null, collector.results().getObjects().get(0).getMaterials().get(0).getIfcName());
+		assertTrue(collector.results().getObjects().get(0).getMaterialNamesBySource(null).size() == 0);
 	}
 	
 	@Test
@@ -314,23 +317,23 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialLayer("brick", 1);
 		factory.addMaterialLayer("rockwool", 3);
 		factory.addMaterial("steel");
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(.25,collector.results().getObjects().get(0).getSubObjects().get(0).getVolume(), 1e-8);
-		assertEquals(.75,collector.results().getObjects().get(0).getSubObjects().get(1).getVolume(), 1e-8);
+		assertEquals(.25,collector.results().getObjects().get(0).getLayers().get(0).getVolume(), 1e-8);
+		assertEquals(.75,collector.results().getObjects().get(0).getLayers().get(1).getVolume(), 1e-8);
 		
 		// as there are layers present and this material is added separately we cannot assign a volume to it.
-		assertEquals(2, collector.results().getObjects().get(0).getSubObjects().size());
+		assertEquals(2, collector.results().getObjects().get(0).getLayers().size());
 	}
 	
 	@Test
 	public void testCollectorCollectsSpacesSeparately() {
 		factory.setGeometry(factory.getGeometryInfoMock(1, 1));
 		factory.addMaterialLayer("brick", 1);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		factory.setGeometry(factory.getGeometryInfoMock(1, 4.0));
-		factory.addSpaceToModel(ifcModel);
+		factory.addSpaceToModel(ifcModel, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(4.0, collector.results().getSpaces().get(0).getVolume(), 1e-8);
@@ -341,12 +344,12 @@ public class MpgIfcObjectCollectorTests {
 	public void testCollectorOmitsChildSpacesFromVolumeTotal() {
 		factory.setGeometry(factory.getGeometryInfoMock(1, 1));
 		factory.addMaterialLayer("brick", 1);
-		factory.addProductToModel(ifcModel);
+		factory.addProductToModel(ifcModel, null, null);
 		factory.setGeometry(factory.getGeometryInfoMock(1, 4.0));
-		factory.addSpaceToModel(ifcModel);
+		factory.addSpaceToModel(ifcModel, null);
 		
 		// add another space that is a child of the first one.
-		factory.addSpaceToModel(ifcModel, ifcModel.getAllWithSubTypes(IfcProduct.class).get(1));
+		factory.addSpaceToModel(ifcModel, ifcModel.getAllWithSubTypes(IfcSpace.class).get(0));
 		
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(4.0, collector.results().getSpaces().get(0).getVolume(), 1e-8);
