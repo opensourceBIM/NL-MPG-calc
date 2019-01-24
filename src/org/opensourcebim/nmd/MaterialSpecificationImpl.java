@@ -15,6 +15,7 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 	private double constructionLossFactor;
 	private HashMap<NmdLifeCycleStage, Double> disposalDistances;
 	private HashMap<NmdLifeCycleStage, Double> disposalRatios;
+	private Boolean isMaintenanceSpec;
 	
 	/**
 	 * NmdBasisProfiles available for this material specification.
@@ -42,6 +43,8 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 		}
 		
 		this.profiles = new HashMap<NmdLifeCycleStage, NmdBasisProfiel>();
+	
+		this.setIsMaintenanceSpec(false);
 	}
 	
 	@Override
@@ -155,6 +158,13 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 		disposalDistances.put(lifeCycleStage, disposalDistance);
 	}
 
+	@Override
+	public Boolean getIsMaintenanceSpec() {
+		return isMaintenanceSpec;
+	}
 
-
+	@Override
+	public void setIsMaintenanceSpec(boolean flag) {
+		this.isMaintenanceSpec = flag;
+	}
 }

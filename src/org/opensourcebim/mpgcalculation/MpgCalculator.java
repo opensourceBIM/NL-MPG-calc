@@ -64,19 +64,17 @@ public class MpgCalculator {
 					// Determine replacements required.
 					// this is usually 1 for regular materials and > 1 for cyclic maintenance
 					// materials
-					// TODO: in order to check for cyclic maintenance we need to reduce the
-					// replacements with 1, but how do we know when it sia cyclic maintenace
-					// materialspec? as of Sep 2016 the minimum should always be 1 (so MAX(2, replLife) - 1;)
-					double replacements = this.calculateReplacements(designLife, matSpec.getProductLifeTime());
+					double replacements = this.calculateReplacements(designLife, matSpec.getProductLifeTime(),
+							matSpec.getIsMaintenanceSpec());
 
 					// calculate total mass taking into account construction losses and replacements
-					// TODO: how does the current approach tackle issues with palte materials etc.?
+					// TODO: how does the current approach tackle issues with plate materials etc.?
 					double lifeTimeVolumePerSpec = replacements * totalVolume;
 					double lifeTimeMassPerSpec = lifeTimeVolumePerSpec * matSpec.getMassPerUnit();
 					double lifeTimeTotalMassKg = lifeTimeMassPerSpec * (1 + matSpec.getConstructionLosses());
 
 					// ----- Production ----
-					results.addCostFactors(
+					results.incrementCostFactors(
 							matSpec.getBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
 									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier, costWeightFactors),
 							specs.getName(), matSpec.getName());
@@ -88,20 +86,19 @@ public class MpgCalculator {
 					for (Entry<NmdLifeCycleStage, Double> entry : matSpec.getDisposalRatios().entrySet()) {
 						double cost = lifeTimeTotalMassKg * entry.getValue();
 
-						results.addCostFactors(
+						results.incrementCostFactors(
 								matSpec.getBasisProfiel(entry.getKey()).calculateFactors(cost, costWeightFactors),
 								specs.getName(), matSpec.getName());
-						
-						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than per product
-						results.incrementCostFactors(matSpec.getBasisProfiel(NmdLifeCycleStage.TransportForRemoval)
-							.calculateFactors(
-								cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey()), costWeightFactors),
-							specs.getName(), matSpec.getName());
-					}
-					
-					// DISPOSALTRANSPORT - done per individual material rather than per product
-					
 
+						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than
+						// per product
+						results.incrementCostFactors(
+								matSpec.getBasisProfiel(NmdLifeCycleStage.TransportForRemoval).calculateFactors(
+										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey()), costWeightFactors),
+								specs.getName(), matSpec.getName());
+					}
+
+					// DISPOSALTRANSPORT - done per individual material rather than per product
 
 					// ----- OPERATION COST ---- - apply different units of measure (l / m3 / kWh
 					// etc.)
@@ -114,7 +111,7 @@ public class MpgCalculator {
 				// TODO: add correction factor for volume transport (standard 1)?
 				// determine tranport costs per composed material in tonnes * km .
 				// the factor 2 has been removed since May 2015
-				results.addCostFactors(specs.getTransportProfile().calculateFactors(
+				results.incrementCostFactors(specs.getTransportProfile().calculateFactors(
 						categoryMultiplier * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0),
 						costWeightFactors), specs.getName());
 			}
@@ -136,16 +133,20 @@ public class MpgCalculator {
 	}
 
 	/**
-	 * Calculate the number of replacements required during the building design life
-	 * source:
+	 * Calculate the number of replacements required during the building design
+	 * life. Omit the initial application for Maintenance materials. source:
 	 * https://www.milieudatabase.nl/imgcms/20141125_SBK_BepMeth_vs_2_0_inclusief_Wijzigingsblad_1_juni_2017_&_1_augustus_2017.pdf
 	 * 
 	 * @param designLife  total duration that building should be usable in years
 	 * @param productLife design life of the material in years
 	 * @return number of replacements. number is alsways larger or equal to 1
 	 */
-	private double calculateReplacements(double designLife, double productLife) {
-		return Math.max(1.0, designLife / Math.max(1.0, productLife) - 1.0);
+	private double calculateReplacements(double designLife, double productLife, boolean isMaintenanceMaterial) {
+		if (isMaintenanceMaterial) {
+			return Math.max(2.0, designLife / Math.max(1.0, productLife) - 1.0) - 1.0;
+		} else {
+			return Math.max(1.0, designLife / Math.max(1.0, productLife));
+		}
 	}
 
 	public MpgCalculationResults getResults() {

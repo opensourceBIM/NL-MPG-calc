@@ -45,4 +45,8 @@ public interface MaterialSpecification {
 	Set<NmdLifeCycleStage> getDefinedProfiles();
 
 	void setDisposalDistance(NmdLifeCycleStage lifeCycleStage, double disposalDistance) throws InvalidInputException;
+
+	Boolean getIsMaintenanceSpec();
+
+	void setIsMaintenanceSpec(boolean b);
 }

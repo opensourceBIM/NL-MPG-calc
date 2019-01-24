@@ -25,6 +25,11 @@ public class MpgCalculationResults {
 	public MpgCalculationResults() {
 		status = ResultStatus.NotRun;
 		costFactors = new HashSet<MpgCostFactor>();
+		this.reset();
+	}
+
+	public void reset() {
+		costFactors.clear();
 		totalFloorArea = 1.0;
 		totalLifeTime = 1.0;
 	}
@@ -78,50 +83,29 @@ public class MpgCalculationResults {
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
-	/**
-	 * CostFactors should be unique per calculation. Therefore check for existence
-	 * and throw an error when a to be added factor already exists.
-	 * 
-	 * @param newFactors Collection of CostFactors
-	 */
-	public void addCostFactors(Set<MpgCostFactor> newFactors, String product) {
-		for (MpgCostFactor costFactor : newFactors) {
-			this.addCostFactor(costFactor, product, "");
-		}
-	}
-
-	public void addCostFactors(Set<MpgCostFactor> newFactors, String product, String specName) {
-		for (MpgCostFactor costFactor : newFactors) {
-			this.addCostFactor(costFactor, product, specName);
-		}
-	}
-
-	public void addCostFactor(MpgCostFactor mpgCostFactor, String product, String specName) {
-
-		mpgCostFactor.setProductName(product);
-		mpgCostFactor.setSpecName(specName);
-
-		if (costFactors.stream().anyMatch(f -> f.equals(mpgCostFactor))) {
-			throw new KeyAlreadyExistsException("Cannot add a cost factor that already exists");
-		}
-
-		costFactors.add(mpgCostFactor);
-	}
-
 	public void incrementCostFactors(Set<MpgCostFactor> factors, String product, String specName) {
 		for (MpgCostFactor costFactor : factors) {
 			this.incrementCostFactor(costFactor, product, specName);
 		}
 	}
 
+	public void incrementCostFactors(Set<MpgCostFactor> factors, String product) {
+		for (MpgCostFactor costFactor : factors) {
+			this.incrementCostFactor(costFactor, product, "");
+		}
+	}
+
 	/**
-	 * increment the value fo a costfactor if it is present in the current set
+	 * Increment the value fo a costfactor if it is present in the current set.
+	 * otherwise create a new factor
+	 * 
+	 * CostFactors should be unique per calculation according to it's equals (method)
 	 * 
 	 * @param mpgCostFactor the value to add
 	 * @param product       product card name of the factor
 	 * @param specName      material spec name of the factor
 	 */
-	private void incrementCostFactor(MpgCostFactor mpgCostFactor, String product, String specName) {
+	public void incrementCostFactor(MpgCostFactor mpgCostFactor, String product, String specName) {
 
 		mpgCostFactor.setProductName(product);
 		mpgCostFactor.setSpecName(specName);

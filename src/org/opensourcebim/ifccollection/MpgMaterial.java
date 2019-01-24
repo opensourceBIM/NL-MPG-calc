@@ -13,7 +13,6 @@ public class MpgMaterial {
 	private String nmdIdentifier;
 	private String BimBotIdentifier;
 	
-	// properties relevant from 
 	private NmdProductCard nmdProductCard;
 	
 	public MpgMaterial(String name)
