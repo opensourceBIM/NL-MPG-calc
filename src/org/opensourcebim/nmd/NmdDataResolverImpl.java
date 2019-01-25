@@ -20,8 +20,8 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 
 	public NmdDataResolverImpl() {
 		services = new ArrayList<NmdDataService>();
-
-		this.addService(new NmdDataBaseSession());
+		String nmdToken = "";
+		this.addService(new NmdDataBaseSession(nmdToken));
 		this.addService(new BimMaterialDatabaseSession());
 
 	}
@@ -34,7 +34,7 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 		try {
 			// start any subscribed services
 			for (NmdDataService nmdDataService : services) {
-				nmdDataService.start();
+				nmdDataService.login();
 			}
 
 			// get data per material - run through services in order
@@ -56,7 +56,7 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 
 		finally {
 			for (NmdDataService nmdDataService : services) {
-				nmdDataService.stop();
+				nmdDataService.logout();
 			}
 		}
 
