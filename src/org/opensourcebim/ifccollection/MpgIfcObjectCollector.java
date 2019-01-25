@@ -113,8 +113,12 @@ public class MpgIfcObjectCollector {
 			// ignore any elements that are irrelevant for the mpg calculations
 			if (!this.ignoredProducts.contains(element.getClass())) {
 
-				String guid = element.getGlobalId();
-				if (StringUtils.isBlank(guid)) {
+				// create the mpg element
+				String newMpgElementId = element.getName() + "-" + element.getGlobalId();
+				this.objectStore.addElement(newMpgElementId);
+				MpgElement newMpgElement = this.objectStore.getElementByName(newMpgElementId);
+				
+				if (StringUtils.isBlank(element.getGlobalId())) {
 					continue;
 				}
 				
@@ -165,6 +169,7 @@ public class MpgIfcObjectCollector {
 
 				// all properties are set. add it to the store.
 				objectStore.getObjects().add(mpgObject);
+				newMpgElement.setMpgObject(mpgObject);
 			}
 		}
 
@@ -190,19 +195,7 @@ public class MpgIfcObjectCollector {
 		if (geometry != null) {
 			area = this.getAreaUnit().convert(geometry.getArea(), modelAreaUnit);
 			volume = this.getVolumeUnit().convert(geometry.getVolume(), modelVolumeUnit);
-		} else {
-			// get volume of product by summing the volumes of its children
-//			if (prod.getIsDecomposedBy().size() > 0) {
-//				Double totalVolume = prod.getIsDecomposedBy().stream().flatMap(rel -> rel.getRelatedObjects().stream())
-//						.filter(o -> o instanceof IfcProduct).map(o -> ((IfcProduct) o).getGeometry())
-//						.map(g -> (g != null) ? g.getVolume() : 0.0).collect(Collectors.summingDouble(v -> v));
-//
-//				volume = this.getVolumeUnit().convert(totalVolume, modelVolumeUnit);
-//			} else {
-//				System.out.println(prod.getGlobalId());
-//			}
-		}
-
+		} 
 		return new ImmutablePair<Double, Double>(area, volume);
 	}
 

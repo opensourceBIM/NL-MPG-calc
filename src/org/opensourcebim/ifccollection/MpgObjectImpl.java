@@ -43,7 +43,7 @@ public class MpgObjectImpl implements MpgObject {
 		this.parentId = parentId;
 
 		properties = new HashMap<String, Object>();
-		listedMaterials = new BasicEList<MaterialSource>();
+		this.listedMaterials = new BasicEList<MaterialSource>();
 
 		this.store = () -> {
 			return objectStore;
@@ -130,13 +130,18 @@ public class MpgObjectImpl implements MpgObject {
 
 	@Override
 	public void addMaterialSource(String materialName, String materialGuid, String source) {
-		this.listedMaterials.add(new MaterialSource(materialGuid, materialName, source));
-		this.getStore().addMaterial(materialName);
+		this.getListedMaterials().add(new MaterialSource(materialGuid, materialName, source));
+	}
+	
+
+	@Override
+	public List<MaterialSource> getListedMaterials() {
+		return listedMaterials;
 	}
 	
 	@Override
 	public List<String> getMaterialNamesBySource(String source) {
-		return this.listedMaterials.stream()
+		return this.getListedMaterials().stream()
 				.filter(m -> source == null ? true : m.getSource() == source)
 				.map(m -> m.getName())
 				.collect(Collectors.toList());
@@ -155,8 +160,8 @@ public class MpgObjectImpl implements MpgObject {
 
 	@Override
 	public boolean hasDuplicateMaterialNames() {
-		return this.listedMaterials.stream().distinct().collect(Collectors.toSet())
-				.size() < this.listedMaterials.size();
+		return this.getListedMaterials().stream().distinct().collect(Collectors.toSet())
+				.size() < this.getListedMaterials().size();
 	}
 
 	/**

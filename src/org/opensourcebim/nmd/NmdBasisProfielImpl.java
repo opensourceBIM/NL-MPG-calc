@@ -9,7 +9,7 @@ import org.opensourcebim.mpgcalculation.MpgCostFactor;
 import org.opensourcebim.mpgcalculation.NmdImpactFactor;
 import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 
-public class NmdBasisProfielImpl implements NmdBasisProfiel {
+public class NmdBasisProfielImpl implements NmdFaseProfiel {
 
 	private String description;
 	private HashMap<NmdImpactFactor, Double> factors;

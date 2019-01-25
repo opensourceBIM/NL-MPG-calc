@@ -6,7 +6,7 @@ import java.util.Set;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 
-public class MaterialSpecificationImpl implements MaterialSpecification {
+public class MaterialSpecificationImpl implements NmdProfileSet {
 	private String name;
 	private String code;
 	private String unit;
@@ -21,7 +21,7 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 	 * NmdBasisProfiles available for this material specification.
 	 * Can be different for specs within the same productcard
 	 */
-	private HashMap<NmdLifeCycleStage, NmdBasisProfiel> profiles;
+	private HashMap<NmdLifeCycleStage, NmdFaseProfiel> profiles;
 
 	public MaterialSpecificationImpl() {
 		this.disposalRatios = new HashMap<NmdLifeCycleStage, Double>();
@@ -42,7 +42,7 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 			e.printStackTrace();
 		}
 		
-		this.profiles = new HashMap<NmdLifeCycleStage, NmdBasisProfiel>();
+		this.profiles = new HashMap<NmdLifeCycleStage, NmdFaseProfiel>();
 	
 		this.setIsMaintenanceSpec(false);
 	}
@@ -126,11 +126,11 @@ public class MaterialSpecificationImpl implements MaterialSpecification {
 	}
 
 	@Override
-	public NmdBasisProfiel getBasisProfiel(NmdLifeCycleStage lifeCycleStage) {
+	public NmdFaseProfiel getFaseProfiel(NmdLifeCycleStage lifeCycleStage) {
 		return this.profiles.getOrDefault(lifeCycleStage, null);
 	}
 	
-	public void addBasisProfiel(NmdLifeCycleStage stage, NmdBasisProfiel profile) throws InvalidInputException {
+	public void addBasisProfiel(NmdLifeCycleStage stage, NmdFaseProfiel profile) throws InvalidInputException {
 		if (stage == NmdLifeCycleStage.TransportToSite) {
 			throw new InvalidInputException("cannot add transport profile to a single material");
 		}

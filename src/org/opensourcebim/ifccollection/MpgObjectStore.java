@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public interface MpgObjectStore {
 
-	HashMap<String, MpgMaterial> getMaterials();
+	HashSet<MpgElement> getElements();
 	List<MpgObject> getObjects();
 	List<MpgSpace> getSpaces();
 	
@@ -31,10 +31,10 @@ public interface MpgObjectStore {
 	
 	Stream<MpgObject> getChildren(String parentGuid);
 	
-	void addMaterial(String string);
-	Set<String> getAllMaterialNames();
-	MpgMaterial getMaterialByName(String name);
-	List<MpgMaterial> getMaterialsByProductType(String productType);
+	void addElement(String string);
+
+	MpgElement getElementByName(String name);
+	List<MpgElement> getElementsByProductType(String productType);
 	double getTotalVolumeOfMaterial(String name);
 	double getTotalVolumeOfProductType(String productType);
 	
@@ -51,9 +51,10 @@ public interface MpgObjectStore {
 	GuidCollection getGuidsWithRedundantMaterials();
 	GuidCollection getGuidsWithUndefinedLayerMats();
 	
-	void setProductCardForMaterial(String string, NmdProductCard specs);
+	void setProductCardForElement(String string, NmdProductCard specs);
 	boolean isMaterialDataComplete();
+	Stream<String> getAllMaterialNames();
+
 	
 	void SummaryReport();
-
 }

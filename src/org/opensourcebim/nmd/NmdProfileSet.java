@@ -13,7 +13,7 @@ import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
  * @author vijj
  *
  */
-public interface MaterialSpecification {
+public interface NmdProfileSet {
 	String getName();
 
 	String getCode();
@@ -40,7 +40,7 @@ public interface MaterialSpecification {
 
 	double getDisposalDistance(NmdLifeCycleStage stage);
 	
-	NmdBasisProfiel getBasisProfiel(NmdLifeCycleStage lifeCycleStage);
+	NmdFaseProfiel getFaseProfiel(NmdLifeCycleStage lifeCycleStage);
 
 	Set<NmdLifeCycleStage> getDefinedProfiles();
 

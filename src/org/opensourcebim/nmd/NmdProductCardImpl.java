@@ -13,11 +13,11 @@ public class NmdProductCardImpl implements NmdProductCard {
 	private String unit;
 	private double distanceToProducer;
 	private double lifeTime;
-	private NmdBasisProfiel transportProfile;
-	private Set<MaterialSpecification> specifications;
+	private NmdFaseProfiel transportProfile;
+	private Set<NmdProfileSet> specifications;
 	
 	public NmdProductCardImpl() {
-		this.specifications = new HashSet<MaterialSpecification>();
+		this.specifications = new HashSet<NmdProfileSet>();
 	}
 	
 	@Override
@@ -51,11 +51,6 @@ public class NmdProductCardImpl implements NmdProductCard {
 	}
 
 	@Override
-	public String getUnit() {
-		return this.unit;
-	}
-
-	@Override
 	public double getDistanceFromProducer() {
 		return this.distanceToProducer;
 	}
@@ -66,17 +61,17 @@ public class NmdProductCardImpl implements NmdProductCard {
 	}
 
 	@Override
-	public NmdBasisProfiel getTransportProfile() {
+	public NmdFaseProfiel getTransportProfile() {
 		return this.transportProfile;
 	}
 
 	@Override
-	public Set<MaterialSpecification> getMaterials() {
+	public Set<NmdProfileSet> getProfileSets() {
 		return this.specifications;
 	}
 	
 	@Override
-	public void addSpecification(MaterialSpecification spec) {
+	public void addProfileSet(NmdProfileSet spec) {
 		this.specifications.add(spec);
 	}
 
@@ -125,7 +120,7 @@ public class NmdProductCardImpl implements NmdProductCard {
 		this.lifeTime = lifeTime;
 	}
 
-	public void setTransportProfile(NmdBasisProfiel transportProfile) {
+	public void setTransportProfile(NmdFaseProfiel transportProfile) {
 		this.transportProfile = transportProfile;
 	}
 }

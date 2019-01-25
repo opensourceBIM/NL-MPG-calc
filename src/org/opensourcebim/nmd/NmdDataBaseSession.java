@@ -13,7 +13,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
-import org.opensourcebim.ifccollection.MpgMaterial;
+import org.opensourcebim.ifccollection.MpgElement;
 
 /**
  * Implementation of the NmdDataService to retrieve data from the NMD see :
@@ -81,7 +81,7 @@ public class NmdDataBaseSession implements NmdDataService {
 	}
 
 	@Override
-	public NmdProductCard retrieveMaterial(MpgMaterial material) {
+	public NmdProductCard retrieveMaterial(MpgElement material) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -93,13 +93,13 @@ public class NmdDataBaseSession implements NmdDataService {
 	}
 
 	@Override
-	public List<MaterialSpecification> getSpecsForProducts(List<NmdProductCard> products) {
+	public List<NmdProfileSet> getSpecsForProducts(List<NmdProductCard> products) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<NmdBasisProfiel> getPhaseProfiles(List<Integer> ids) {
+	public List<NmdFaseProfiel> getPhaseProfiles(List<Integer> ids) {
 		// TODO Auto-generated method stub
 		return null;
 	}

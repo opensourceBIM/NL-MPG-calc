@@ -16,7 +16,7 @@ import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
  * @author vijj
  *
  */
-public interface NmdBasisProfiel {
+public interface NmdFaseProfiel {
 
 	String getDescription();
 	

@@ -24,6 +24,7 @@ import org.bimserver.models.ifc2x3tc1.IfcProject;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesMaterial;
 import org.bimserver.models.ifc2x3tc1.IfcRelDecomposes;
+import org.bimserver.models.ifc2x3tc1.IfcRelDefines;
 import org.bimserver.models.ifc2x3tc1.IfcSIPrefix;
 import org.bimserver.models.ifc2x3tc1.IfcSIUnit;
 import org.bimserver.models.ifc2x3tc1.IfcSpace;
@@ -72,8 +73,11 @@ public class IfcMockFactory {
 			when(mockRel.getRelatingObject()).thenReturn(parentObject);
 			relations.add(mockRel);
 		}
-
+		
 		when(newProduct.getDecomposes()).thenReturn(relations);
+		
+		// for now add empty reldefinedBy
+		when(newProduct.getIsDefinedBy()).thenReturn(new BasicEList<IfcRelDefines>());
 		
 		products.add(newProduct);
 		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);

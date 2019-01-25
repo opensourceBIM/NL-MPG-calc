@@ -3,7 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.Date;
 import java.util.List;
 
-import org.opensourcebim.ifccollection.MpgMaterial;
+import org.opensourcebim.ifccollection.MpgElement;
 
 /**
  * Standard interface to provide material data from the source to the user.
@@ -21,10 +21,10 @@ public interface NmdDataService {
 
 	List<NmdProductCard> getAllProductSets();
 	
-	List<MaterialSpecification> getSpecsForProducts(List<NmdProductCard> products);
+	List<NmdProfileSet> getSpecsForProducts(List<NmdProductCard> products);
 	
-	List<NmdBasisProfiel> getPhaseProfiles(List<Integer> ids);
+	List<NmdFaseProfiel> getPhaseProfiles(List<Integer> ids);
 	
-	NmdProductCard retrieveMaterial(MpgMaterial material);
+	NmdProductCard retrieveMaterial(MpgElement material);
 
 }

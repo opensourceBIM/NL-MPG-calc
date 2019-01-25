@@ -3,21 +3,30 @@ package org.opensourcebim.ifccollection;
 import org.opensourcebim.nmd.NmdProductCard;
 
 /**
- * Storage container class to archive all material properties.
+ * Storage container to map mpgOject to the Nmdproducts
  * @author Jasper Vijverberg
  *
  */
-public class MpgMaterial {
+public class MpgElement {
 	// id's
-	private String ifcName;
 	private String nmdIdentifier;
 	private String BimBotIdentifier;
 	
+	private String ifcName;
 	private NmdProductCard nmdProductCard;
+	private MpgObject mpgObject;
 	
-	public MpgMaterial(String name)
+	public MpgElement(String name)
 	{
 		ifcName = name;
+	}
+	
+	public void setMpgObject(MpgObject mpgObject) {
+		this.mpgObject = mpgObject;
+	}
+	
+	public MpgObject getMpgObject() {
+		return this.mpgObject;
 	}
 	
 	/**
@@ -25,7 +34,7 @@ public class MpgMaterial {
 	 * @return
 	 */
 	public String getIfcName() {
-		return ifcName;
+		return this.ifcName;
 	}
 
 	/**
@@ -33,7 +42,7 @@ public class MpgMaterial {
 	 * @return a string with the nmd identifier
 	 */
 	public String getNmdIdentifier() {
-		return nmdIdentifier;
+		return nmdProductCard.getProductCode();
 	}
 
 	/**
@@ -66,7 +75,13 @@ public class MpgMaterial {
 		return nmdProductCard;
 	}
 
-	public void setMaterialSpecs(NmdProductCard productCard) {
+	public void setProductCard(NmdProductCard productCard) {
 		this.nmdProductCard = productCard;
+		
+		// check with the store which child elements will also be mapped with this action
+	}
+	
+	public void removeProductCard() {
+		// unmap any child elements.
 	}
 }

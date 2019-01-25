@@ -21,9 +21,9 @@ import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.ifccollection.MpgSpace;
 import org.opensourcebim.ifccollection.MpgLayerImpl;
 import org.opensourcebim.ifccollection.MpgLayer;
-import org.opensourcebim.nmd.MaterialSpecification;
+import org.opensourcebim.nmd.NmdProfileSet;
 import org.opensourcebim.nmd.MaterialSpecificationImpl;
-import org.opensourcebim.nmd.NmdBasisProfiel;
+import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdBasisProfielImpl;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProductCardImpl;
@@ -65,7 +65,7 @@ public class mpgCalculatorTests {
 	@Test
 	public void testReturnIncompleteDataStatusWhenIfcModelIsNotComplete() {
 		// no objects are linked to the material which shoudl return an warning
-		this.store.addMaterial("steel");
+		this.store.addElement("steel");
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.IncompleteData, results.getStatus());
@@ -74,7 +74,7 @@ public class mpgCalculatorTests {
 	@Test
 	public void testReturnIncompleteDataStatusWhenNMdDataIsIncomplete() {
 		// no material spec is added which should return a warning
-		store.addMaterial("steel");
+		store.addElement("steel");
 		this.addUnitObject("steel");
 
 		startCalculations(1.0);
@@ -185,7 +185,7 @@ public class mpgCalculatorTests {
 		addUnitObject("brick");
 		addUnitObject("brick");
 
-		String nmdMatName = store.getMaterialByName("steel").getNmdProductCard().getName();
+		String nmdMatName = store.getElementByName("steel").getNmdProductCard().getName();
 
 		startCalculations(1);
 
@@ -201,7 +201,7 @@ public class mpgCalculatorTests {
 
 		Double totalCost = results.getTotalCost();
 
-		Optional<MaterialSpecification> spec = store.getMaterialByName("steel").getNmdProductCard().getMaterials()
+		Optional<NmdProfileSet> spec = store.getElementByName("steel").getNmdProductCard().getProfileSets()
 				.stream().findFirst();
 		for (Entry<NmdLifeCycleStage, Double> entry : spec.get().getDisposalRatios().entrySet()) {
 			assertEquals(totalCost * entry.getValue(), results.getCostPerLifeCycle(entry.getKey()), 1e-8);
@@ -215,7 +215,7 @@ public class mpgCalculatorTests {
 
 		// set some disposal ratios and leave all other items empty (no production or
 		// tranport cost)
-		MaterialSpecification mat = store.getMaterialByName("steel").getNmdProductCard().getMaterials().iterator()
+		NmdProfileSet mat = store.getElementByName("steel").getNmdProductCard().getProfileSets().iterator()
 				.next();
 		try {
 			mat.setDisposalRatio(NmdLifeCycleStage.Disposal, 0.5);
@@ -241,7 +241,7 @@ public class mpgCalculatorTests {
 
 		// set some disposal ratios and leave all other items empty (no production or
 		// tranport cost)
-		MaterialSpecification mat = store.getMaterialByName("steel").getNmdProductCard().getMaterials().iterator()
+		NmdProfileSet mat = store.getElementByName("steel").getNmdProductCard().getProfileSets().iterator()
 				.next();
 		try {
 			mat.setDisposalRatio(NmdLifeCycleStage.Disposal, 0.0);
@@ -260,7 +260,7 @@ public class mpgCalculatorTests {
 
 		// set some disposal ratios and leave all other items empty (no production or
 		// tranport cost)
-		MaterialSpecification mat = store.getMaterialByName("steel").getNmdProductCard().getMaterials().iterator()
+		NmdProfileSet mat = store.getElementByName("steel").getNmdProductCard().getProfileSets().iterator()
 				.next();
 		try {
 			mat.setDisposalRatio(NmdLifeCycleStage.Disposal, 0.0);
@@ -281,7 +281,7 @@ public class mpgCalculatorTests {
 
 		// set some disposal ratios and leave all other items empty (no production or
 		// tranport cost)
-		MaterialSpecification mat = store.getMaterialByName("steel").getNmdProductCard().getMaterials().iterator()
+		NmdProfileSet mat = store.getElementByName("steel").getNmdProductCard().getProfileSets().iterator()
 				.next();
 
 		startCalculations(1);
@@ -293,30 +293,30 @@ public class mpgCalculatorTests {
 	public void testProductCardWithMultipleMaterialSpecsWillReturnCostBasedOnDensityRatio() {
 		// create a product card without transport costs and split out over two material
 		// specifications evenly
-		store.addMaterial("Brick");
+		store.addElement("Brick");
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
 		productCard.setName("Brick and mortar");
 		productCard.setDataCategory(1);
 		productCard.setDistanceToProducer(1.0);
 		productCard.setTransportProfile(createZeroProfile(NmdLifeCycleStage.TransportToSite));
 		// mortar to bricks mass ratio per unit mass is assumed to be 1 to 10
-		productCard.addSpecification(createNamedMaterialSpec("bricks", 10.0, 0.0, 1));
-		productCard.addSpecification(createNamedMaterialSpec("mortar", 1.0, 0.0, 1));
-		store.setProductCardForMaterial("Brick", productCard);
+		productCard.addProfileSet(createNamedMaterialSpec("bricks", 10.0, 0.0, 1));
+		productCard.addProfileSet(createNamedMaterialSpec("mortar", 1.0, 0.0, 1));
+		store.setProductCardForElement("Brick", productCard);
 
 		addUnitObject("Brick");
 
 		startCalculations(1);
 
 		Double totalCost = results.getTotalCost();
-		double totalWeight = store.getMaterialByName("Brick").getNmdProductCard().getDensity();
+		double totalWeight = store.getElementByName("Brick").getNmdProductCard().getDensity();
 
 		assertEquals(totalCost, results.getCostPerProductName("Brick and mortar"), 1e-8);
 
-		for (MaterialSpecification spec : store.getMaterialByName("Brick").getNmdProductCard().getMaterials().stream()
+		for (NmdProfileSet spec : store.getElementByName("Brick").getNmdProductCard().getProfileSets().stream()
 				.collect(Collectors.toList())) {
 			Double specCost = results.getCostPerSpecification(spec.getName());
-			Double density = productCard.getDensityOfSpec(spec.getName());
+			Double density = productCard.getDensityOfProfile(spec.getName());
 			assertEquals(totalCost * density / totalWeight, specCost, 1e-8);
 		}
 	}
@@ -324,13 +324,13 @@ public class mpgCalculatorTests {
 	@Test
 	public void TestCyclicMaintenanceMaterialsDoNotHaveInitialApplication() {
 		// create a product card with a regular material
-		store.addMaterial("Paint");
+		store.addElement("Paint");
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 		productCard.setDistanceToProducer(1.0);
-		productCard.addSpecification(createNamedMaterialSpec("verf", 1.0, 0.0, 5));
-		store.setProductCardForMaterial("Paint", productCard);
+		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 0.0, 5));
+		store.setProductCardForElement("Paint", productCard);
 		addUnitObject("Paint");
 		// paint will last 5 year, so will need to be applied 2 during lifetime
 		startCalculations(10);
@@ -338,15 +338,15 @@ public class mpgCalculatorTests {
 		results.reset();
 
 		store.reset();
-		store.addMaterial("Paint");
+		store.addElement("Paint");
 		productCard = new NmdProductCardImpl();
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 		productCard.setDistanceToProducer(1.0);
-		MaterialSpecification maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 0.0, 5);
+		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 0.0, 5);
 		maintenanceSpec.setIsMaintenanceSpec(true);
-		productCard.addSpecification(maintenanceSpec);
-		store.setProductCardForMaterial("Paint", productCard);
+		productCard.addProfileSet(maintenanceSpec);
+		store.setProductCardForElement("Paint", productCard);
 		addUnitObject("Paint");
 		// as this is a miantenance material it only needs to be applied once (after 5
 		// year)
@@ -360,13 +360,13 @@ public class mpgCalculatorTests {
 	public void TestCyclicMaintenanceCostIsAddedToRegularCost() {
 
 		// create a product card with a initial paint layer
-		store.addMaterial("Paint");
+		store.addElement("Paint");
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 		productCard.setDistanceToProducer(1.0);
-		productCard.addSpecification(createNamedMaterialSpec("verf", 1.0, 0.0, 10));
-		store.setProductCardForMaterial("Paint", productCard);
+		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 0.0, 10));
+		store.setProductCardForElement("Paint", productCard);
 		addUnitObject("Paint");
 		// paint will last 5 year, so will need to be applied 2 during lifetime
 		startCalculations(10);
@@ -376,18 +376,18 @@ public class mpgCalculatorTests {
 		store.reset();
 
 		// now add a first layer and maintenance for every 5 year
-		store.addMaterial("Paint");
+		store.addElement("Paint");
 		productCard = new NmdProductCardImpl();
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 		productCard.setDistanceToProducer(1.0);
-		productCard.addSpecification(createNamedMaterialSpec("verf", 1.0, 0.0, 10));
+		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 0.0, 10));
 
-		MaterialSpecification maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 0.0, 5);
+		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 0.0, 5);
 		maintenanceSpec.setIsMaintenanceSpec(true);
-		productCard.addSpecification(maintenanceSpec);
+		productCard.addProfileSet(maintenanceSpec);
 
-		store.setProductCardForMaterial("Paint", productCard);
+		store.setProductCardForElement("Paint", productCard);
 		addUnitObject("Paint");
 		// as this is a miantenance material it only needs to be applied once (after 5
 		// year)
@@ -413,15 +413,15 @@ public class mpgCalculatorTests {
 
 	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, double producerDistance,
 			double lossFactor, int category) {
-		store.addMaterial(ifcMatName);
-		store.setProductCardForMaterial(ifcMatName,
+		store.addElement(ifcMatName);
+		store.setProductCardForElement(ifcMatName,
 				createUnitProductCard(nmdMatName, producerDistance, lossFactor, category));
 	}
 
 	private void addMaterialsWithDisposalProductCard(String ifcMatName, String nmdMatName, double producerDistance,
 			int category) {
-		store.addMaterial(ifcMatName);
-		store.setProductCardForMaterial(ifcMatName, createDisposalProductCard(nmdMatName, producerDistance, category));
+		store.addElement(ifcMatName);
+		store.setProductCardForElement(ifcMatName, createDisposalProductCard(nmdMatName, producerDistance, category));
 	}
 
 	private void addUnitObject(String material) {
@@ -449,7 +449,7 @@ public class mpgCalculatorTests {
 		specs.setDataCategory(category);
 		specs.setDistanceToProducer(transportDistance);
 		specs.setTransportProfile(createUnitProfile(NmdLifeCycleStage.TransportToSite));
-		specs.addSpecification(createDummySpec(1.0, lossFactor));
+		specs.addProfileSet(createDummySpec(1.0, lossFactor));
 		return specs;
 	}
 
@@ -459,15 +459,15 @@ public class mpgCalculatorTests {
 		specs.setDataCategory(category);
 		specs.setDistanceToProducer(transportDistance);
 		specs.setTransportProfile(createZeroProfile(NmdLifeCycleStage.TransportToSite));
-		specs.addSpecification(createOnlyDisposalSpec(1.0));
+		specs.addProfileSet(createOnlyDisposalSpec(1.0));
 		return specs;
 	}
 
-	private MaterialSpecification createDummySpec(double massPerUnit, double lossFactor) {
+	private NmdProfileSet createDummySpec(double massPerUnit, double lossFactor) {
 		return createNamedMaterialSpec("dummy spec", massPerUnit, lossFactor, 1);
 	}
 
-	private MaterialSpecification createNamedMaterialSpec(String name, double massPerUnit, double lossFactor,
+	private NmdProfileSet createNamedMaterialSpec(String name, double massPerUnit, double lossFactor,
 			int lifetime) {
 		MaterialSpecificationImpl spec = new MaterialSpecificationImpl();
 		try {
@@ -498,7 +498,7 @@ public class mpgCalculatorTests {
 		return spec;
 	}
 
-	private MaterialSpecification createOnlyDisposalSpec(double massPerUnit) {
+	private NmdProfileSet createOnlyDisposalSpec(double massPerUnit) {
 		MaterialSpecificationImpl spec = new MaterialSpecificationImpl();
 		try {
 			spec.setDisposalRatio(NmdLifeCycleStage.Disposal, 1.0);
@@ -528,15 +528,15 @@ public class mpgCalculatorTests {
 		return spec;
 	}
 
-	private NmdBasisProfiel createUnitProfile(NmdLifeCycleStage stage) {
+	private NmdFaseProfiel createUnitProfile(NmdLifeCycleStage stage) {
 		return createConstantValueProfile(stage, 1.0);
 	}
 
-	private NmdBasisProfiel createZeroProfile(NmdLifeCycleStage stage) {
+	private NmdFaseProfiel createZeroProfile(NmdLifeCycleStage stage) {
 		return createConstantValueProfile(stage, 0.0);
 	}
 
-	private NmdBasisProfiel createConstantValueProfile(NmdLifeCycleStage stage, Double constantValue) {
+	private NmdFaseProfiel createConstantValueProfile(NmdLifeCycleStage stage, Double constantValue) {
 		NmdBasisProfielImpl profile = new NmdBasisProfielImpl(stage, NmdUnit.Kg);
 		profile.setAll(constantValue);
 		return profile;

@@ -3,7 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opensourcebim.ifccollection.MpgMaterial;
+import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 
 /**
@@ -38,16 +38,15 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 			}
 
 			// get data per material - run through services in order
-			for (MpgMaterial material : ifcResults.getMaterials().values()) {
-				NmdProductCard nmdMaterial = tryGetMaterialProperties(material);
+			for (MpgElement element : ifcResults.getElements()) {
+				NmdProductCard nmdMaterial = tryGetMaterialProperties(element);
 				
 				if (nmdMaterial == null)
 				{
 					
 				} else {
-					ifcResults.setProductCardForMaterial(material.getIfcName(), nmdMaterial);
+					element.setProductCard(nmdMaterial);
 				}
-					
 			}
 
 		} catch (ArrayIndexOutOfBoundsException ex) {
@@ -63,7 +62,7 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 		return nmdResults;
 	}
 
-	private NmdProductCard tryGetMaterialProperties(MpgMaterial material) {
+	private NmdProductCard tryGetMaterialProperties(MpgElement material) {
 		NmdProductCard retrievedMaterial = null;
 		for (NmdDataService nmdDataService : services) {
 			retrievedMaterial = nmdDataService.retrieveMaterial(material);

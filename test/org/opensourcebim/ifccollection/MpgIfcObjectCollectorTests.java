@@ -42,13 +42,13 @@ public class MpgIfcObjectCollectorTests {
 
 	@Test
 	public void testNewCollectorHasNoParsedMaterials() {
-		assertEquals(0, collector.results().getMaterials().size());
+		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
 	public void testParseModelWithoutProducts() {
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(0, collector.results().getMaterials().size());
+		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
 		
 	@Test
@@ -56,7 +56,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.setAssociations(null);
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(0, collector.results().getMaterials().size());
+		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -65,7 +65,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 		
-		assertEquals(0, collector.results().getMaterials().size());
+		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -97,7 +97,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(1, collector.results().getMaterials().size());
+		assertEquals(1, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -108,7 +108,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		collector.collectIfcModelObjects(ifcModel);
 		// if the materials are the same we should only store it once.
-		assertEquals(1, collector.results().getMaterials().size());
+		assertEquals(1, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -124,7 +124,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		collector.collectIfcModelObjects(ifcModel);
 		// if the materials are the same we should only store it once.
-		assertEquals(2, collector.results().getMaterials().size());
+		assertEquals(2, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -135,7 +135,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
 
-		assertEquals(2, collector.results().getMaterials().size());
+		assertEquals(2, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -143,7 +143,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialList(Arrays.asList("Steel", "Aluminium", "Aluminium"));
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(2, collector.results().getMaterials().size());
+		assertEquals(2, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -151,7 +151,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialList(new ArrayList<String>());
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(0, collector.results().getMaterials().size());
+		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -159,7 +159,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialLayer("brick", 0.15);
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(1, collector.results().getMaterials().size());
+		assertEquals(1, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -174,7 +174,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialLayerSet(layers);
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.results().getMaterials().size());
+		assertEquals(3, collector.results().getAllMaterialNames().count() );
 	}
 	
 	@Test
@@ -189,7 +189,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addMaterialLayerSetUsage(layers);
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.results().getMaterials().size());
+		assertEquals(3, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -206,7 +206,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(4, collector.results().getMaterials().size());
+		assertEquals(4, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test
@@ -307,7 +307,7 @@ public class MpgIfcObjectCollectorTests {
 		collector.collectIfcModelObjects(ifcModel);
 		
 		// material names of layers are null
-		assertTrue(collector.results().getObjects().get(0).getMaterialNamesBySource(null).size() == 0);
+		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
 	
 	@Test

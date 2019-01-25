@@ -3,7 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.Date;
 import java.util.List;
 
-import org.opensourcebim.ifccollection.MpgMaterial;
+import org.opensourcebim.ifccollection.MpgElement;
 
 
 /**
@@ -33,7 +33,7 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	}
 
 	@Override
-	public NmdProductCard retrieveMaterial(MpgMaterial material) {
+	public NmdProductCard retrieveMaterial(MpgElement material) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -45,13 +45,13 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	}
 
 	@Override
-	public List<MaterialSpecification> getSpecsForProducts(List<NmdProductCard> products) {
+	public List<NmdProfileSet> getSpecsForProducts(List<NmdProductCard> products) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<NmdBasisProfiel> getPhaseProfiles(List<Integer> ids) {
+	public List<NmdFaseProfiel> getPhaseProfiles(List<Integer> ids) {
 		// TODO Auto-generated method stub
 		return null;
 	}

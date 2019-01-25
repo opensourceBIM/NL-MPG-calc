@@ -3,10 +3,10 @@ package org.opensourcebim.mpgcalculation;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import org.opensourcebim.ifccollection.MpgMaterial;
+import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.nmd.MaterialSpecification;
-import org.opensourcebim.nmd.NmdBasisProfiel;
+import org.opensourcebim.nmd.NmdProfileSet;
+import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdProductCard;
 
 /**
@@ -46,7 +46,7 @@ public class MpgCalculator {
 			results.setTotalFloorArea(objectStore.getTotalFloorArea());
 
 			// for each building material found:
-			for (MpgMaterial mpgMaterial : objectStore.getMaterials().values()) {
+			for (MpgElement mpgMaterial : objectStore.getElements()) {
 
 				// this total volume can be in m3 or possible also in kWh depending on the unit
 				// in the product card
@@ -59,7 +59,7 @@ public class MpgCalculator {
 				// a single building material can be composed of individual materials.
 				double specsMatSumKg = 0.0;
 
-				for (MaterialSpecification matSpec : specs.getMaterials()) {
+				for (NmdProfileSet matSpec : specs.getProfileSets()) {
 
 					// Determine replacements required.
 					// this is usually 1 for regular materials and > 1 for cyclic maintenance
@@ -75,7 +75,7 @@ public class MpgCalculator {
 
 					// ----- Production ----
 					results.incrementCostFactors(
-							matSpec.getBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
+							matSpec.getFaseProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
 									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier, costWeightFactors),
 							specs.getName(), matSpec.getName());
 
@@ -87,18 +87,16 @@ public class MpgCalculator {
 						double cost = lifeTimeTotalMassKg * entry.getValue();
 
 						results.incrementCostFactors(
-								matSpec.getBasisProfiel(entry.getKey()).calculateFactors(cost, costWeightFactors),
+								matSpec.getFaseProfiel(entry.getKey()).calculateFactors(cost, costWeightFactors),
 								specs.getName(), matSpec.getName());
 
 						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than
 						// per product
 						results.incrementCostFactors(
-								matSpec.getBasisProfiel(NmdLifeCycleStage.TransportForRemoval).calculateFactors(
+								matSpec.getFaseProfiel(NmdLifeCycleStage.TransportForRemoval).calculateFactors(
 										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey()), costWeightFactors),
 								specs.getName(), matSpec.getName());
 					}
-
-					// DISPOSALTRANSPORT - done per individual material rather than per product
 
 					// ----- OPERATION COST ---- - apply different units of measure (l / m3 / kWh
 					// etc.)

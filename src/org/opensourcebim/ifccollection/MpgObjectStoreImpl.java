@@ -1,7 +1,6 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 public class MpgObjectStoreImpl implements MpgObjectStore {
 
-	private HashMap<String, MpgMaterial> mpgMaterials;
+	private HashSet<MpgElement> mpgElements;
 
 	private List<MpgObject> mpgObjects;
 
@@ -66,14 +65,14 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	private GuidCollection guidsWithRedundantMats;
 
 	/**
-	 * list to store the guids with any MpgObjects that the object linked to hat
+	 * list to store the guids with any MpgObjects that the object linked to that
 	 * guid decomposes
 	 */
 	@JsonIgnore
 	private List<ImmutablePair<String, MpgObject>> decomposedRelations;
 
 	public MpgObjectStoreImpl() {
-		setMaterials(new HashMap<>());
+		setElements(new HashSet<>());
 		setObjects(new BasicEList<MpgObject>());
 		setSpaces(new BasicEList<MpgSpace>());
 
@@ -90,7 +89,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	public void reset() {
 		mpgObjects.clear();
-		mpgMaterials.clear();
+		mpgElements.clear();
 		spaces.clear();
 
 		getGuidsWithoutMaterial().reset();
@@ -100,25 +99,27 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void addMaterial(String name) {
+	public void addElement(String name) {
 		if (name != null && !name.isEmpty()) {
-			mpgMaterials.putIfAbsent(name, new MpgMaterial(name));
+			mpgElements.add(new MpgElement(name));
 		}
 	}
 
 	@Override
-	public HashMap<String, MpgMaterial> getMaterials() {
-		return mpgMaterials;
+	public HashSet<MpgElement> getElements() {
+		return mpgElements;
 	}
 
-	private void setMaterials(HashMap<String, MpgMaterial> mpgMaterials) {
-		this.mpgMaterials = mpgMaterials;
+	private void setElements(HashSet<MpgElement> mpgElements) {
+		this.mpgElements = mpgElements;
 	}
 
 	@Override
-	public void setProductCardForMaterial(String name, NmdProductCard specs) {
-		// TODO catch null reference exceptions
-		getMaterialByName(name).setMaterialSpecs(specs);
+	public void setProductCardForElement(String name, NmdProductCard specs) {
+		MpgElement el = getElementByName(name);
+		if( el != null) {
+			el.setProductCard(specs);
+		}
 	}
 
 	@Override
@@ -175,25 +176,20 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		return mpgObjects.stream().filter(o -> guidIds.contains(o.getGlobalId())).collect(Collectors.toList());
 	}
 
-	@JsonIgnore
 	@Override
-	public Set<String> getAllMaterialNames() {
-		return getMaterials().keySet();
+	public MpgElement getElementByName(String name) {
+		Optional<MpgElement> element = getElements().stream().filter(e-> e.getIfcName().equalsIgnoreCase(name)).findFirst();
+		return element.isPresent() ? element.get() : null;
 	}
 
 	@Override
-	public MpgMaterial getMaterialByName(String name) {
-		return getMaterials().getOrDefault(name, null);
-	}
-
-	@Override
-	public List<MpgMaterial> getMaterialsByProductType(String productType) {
+	public List<MpgElement> getElementsByProductType(String productType) {
 		List<MpgObject> objectsByProductType = this.getObjectsByProductType(productType);
 
 		List<String> materialNames = objectsByProductType.stream()
 				.flatMap(o -> o.getMaterialNamesBySource(null).stream()).distinct().collect(Collectors.toList());
 
-		return materialNames.stream().map(mat -> this.getMaterialByName(mat)).collect(Collectors.toList());
+		return materialNames.stream().map(mat -> this.getElementByName(mat)).collect(Collectors.toList());
 	}
 
 	@Override
@@ -252,7 +248,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 */
 	@Override
 	public boolean isMaterialDataComplete() {
-		return getMaterials().values().stream().allMatch(mat -> mat.getNmdProductCard() != null);
+		return getElements().stream().allMatch(mat -> mat.getNmdProductCard() != null);
 	}
 
 	@Override
@@ -348,16 +344,16 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public boolean isIfcDataComplete() {
-		return getGuidsWithoutMaterial().getSize() == 0 && getGuidsWithoutVolume().getSize() == 0
-				&& getGuidsWithRedundantMaterials().getSize() == 0 && getGuidsWithUndefinedLayerMats().getSize() == 0;
+		return getGuidsWithoutMaterial().getSize() == 0 
+				&& getGuidsWithoutVolume().getSize() == 0
+				&& getGuidsWithRedundantMaterials().getSize() == 0 
+				&& getGuidsWithUndefinedLayerMats().getSize() == 0;
 	}
 
 	@Override
 	public void SummaryReport() {
 		System.out.println("----------------------------");
 		System.out.println("Summary report for ifc file:");
-		System.out.println("Materials found : " + mpgMaterials.size());
-		System.out.println(String.join(", ", getAllMaterialNames()));
 
 		System.out.println();
 		System.out.println("Total objects found : " + mpgObjects.size());
@@ -370,8 +366,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			System.out.println(" - number found : " + products.size());
 			System.out.println(" - with total volume : " + getTotalVolumeOfProductType(productType));
 			System.out.println("Materials found relating to product: ");
-			for (MpgMaterial mpgMaterial : getMaterialsByProductType(productType)) {
-				System.out.println(" - " + mpgMaterial == null ? "" : mpgMaterial.getIfcName());
+			for (MpgElement element : getElementsByProductType(productType)) {
+				System.out.println(" - " + element == null ? "" : element.getIfcName());
 			}
 			System.out.println();
 		}
@@ -389,5 +385,13 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 		System.out.println("End of Summary");
 		System.out.println("----------------------------");
+	}
+
+	@Override
+	public Stream<String> getAllMaterialNames() {
+		return this.getElements().stream()
+				.flatMap(e -> e.getMpgObject().getListedMaterials().stream())
+				.map(s -> s.getName())
+				.distinct();
 	}
 }

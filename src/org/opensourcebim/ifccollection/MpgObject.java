@@ -16,6 +16,7 @@ public interface MpgObject {
 	double getVolume();
 	
 	void addMaterialSource(String name, String guid, String source);
+	List<MaterialSource> getListedMaterials();
 	List<String> getMaterialNamesBySource(String source);
 
 	Map<String, Object> getProperties();
