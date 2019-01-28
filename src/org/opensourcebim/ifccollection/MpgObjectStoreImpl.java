@@ -185,7 +185,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	public List<MpgElement> getElementsByProductType(String productType) {
 		List<MpgObject> objectsByProductType = this.getObjectsByProductType(productType);
-
 		List<String> materialNames = objectsByProductType.stream()
 				.flatMap(o -> o.getMaterialNamesBySource(null).stream()).distinct().collect(Collectors.toList());
 
@@ -244,10 +243,10 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	/**
-	 * Check if all the MpgMaterials have matched Nmd ProductCards linked
+	 * Check if all the MpgElements have matched Nmd ProductCards linked
 	 */
 	@Override
-	public boolean isMaterialDataComplete() {
+	public boolean isElementDataComplete() {
 		return getElements().stream().allMatch(mat -> mat.getNmdProductCard() != null);
 	}
 

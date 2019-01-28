@@ -41,7 +41,10 @@ public interface MpgObjectStore {
 	void addSpace(MpgSpace space);
 	double getTotalFloorArea();
 	
+	
+	void validateIfcDataCollection();
 	boolean isIfcDataComplete();
+	
 	@JsonIgnore
 	GuidCollection getGuidsWithoutMaterial();
 	GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials();
@@ -52,9 +55,8 @@ public interface MpgObjectStore {
 	GuidCollection getGuidsWithUndefinedLayerMats();
 	
 	void setProductCardForElement(String string, NmdProductCard specs);
-	boolean isMaterialDataComplete();
+	boolean isElementDataComplete();
 	Stream<String> getAllMaterialNames();
 
-	
 	void SummaryReport();
 }

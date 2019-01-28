@@ -36,7 +36,7 @@ public class MpgCalculator {
 			return results;
 		}
 
-		if (!(objectStore.isIfcDataComplete() && objectStore.isMaterialDataComplete())) {
+		if (!(objectStore.isIfcDataComplete() && objectStore.isElementDataComplete())) {
 			results.SetResultsStatus(ResultStatus.IncompleteData);
 			return results;
 		}
