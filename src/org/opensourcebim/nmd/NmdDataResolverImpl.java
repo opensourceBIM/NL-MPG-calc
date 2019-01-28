@@ -20,8 +20,8 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 
 	public NmdDataResolverImpl() {
 		services = new ArrayList<NmdDataService>();
-		String nmdToken = "";
-		this.addService(new NmdDataBaseSession(nmdToken));
+		NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
+		this.addService(new NmdDataBaseSession(config));
 		this.addService(new BimMaterialDatabaseSession());
 
 	}

@@ -14,6 +14,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.opensourcebim.ifccollection.MpgElement;
+import org.opensourcebim.nmd.NmdDatabaseConfig;
 
 /**
  * Implementation of the NmdDataService to retrieve data from the NMD see :
@@ -27,20 +28,33 @@ public class NmdDataBaseSession implements NmdDataService {
 	private static final DateFormat dbDateFormat = new SimpleDateFormat("yyyyMMdd"); // according to docs thi should be
 																						// correct
 	private Date requestDate = new Date();
+	private NmdDatabaseConfig config = null;
 	private boolean isConnected = false;
 	private String token;
 
-	public NmdDataBaseSession(String authToken) {
-		this.setToken(authToken);
+	public NmdDataBaseSession(NmdDatabaseConfig config) {
+		this.config = config;
 		this.login();
 	}
 	
-	private String getToken() {
-		return token;
-	}
-
 	public void setToken(String token) {
 		this.token = token;
+	}
+	
+	@Override
+	public Date getRequestDate() {
+		return this.requestDate;
+	}
+	
+	@Override
+	public void setRequestDate(Date newDate) {
+		this.requestDate = newDate;
+	}
+
+	@Override
+	public Boolean getIsConnected() {
+		// TODO Auto-generated method stub
+		return this.isConnected;
 	}
 
 	@Override
@@ -49,7 +63,7 @@ public class NmdDataBaseSession implements NmdDataService {
 		HttpPost httppost = new HttpPost(
 				"https://www.milieudatabase-datainvoer.nl/NMD_30_AuthenticationServer/NMD_30_API_Authentication/getToken");
 
-		httppost.setHeader("refreshToken", this.getToken());
+		httppost.setHeader("refreshToken", config.getToken());
 		httppost.setHeader("pAPI_ID", "1");
 		httppost.setHeader("Content-Type", "application/x-www-form-urlencoded");
 
@@ -70,7 +84,8 @@ public class NmdDataBaseSession implements NmdDataService {
 			}
 
 		} catch (IOException e1) {
-			System.out.println("no response received.");
+			this.isConnected = false;
+			System.out.println("authentication failed");
 		}
 
 	}
@@ -78,16 +93,17 @@ public class NmdDataBaseSession implements NmdDataService {
 	@Override
 	public void logout() {
 		this.setToken("");
-	}
-
-	@Override
-	public NmdProductCard retrieveMaterial(MpgElement material) {
-		// TODO Auto-generated method stub
-		return null;
+		this.isConnected = false;
 	}
 
 	@Override
 	public List<NmdProductCard> getAllProductSets() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public NmdProductCard retrieveMaterial(MpgElement material) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -102,21 +118,5 @@ public class NmdDataBaseSession implements NmdDataService {
 	public List<NmdFaseProfiel> getFaseProfilesByIds(List<Integer> ids) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	@Override
-	public Date getRequestDate() {
-		return this.requestDate;
-	}
-	
-	@Override
-	public void setRequestDate(Date newDate) {
-		this.requestDate = newDate;
-	}
-
-	@Override
-	public Boolean getIsConnected() {
-		// TODO Auto-generated method stub
-		return this.isConnected;
 	}
 }
