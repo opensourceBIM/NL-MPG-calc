@@ -6,7 +6,14 @@ package org.opensourcebim.nmd;
  * sure the implementation is on the git ignore list.
  */
 public interface NmdDatabaseConfig {
+
+	/*
+	 * refresh token for authorization to request a new OAuth token
+	 */
 	public String getToken();
 
-	public String getConnectionString();
+	/*
+	 * Company specific client id for authorization
+	 */
+	int getClientId();
 }
