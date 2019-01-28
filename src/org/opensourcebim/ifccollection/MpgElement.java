@@ -42,7 +42,7 @@ public class MpgElement {
 	 * @return a string with the nmd identifier
 	 */
 	public String getNmdIdentifier() {
-		return nmdProductCard.getProductCode();
+		return nmdProductCard.getNLsfbCode();
 	}
 
 	/**

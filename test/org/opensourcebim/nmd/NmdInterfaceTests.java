@@ -76,6 +76,31 @@ public class NmdInterfaceTests {
 	@Test
 	public void testDatabaseIsConnected() {
 		// the default connection should login as intended
+		connect();
 		assertTrue(db.getIsConnected());
+	}
+	
+	@Test
+	public void testCanRetrieveResponseSets() {
+		connect();
+		assertTrue(4 <= db.getAllProductSets().size());
+	}
+	
+	@Test
+	public void testReturnWarningWhenProductSetIdDoesNotExist() {
+		connect();
+		
+		NmdProductCardImpl card = new NmdProductCardImpl();
+		card.setRAWCode("-42");
+		db.getProfileSetForProductCard(card);
+	}
+	
+	@Test
+	public void testCanRetrieveProfileSetIdsByProductSetId() {
+		connect();
+		
+		NmdProductCardImpl card = new NmdProductCardImpl();
+		card.setRAWCode("155");
+		db.getProfileSetForProductCard(card);
 	}
 }

@@ -15,5 +15,5 @@ public interface NmdDatabaseConfig {
 	/*
 	 * Company specific client id for authorization
 	 */
-	int getClientId();
+	Integer getClientId();
 }

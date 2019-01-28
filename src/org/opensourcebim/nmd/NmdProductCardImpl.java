@@ -7,8 +7,8 @@ public class NmdProductCardImpl implements NmdProductCard {
 	private String name;
 	private String description;
 	private int dataCategory;
-	private String productCode;
-	private String elementCode;
+	private String nlsfbCode;
+	private String rawCode;
 	private String elementName;
 	private String unit;
 	private double distanceToProducer;
@@ -36,13 +36,13 @@ public class NmdProductCardImpl implements NmdProductCard {
 	}
 
 	@Override
-	public String getProductCode() {
-		return this.productCode;
+	public String getNLsfbCode() {
+		return this.nlsfbCode;
 	}
 
 	@Override
-	public String getElementCode() {
-		return this.elementCode;
+	public String getRAWCode() {
+		return this.rawCode;
 	}
 
 	@Override
@@ -92,12 +92,12 @@ public class NmdProductCardImpl implements NmdProductCard {
 		this.dataCategory = dataCategory;
 	}
 
-	public void setProductCode(String productCode) {
-		this.productCode = productCode;
+	public void setNLsfbCode(String productCode) {
+		this.nlsfbCode = productCode;
 	}
 
-	public void setElementCode(String elementCode) {
-		this.elementCode = elementCode;
+	public void setRAWCode(String elementCode) {
+		this.rawCode = elementCode;
 	}
 
 	public void setElementName(String elementName) {

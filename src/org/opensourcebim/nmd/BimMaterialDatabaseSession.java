@@ -54,11 +54,10 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
-	public List<NmdProfileSet> getSpecsForProducts(List<NmdProductCard> products) {
+	public void getProfileSetForProductCard(NmdProductCard product) {
 		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

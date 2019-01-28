@@ -22,9 +22,9 @@ public interface NmdProductCard {
 
 	int getDataCategory();
 
-	String getProductCode();
+	String getNLsfbCode();
 
-	String getElementCode();
+	String getRAWCode();
 
 	String getElementName();
 
