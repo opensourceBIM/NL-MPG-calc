@@ -1,5 +1,6 @@
 package org.opensourcebim.nmd;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import org.opensourcebim.ifccollection.MpgElement;
  */
 public class BimMaterialDatabaseSession implements EditableDataService {
 
-	private Date requestDate;
+	private Calendar requestDate;
 	
 	@Override
 	public void login() {
@@ -28,8 +29,18 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	}
 	
 	@Override
-	public void setRequestDate(Date newDate) {
+	public void setRequestDate(Calendar newDate) {
 		this.requestDate = newDate;
+	}
+	
+	@Override
+	public Calendar getRequestDate() {
+		return this.requestDate;
+	}
+
+	@Override
+	public Boolean getIsConnected() {
+		return true;
 	}
 
 	@Override
@@ -54,15 +65,5 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	public List<NmdFaseProfiel> getFaseProfilesByIds(List<Integer> ids) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	@Override
-	public Date getRequestDate() {
-		return this.requestDate;
-	}
-
-	@Override
-	public Boolean getIsConnected() {
-		return true;
 	}
 }

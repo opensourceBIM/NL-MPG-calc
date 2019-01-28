@@ -27,27 +27,29 @@ public class NmdDataBaseSession implements NmdDataService {
 
 	private static final DateFormat dbDateFormat = new SimpleDateFormat("yyyyMMdd"); // according to docs thi should be
 																						// correct
-	private Date requestDate = new Date();
+	private Calendar requestDate;
 	private NmdDatabaseConfig config = null;
+	private HttpClient httpclient;
 	private boolean isConnected = false;
 	private String token;
 
 	public NmdDataBaseSession(NmdDatabaseConfig config) {
 		this.config = config;
-		this.login();
+		this.requestDate = Calendar.getInstance();
+		httpclient = HttpClients.createDefault();
 	}
-	
+
 	public void setToken(String token) {
 		this.token = token;
 	}
-	
+
 	@Override
-	public Date getRequestDate() {
+	public Calendar getRequestDate() {
 		return this.requestDate;
 	}
-	
+
 	@Override
-	public void setRequestDate(Date newDate) {
+	public void setRequestDate(Calendar newDate) {
 		this.requestDate = newDate;
 	}
 

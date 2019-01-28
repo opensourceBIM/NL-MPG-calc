@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
@@ -22,23 +23,34 @@ public class NmdInterfaceTests {
 
 	@Before
 	public void setUp() throws Exception {
-		config = new NmdDatabaseConfigImpl();
-		db = new NmdDataBaseSession(config);
+
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		db = null;
 	}
-
-	@Test
-	public void testDbIsInitiallyNotConnected() {
-		assertFalse(db.getIsConnected());
+	
+	public void connect() {
+		config = new NmdDatabaseConfigImpl();
+		db = new NmdDataBaseSession(config);
+		db.login();
 	}
 	
 	@Test
 	public void testDefaultRequestDateIsCurrentDate() {
-		assertEquals(new Date(), db.getRequestDate());
+		this.connect();
+		long now = Calendar.getInstance().getTimeInMillis();
+		long req_now = db.getRequestDate().getTimeInMillis();
+		// check that the time difference is less than a minute
+		assertTrue((now - req_now) / 60000 < 1 );
+	}
+	
+	@Test
+	public void testDbIsInitiallyNotLoggedIn() {
+		config = new NmdDatabaseConfigImpl();
+		db = new NmdDataBaseSession(config);
+		assertFalse(db.getIsConnected());
 	}
 	
 	@Test

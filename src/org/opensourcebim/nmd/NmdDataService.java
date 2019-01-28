@@ -1,5 +1,6 @@
 package org.opensourcebim.nmd;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -17,13 +18,13 @@ public interface NmdDataService {
 
 	void logout();
 	
-	Date getRequestDate();
+	Calendar getRequestDate();
 
-	void setRequestDate(Date newDate);
+	void setRequestDate(Calendar newDate);
 
 	List<NmdProductCard> getAllProductSets();
 	
-	List<NmdProfileSet> getSpecsForProducts(List<NmdProductCard> products);
+	void getProfileSetForProductCard(NmdProductCard product);
 	
 	List<NmdFaseProfiel> getFaseProfilesByIds(List<Integer> ids);
 	
