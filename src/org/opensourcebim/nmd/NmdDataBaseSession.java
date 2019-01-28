@@ -99,13 +99,24 @@ public class NmdDataBaseSession implements NmdDataService {
 	}
 
 	@Override
-	public List<NmdFaseProfiel> getPhaseProfiles(List<Integer> ids) {
+	public List<NmdFaseProfiel> getFaseProfilesByIds(List<Integer> ids) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
+	public Date getRequestDate() {
+		return this.requestDate;
+	}
+	
+	@Override
 	public void setRequestDate(Date newDate) {
 		this.requestDate = newDate;
+	}
+
+	@Override
+	public Boolean getIsConnected() {
+		// TODO Auto-generated method stub
+		return this.isConnected;
 	}
 }

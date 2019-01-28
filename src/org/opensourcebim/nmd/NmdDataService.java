@@ -17,14 +17,18 @@ public interface NmdDataService {
 
 	void logout();
 	
+	Date getRequestDate();
+
 	void setRequestDate(Date newDate);
 
 	List<NmdProductCard> getAllProductSets();
 	
 	List<NmdProfileSet> getSpecsForProducts(List<NmdProductCard> products);
 	
-	List<NmdFaseProfiel> getPhaseProfiles(List<Integer> ids);
+	List<NmdFaseProfiel> getFaseProfilesByIds(List<Integer> ids);
 	
 	NmdProductCard retrieveMaterial(MpgElement material);
+
+	Boolean getIsConnected();
 
 }

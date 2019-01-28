@@ -9,3 +9,4 @@
 *.war
 *.ear
 /target/
+test/org/opensourcebim/nmd/NmdDatabaseConfigImpl.java

@@ -51,8 +51,18 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	}
 
 	@Override
-	public List<NmdFaseProfiel> getPhaseProfiles(List<Integer> ids) {
+	public List<NmdFaseProfiel> getFaseProfilesByIds(List<Integer> ids) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public Date getRequestDate() {
+		return this.requestDate;
+	}
+
+	@Override
+	public Boolean getIsConnected() {
+		return true;
 	}
 }
