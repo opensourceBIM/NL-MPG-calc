@@ -559,6 +559,22 @@ public class mpgCalculatorTests {
 		milieuCats.put(15, new NmdMileuCategorie("FreshWaterUse", "m3", 1.0 ));
 		
 		resources.setMilieuCategorieMapping(milieuCats);
+		HashMap<Integer, String> fasen = new HashMap<Integer, String>();
+		fasen.put(1, "productie");
+		fasen.put(2, "transport -> bouwplaats");
+		fasen.put(3, "bouwfase");
+		fasen.put(4, "gebruik van product");
+		fasen.put(5, "onderhoud");
+		fasen.put(6, "reparatie");
+		fasen.put(7, "vervangen");
+		fasen.put(8, "opknappen");
+		fasen.put(9, "deconstructie of sloop");
+		fasen.put(10, "transport -> afval");
+		fasen.put(11, "afvalverwerking");
+		fasen.put(12, "afvalverwijdering");
+		fasen.put(13, "Baten en lasten voorbij de systeemgrenzen");
+		resources.setFaseMapping(fasen);
+		
 		return resources;
 	}
 }
