@@ -19,13 +19,9 @@ public class MpgCalculator {
 
 	private MpgObjectStore objectStore = null;
 	private MpgCalculationResults results;
-	private HashMap<NmdImpactFactor, Double> costWeightFactors = new HashMap<NmdImpactFactor, Double>();
 
 	public MpgCalculator() {
 		setResults(new MpgCalculationResults());
-		for (NmdImpactFactor nmdImpactFactor : NmdImpactFactor.values()) {
-			costWeightFactors.put(nmdImpactFactor, 1.0);
-		}
 	}
 
 	public MpgCalculationResults calculate(double designLife) {
@@ -75,7 +71,7 @@ public class MpgCalculator {
 					// ----- Production ----
 					results.incrementCostFactors(
 							matSpec.getFaseProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
-									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier, costWeightFactors),
+									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier),
 							specs.getName(), matSpec.getName());
 
 					// ----- DISPOSAL ----
@@ -86,14 +82,14 @@ public class MpgCalculator {
 						double cost = lifeTimeTotalMassKg * entry.getValue();
 
 						results.incrementCostFactors(
-								matSpec.getFaseProfiel(entry.getKey()).calculateFactors(cost, costWeightFactors),
+								matSpec.getFaseProfiel(entry.getKey()).calculateFactors(cost),
 								specs.getName(), matSpec.getName());
 
 						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than
 						// per product
 						results.incrementCostFactors(
 								matSpec.getFaseProfiel(NmdLifeCycleStage.TransportForRemoval).calculateFactors(
-										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey()), costWeightFactors),
+										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey())),
 								specs.getName(), matSpec.getName());
 					}
 
@@ -109,8 +105,7 @@ public class MpgCalculator {
 				// determine tranport costs per composed material in tonnes * km .
 				// the factor 2 has been removed since May 2015
 				results.incrementCostFactors(specs.getTransportProfile().calculateFactors(
-						categoryMultiplier * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0),
-						costWeightFactors), specs.getName());
+						categoryMultiplier * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0)), specs.getName());
 			}
 
 			results.SetResultsStatus(ResultStatus.Success);

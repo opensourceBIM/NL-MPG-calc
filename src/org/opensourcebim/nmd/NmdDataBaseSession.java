@@ -28,7 +28,7 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.bimserver.shared.reflector.KeyValuePair;
 import org.opensourcebim.ifccollection.MpgElement;
-import org.opensourcebim.mpgcalculation.NmdImpactFactor;
+import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -137,9 +137,9 @@ public class NmdDataBaseSession implements NmdDataService {
 			HttpResponse categorieResponse = this
 					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/MilieuCategorien", params);
 			JsonNode categorie_node = this.responseToJson(categorieResponse).get("results");
-			HashMap<Integer, NmdImpactFactor> categorien = new HashMap<Integer, NmdImpactFactor>();
+			HashMap<Integer, NmdMileuCategorie> categorien = new HashMap<Integer, NmdMileuCategorie>();
 			categorie_node.forEach(categorie -> {
-				NmdImpactFactor factor = new NmdImpactFactor(categorie.get("Milieueffect").asText(),
+				NmdMileuCategorie factor = new NmdMileuCategorie(categorie.get("Milieueffect").asText(),
 						categorie.get("Eenheid").asText(),
 						categorie.get("Wegingsfactor") != null ? categorie.get("Wegingsfactor").asDouble() : 0.0);
 				categorien.putIfAbsent(Integer.parseInt(categorie.get("MilieuCategorieID").asText()), factor);
@@ -159,6 +159,8 @@ public class NmdDataBaseSession implements NmdDataService {
 
 			});
 			resources.setUnitMapping(eenheden);
+
+			// rekenregels
 
 		} catch (Exception e) {
 			e.printStackTrace();

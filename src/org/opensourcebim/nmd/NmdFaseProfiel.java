@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.opensourcebim.mpgcalculation.MpgCostFactor;
-import org.opensourcebim.mpgcalculation.NmdImpactFactor;
+import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
 import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 
 /**
@@ -24,7 +24,7 @@ public interface NmdFaseProfiel {
 
 	NmdUnit getUnit();
 	
-	double getImpactFactor(NmdImpactFactor factor);
+	Set<MpgCostFactor> calculateFactors(double cost);
 
-	Set<MpgCostFactor> calculateFactors(double cost, HashMap<NmdImpactFactor, Double> weightFactors);
+	double getProfielCoefficient(String milieuCategorie);
 }

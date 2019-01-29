@@ -3,6 +3,7 @@ package org.opensourcebim.mpgcalculation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,11 +20,12 @@ import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.nmd.MaterialSpecificationImpl;
-import org.opensourcebim.nmd.NmdBasisProfielImpl;
+import org.opensourcebim.nmd.NmdFaseProfielImpl;
 import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProductCardImpl;
 import org.opensourcebim.nmd.NmdProfileSet;
+import org.opensourcebim.nmd.NmdReferenceResources;
 import org.opensourcebim.nmd.NmdUnit;
 
 public class mpgCalculatorTests {
@@ -101,7 +103,7 @@ public class mpgCalculatorTests {
 
 		startCalculations(1.0);
 		// we have added a unit value for every ImpactFactor
-		assertEquals((double) (NmdImpactFactor.values().length) / 1000.0,
+		assertEquals((double) (getDummyReferences().getMilieuCategorieMapping().size()) / 1000.0,
 				results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
 	}
 
@@ -112,7 +114,7 @@ public class mpgCalculatorTests {
 		addUnitObject("steel");
 
 		startCalculations(1.0);
-		assertEquals((double) (NmdImpactFactor.values().length) * (1.0 + loss) / 1000.0,
+		assertEquals((double) (getDummyReferences().getMilieuCategorieMapping().size()) * (1.0 + loss) / 1000.0,
 				results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
 	}
 
@@ -122,7 +124,7 @@ public class mpgCalculatorTests {
 		addUnitObject("steel");
 
 		startCalculations(1.0);
-		assertEquals(1.3 * (double) (NmdImpactFactor.values().length) / 1000.0,
+		assertEquals(1.3 * (double) (getDummyReferences().getMilieuCategorieMapping().size()) / 1000.0,
 				results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
 	}
 
@@ -532,8 +534,31 @@ public class mpgCalculatorTests {
 	}
 
 	private NmdFaseProfiel createConstantValueProfile(NmdLifeCycleStage stage, Double constantValue) {
-		NmdBasisProfielImpl profile = new NmdBasisProfielImpl(stage, NmdUnit.Kg);
+		NmdFaseProfielImpl profile = new NmdFaseProfielImpl(stage, NmdUnit.Kg, this.getDummyReferences());
 		profile.setAll(constantValue);
 		return profile;
+	}
+	
+	private NmdReferenceResources getDummyReferences() {
+		NmdReferenceResources resources = new NmdReferenceResources();
+		HashMap<Integer, NmdMileuCategorie> milieuCats = new HashMap<Integer, NmdMileuCategorie>();
+		milieuCats.put(1, new NmdMileuCategorie("AbioticDepletionNonFuel", "kg antimoon", 1.0 ));
+		milieuCats.put(2, new NmdMileuCategorie("AbioticDepletionFuel", "kg antimoon", 1.0 ));
+		milieuCats.put(3, new NmdMileuCategorie("GWP100", "kg CO2", 1.0 ));
+		milieuCats.put(4, new NmdMileuCategorie("ODP", "kg CFC11", 1.0 ));
+		milieuCats.put(5, new NmdMileuCategorie("PhotoChemicalOxidation", "kg etheen", 1.0 ));
+		milieuCats.put(6, new NmdMileuCategorie("Acidifcation", "kg SO2", 1.0 ));
+		milieuCats.put(7, new NmdMileuCategorie("Eutrophication", "kg (PO4)^3-", 1.0 ));
+		milieuCats.put(8, new NmdMileuCategorie("HumanToxicity", "kg 1,4 dichloor benzeen", 1.0 ));
+		milieuCats.put(9, new NmdMileuCategorie("FreshWaterAquaticEcoToxicity", "kg 1,4 dichloor benzeen", 1.0 ));
+		milieuCats.put(10, new NmdMileuCategorie("MarineAquaticEcoToxicity", "kg 1,4 dichloor benzeen", 1.0 ));
+		milieuCats.put(11, new NmdMileuCategorie("TerrestrialEcoToxocity", "kg 1,4 dichloor benzeen", 1.0 ));
+		milieuCats.put(12, new NmdMileuCategorie("TotalRenewableEnergy", "MJ", 1.0 ));
+		milieuCats.put(13, new NmdMileuCategorie("TotalNonRenewableEnergy", "MJ", 1.0 ));
+		milieuCats.put(14, new NmdMileuCategorie("TotalEnergy", "MJ", 1.0 ));
+		milieuCats.put(15, new NmdMileuCategorie("FreshWaterUse", "m3", 1.0 ));
+		
+		resources.setMilieuCategorieMapping(milieuCats);
+		return resources;
 	}
 }

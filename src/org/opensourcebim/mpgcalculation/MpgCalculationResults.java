@@ -66,8 +66,8 @@ public class MpgCalculationResults {
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
-	public double getCostPerImpactFactor(NmdImpactFactor factor) {
-		return costFactors.stream().filter(f -> f.getFactor() == factor)
+	public double getCostPerImpactFactor(String factor) {
+		return costFactors.stream().filter(f -> f.getMilieuCategorie() == factor)
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
