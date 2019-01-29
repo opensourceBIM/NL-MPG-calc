@@ -5,9 +5,8 @@ import java.util.Map.Entry;
 
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.nmd.NmdProfileSet;
-import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdProductCard;
+import org.opensourcebim.nmd.NmdProfileSet;
 
 /**
  * Do the MPG calculations based on a read in object model. with material data

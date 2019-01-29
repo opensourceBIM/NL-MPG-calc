@@ -5,8 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.management.openmbean.KeyAlreadyExistsException;
-
 /**
  * Class to store all the calculation results broken down by a series of
  * properties as defined in the CostFactor class. This class will also

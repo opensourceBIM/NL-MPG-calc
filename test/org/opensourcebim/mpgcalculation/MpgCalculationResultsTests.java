@@ -2,8 +2,6 @@ package org.opensourcebim.mpgcalculation;
 
 import static org.junit.Assert.assertEquals;
 
-import javax.management.openmbean.KeyAlreadyExistsException;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
