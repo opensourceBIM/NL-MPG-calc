@@ -90,13 +90,12 @@ public class NmdInterfaceTests {
 		assertTrue(4 <= db.getAllProductSets().size());
 	}
 	
-	@Test(expected = FileNotFoundException.class)
-	public void testGetChildProductsWillReturnNullOnNonExistenProductCode() throws FileNotFoundException {
+	@Test
+	public void testGetChildProductsWillReturnNullOnNonExistenProductCode() {
 		connect();
 		
 		NmdProductCardImpl card = new NmdProductCardImpl();
 		card.setRAWCode("-42");
-
 		assertTrue(null == db.getChildProductSetsForProductSet(card));
 	}
 	
@@ -114,5 +113,26 @@ public class NmdInterfaceTests {
 		connect();
 		List<String> ids = Arrays.asList("19");
 		db.getFaseProfielenByIds(ids);
+	}
+	
+	@Test
+	public void getReferenceResourcesReturnsProfielFaseMapping() {
+		connect();
+		NmdReferenceResources mappings = db.getReferenceResources();
+		assertTrue(0 < mappings.getFaseMapping().size()); 
+	}
+	
+	@Test
+	public void getReferenceResourcesReturnsMilieuCategorienMapping() {
+		connect();
+		NmdReferenceResources mappings = db.getReferenceResources();
+		assertTrue(0 < mappings.getMilieuCategorieMapping().size()); 
+	}
+	
+	@Test
+	public void getReferenceResourcesReturnsEenhedenMapping() {
+		connect();
+		NmdReferenceResources mappings = db.getReferenceResources();
+		assertTrue(0 < mappings.getUnitMapping().size()); 
 	}
 }

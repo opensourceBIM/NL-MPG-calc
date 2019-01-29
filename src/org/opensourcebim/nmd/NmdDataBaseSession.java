@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,7 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.bimserver.shared.reflector.KeyValuePair;
 import org.opensourcebim.ifccollection.MpgElement;
+import org.opensourcebim.mpgcalculation.NmdImpactFactor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -110,6 +112,60 @@ public class NmdDataBaseSession implements NmdDataService {
 		this.isConnected = false;
 	}
 
+	/*
+	 * Get the reference resources to map database ids to meaningful fieldnames
+	 */
+	public NmdReferenceResources getReferenceResources() {
+
+		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
+		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
+		NmdReferenceResources resources = new NmdReferenceResources();
+
+		try {
+			// fasen
+			HttpResponse faseResponse = this.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/Fasen",
+					params);
+			JsonNode fasen_node = this.responseToJson(faseResponse).get("results");
+			HashMap<Integer, String> fasen = new HashMap<Integer, String>();
+			fasen_node.forEach(fase -> {
+				fasen.putIfAbsent(Integer.parseInt(fase.get("FaseID").asText()), fase.get("FaseNaam").asText());
+
+			});
+			resources.setFaseMapping(fasen);
+
+			// milieucategorien
+			HttpResponse categorieResponse = this
+					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/MilieuCategorien", params);
+			JsonNode categorie_node = this.responseToJson(categorieResponse).get("results");
+			HashMap<Integer, NmdImpactFactor> categorien = new HashMap<Integer, NmdImpactFactor>();
+			categorie_node.forEach(categorie -> {
+				NmdImpactFactor factor = new NmdImpactFactor(categorie.get("Milieueffect").asText(),
+						categorie.get("Eenheid").asText(),
+						categorie.get("Wegingsfactor") != null ? categorie.get("Wegingsfactor").asDouble() : 0.0);
+				categorien.putIfAbsent(Integer.parseInt(categorie.get("MilieuCategorieID").asText()), factor);
+
+			});
+			resources.setMilieuCategorieMapping(categorien);
+
+			// eenheden
+			HttpResponse eenheidResponse = this
+					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/Eenheden", params);
+			JsonNode eenheid_node = this.responseToJson(eenheidResponse).get("results");
+			HashMap<Integer, String> eenheden = new HashMap<Integer, String>();
+			eenheid_node.forEach(eenheid -> {
+
+				eenheden.putIfAbsent(TryParseJsonNode(eenheid.get("EenheidID"), -1),
+						TryParseJsonNode(eenheid.get("Code"), ""));
+
+			});
+			resources.setUnitMapping(eenheden);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return resources;
+	}
+
 	@Override
 	public List<NmdProductCard> getAllProductSets() {
 
@@ -169,29 +225,33 @@ public class NmdDataBaseSession implements NmdDataService {
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 		params.add(new KeyValuePair("ProductIDs", String.join(",", ids)));
 		params.add(new KeyValuePair("includeNULLs", true));
-		
+
 		try {
-			HttpResponse response = this.performGetRequestWithParams(
-					"/NMD_30_API_v0.2/api/NMD30_Web_API/ProductenProfielWaarden",
-					params);
-			
+			HttpResponse response = this
+					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/ProductenProfielWaarden", params);
+
 			// do something with the entity to get the token
 			JsonNode resp_node = this.responseToJson(response);
-			
+
 			List<NmdFaseProfiel> profiles = new ArrayList<NmdFaseProfiel>();
-			
+
 			JsonNode profielSetNodes = resp_node.get("results").get(0).get("ProfielSet");
 			profielSetNodes.forEach(profielSet -> {
 				JsonNode profielen = profielSet.get("Profiel");
-				int duration = Integer.parseInt(profielSet.get("Levensduur").asText());
-			
+				Integer duration = TryParseJsonNode(profielSet.get("Levensduur"), -1);
+
 				profielen.forEach(p -> {
-					JsonNode category = p.get("CategorieID");
-					JsonNode fase = p.get("FaseID");
-					JsonNode mki = p.get("ProfielMilieuEffecten");
+					Integer category = TryParseJsonNode(p.get("CategorieID"), -1);
+					Integer fase = TryParseJsonNode(p.get("FaseID"), -1);
+					HashMap<Integer, Double> profielWaarden = new HashMap<Integer, Double>();
+					p.get("ProfielMilieuEffecten").forEach(val -> {
+						Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
+						Double catVal = TryParseJsonNode(val.get("MilieuWaarde"), Double.NaN);
+						profielWaarden.putIfAbsent(catId, catVal);
+					});
 				});
 			});
-			
+
 			return profiles;
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
@@ -242,14 +302,26 @@ public class NmdDataBaseSession implements NmdDataService {
 		newCard.setRAWCode(cardInfo.get("ElementID").asText());
 		newCard.setNLsfbCode(cardInfo.get("ElementCode").asText());
 		newCard.setElementName(cardInfo.get("ElementNaam").asText());
-		
+
 		if (cardInfo.has("FunctioneleBeschrijving")) {
 			newCard.setDescription(cardInfo.get("FunctioneleBeschrijving").asText());
 		}
-	
+
 		if (cardInfo.has("FunctioneleEenheidID")) {
 			int unitid = cardInfo.get("FunctioneleEenheidID").asInt();
 		}
 		return newCard;
+	}
+
+	private Integer TryParseJsonNode(JsonNode node, Integer defaultValue) {
+		return (node == null) ? defaultValue : node.asInt(defaultValue);
+	}
+
+	private Double TryParseJsonNode(JsonNode node, Double defaultValue) {
+		return (node == null) ? defaultValue : node.asDouble(defaultValue);
+	}
+
+	private String TryParseJsonNode(JsonNode node, String defaultValue) {
+		return (node == null) ? defaultValue : node.asText(defaultValue);
 	}
 }
