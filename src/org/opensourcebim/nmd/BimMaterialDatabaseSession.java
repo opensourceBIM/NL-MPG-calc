@@ -1,7 +1,6 @@
 package org.opensourcebim.nmd;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 import org.opensourcebim.ifccollection.MpgElement;
@@ -44,24 +43,19 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	}
 
 	@Override
-	public NmdProductCard retrieveMaterial(MpgElement material) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public List<NmdProductCard> getAllProductSets() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
-	public void getProfileSetForProductCard(NmdProductCard product) {
+	public List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) {
 		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
-	public List<NmdFaseProfiel> getFaseProfilesByIds(List<Integer> ids) {
+	public List<NmdFaseProfiel> getFaseProfielenByIds(List<String> ids) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -65,7 +65,10 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 	private NmdProductCard tryGetMaterialProperties(MpgElement material) {
 		NmdProductCard retrievedMaterial = null;
 		for (NmdDataService nmdDataService : services) {
-			retrievedMaterial = nmdDataService.retrieveMaterial(material);
+			
+			// resolve which product card to retrieve based on the input MpgElement
+			
+			
 			if (retrievedMaterial != null) {
 				break;
 			}

@@ -3,15 +3,19 @@ package org.opensourcebim.nmd;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
-
-import javax.management.openmbean.KeyAlreadyExistsException;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import net.bytebuddy.asm.Advice.Thrown;
 
 public class NmdInterfaceTests {
 
@@ -86,21 +90,29 @@ public class NmdInterfaceTests {
 		assertTrue(4 <= db.getAllProductSets().size());
 	}
 	
-	@Test
-	public void testReturnWarningWhenProductSetIdDoesNotExist() {
+	@Test(expected = FileNotFoundException.class)
+	public void testGetChildProductsWillReturnNullOnNonExistenProductCode() throws FileNotFoundException {
 		connect();
 		
 		NmdProductCardImpl card = new NmdProductCardImpl();
 		card.setRAWCode("-42");
-		db.getProfileSetForProductCard(card);
+
+		assertTrue(null == db.getChildProductSetsForProductSet(card));
 	}
 	
 	@Test
-	public void testCanRetrieveProfileSetIdsByProductSetId() {
+	public void testGetChildProductsWillGetArrayWithProductSetsOnSuccesfulRetrieval() {
 		connect();
 		
 		NmdProductCardImpl card = new NmdProductCardImpl();
 		card.setRAWCode("155");
-		db.getProfileSetForProductCard(card);
+		assertTrue(0 < db.getChildProductSetsForProductSet(card).size());
+	}
+	
+	@Test
+	public void testCanRetrieveProfileSetsBySingleId() {
+		connect();
+		List<String> ids = Arrays.asList("19");
+		db.getFaseProfielenByIds(ids);
 	}
 }

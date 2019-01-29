@@ -1,14 +1,15 @@
 package org.opensourcebim.nmd;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -18,15 +19,15 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
+import org.bimserver.shared.reflector.KeyValuePair;
 import org.opensourcebim.ifccollection.MpgElement;
-import org.opensourcebim.nmd.NmdDatabaseConfig;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -111,46 +112,108 @@ public class NmdDataBaseSession implements NmdDataService {
 
 	@Override
 	public List<NmdProductCard> getAllProductSets() {
-		HttpResponse response = this.performGetRequestWithParams(
-				"https://www.Milieudatabase-datainvoer.nl/NMD_30_API_v0.2/api/NMD30_Web_API/NLsfB_RAW_Elementen?ZoekDatum=20190105",
-				new BasicHttpParams());
 
-		// do something with the entity to get the token
-		JsonNode resp_node = this.responseToJson(response);
+		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
+		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 
-		// convert reponseNode to NmdProductCard info.
-		List<NmdProductCard> results = new ArrayList<NmdProductCard>();
-		resp_node.get("results")
-			.forEach(f -> results.add(this.getIdsFromJson(f)));
-		
-		return results;
-	}
+		try {
+			HttpResponse response = this
+					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/NLsfB_RAW_Elementen", params);
+			// do something with the entity to get the token
+			JsonNode resp_node = this.responseToJson(response);
 
-	@Override
-	public NmdProductCard retrieveMaterial(MpgElement material) {
-		// TODO Auto-generated method stub
+			// convert reponseNode to NmdProductCard info.
+			List<NmdProductCard> results = new ArrayList<NmdProductCard>();
+			resp_node.get("results").forEach(f -> results.add(this.getIdsFromJson(f)));
+
+			return results;
+
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+
 		return null;
 	}
 
 	@Override
-	public void getProfileSetForProductCard(NmdProductCard product) {
-		
-	}
+	public List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) {
+		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
+		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
+		params.add(new KeyValuePair("ElementID", product.getRAWCode()));
 
-	@Override
-	public List<NmdFaseProfiel> getFaseProfilesByIds(List<Integer> ids) {
-		// TODO Auto-generated method stub
+		try {
+			HttpResponse response = this
+					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/ElementOnderdelen", params);
+
+			// do something with the entity to get the token
+			JsonNode resp_node = this.responseToJson(response);
+			if (resp_node != null) {
+				List<NmdProductCard> childCards = new ArrayList<NmdProductCard>();
+				resp_node.get("results").forEach(res -> {
+					childCards.add(getIdsFromJson(res));
+				});
+
+				return childCards;
+			}
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		return null;
 	}
 
-	private HttpResponse performGetRequestWithParams(String url, HttpParams params) {
-		HttpGet request = new HttpGet(url);
+	@Override
+	public List<NmdFaseProfiel> getFaseProfielenByIds(List<String> ids) {
+		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
+		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
+		params.add(new KeyValuePair("ProductIDs", String.join(",", ids)));
+		params.add(new KeyValuePair("includeNULLs", true));
+		
+		try {
+			HttpResponse response = this.performGetRequestWithParams(
+					"/NMD_30_API_v0.2/api/NMD30_Web_API/ProductenProfielWaarden",
+					params);
+			
+			// do something with the entity to get the token
+			JsonNode resp_node = this.responseToJson(response);
+			
+			List<NmdFaseProfiel> profiles = new ArrayList<NmdFaseProfiel>();
+			
+			JsonNode profielSetNodes = resp_node.get("results").get(0).get("ProfielSet");
+			profielSetNodes.forEach(profielSet -> {
+				JsonNode profielen = profielSet.get("Profiel");
+				int duration = Integer.parseInt(profielSet.get("Levensduur").asText());
+			
+				profielen.forEach(p -> {
+					JsonNode category = p.get("CategorieID");
+					JsonNode fase = p.get("FaseID");
+					JsonNode mki = p.get("ProfielMilieuEffecten");
+				});
+			});
+			
+			return profiles;
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	private HttpResponse performGetRequestWithParams(String url, List<KeyValuePair> params) throws URISyntaxException {
+		URIBuilder builder = new URIBuilder();
+		builder.setScheme("https").setHost("www.Milieudatabase-datainvoer.nl").setPath(url);
+
+		params.forEach(p -> builder.addParameter(p.getFieldName(), p.getValue().toString()));
+
+		URI uri = builder.build();
+
+		HttpGet request = new HttpGet(uri);
 		request.addHeader("Access_Token", this.token);
-		
+
 		// Execute and get the response.
 		HttpResponse response = null;
 		try {
-			request.setParams(params);
 			response = this.httpclient.execute(request);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -173,14 +236,18 @@ public class NmdDataBaseSession implements NmdDataService {
 		}
 		return responseNode;
 	}
-	
+
 	private NmdProductCard getIdsFromJson(JsonNode cardInfo) {
 		NmdProductCardImpl newCard = new NmdProductCardImpl();
 		newCard.setRAWCode(cardInfo.get("ElementID").asText());
 		newCard.setNLsfbCode(cardInfo.get("ElementCode").asText());
 		newCard.setElementName(cardInfo.get("ElementNaam").asText());
-		newCard.setDescription(cardInfo.get("FunctioneleBeschrijving").asText());
-		if (cardInfo.has("FunctioneleEenheidID")) {			
+		
+		if (cardInfo.has("FunctioneleBeschrijving")) {
+			newCard.setDescription(cardInfo.get("FunctioneleBeschrijving").asText());
+		}
+	
+		if (cardInfo.has("FunctioneleEenheidID")) {
 			int unitid = cardInfo.get("FunctioneleEenheidID").asInt();
 		}
 		return newCard;

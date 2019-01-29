@@ -1,7 +1,7 @@
 package org.opensourcebim.nmd;
 
+import java.io.FileNotFoundException;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 import org.opensourcebim.ifccollection.MpgElement;
@@ -24,12 +24,12 @@ public interface NmdDataService {
 
 	List<NmdProductCard> getAllProductSets();
 	
-	void getProfileSetForProductCard(NmdProductCard product);
+	List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) throws FileNotFoundException;
 	
-	List<NmdFaseProfiel> getFaseProfilesByIds(List<Integer> ids);
+	List<NmdFaseProfiel> getFaseProfielenByIds(List<String> ids);
 	
-	NmdProductCard retrieveMaterial(MpgElement material);
-
 	Boolean getIsConnected();
+
+
 
 }
