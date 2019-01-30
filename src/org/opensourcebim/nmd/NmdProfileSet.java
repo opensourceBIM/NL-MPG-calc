@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.eclipse.jdt.core.compiler.InvalidInputException;
-import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 
 /**
  * Material specification. contains Basis Profiel data for every lifecycle stage
@@ -16,8 +15,18 @@ import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 public interface NmdProfileSet {
 	String getName();
 
-	String getCode();
+	Integer getProfielId();
 
+	/*
+	 * Flag to indicate whether this profile covers for all of its children profiles
+	 */
+	Boolean getIsFullProfile();
+	
+	/*
+	 * reference to ProfielId of parent profiel
+	 */
+	Integer getParentProfielId();
+	
 	String getUnit();
 	
 	/**
@@ -26,7 +35,7 @@ public interface NmdProfileSet {
 	 */
 	double getMassPerUnit();
 
-	double getProductLifeTime();
+	Integer getProductLifeTime();
 
 	/**
 	 * factor between 0 and < 1 where 0 is no losses

@@ -30,6 +30,15 @@ public class NmdFaseProfielImpl implements NmdFaseProfiel {
 			setProfielCoefficient(factor.getValue().getDescription(), value);
 		}
 	}
+	
+	@Override
+	public Integer getCategory() {
+		return this.category;
+	}
+	
+	public void setCategory(Integer category) {
+		this.category = category;
+	}
 
 	@Override
 	public String getDescription() {

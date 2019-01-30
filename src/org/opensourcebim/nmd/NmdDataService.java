@@ -2,6 +2,7 @@ package org.opensourcebim.nmd;
 
 import java.io.FileNotFoundException;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 
 import org.opensourcebim.ifccollection.MpgElement;
@@ -26,9 +27,12 @@ public interface NmdDataService {
 	
 	List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) throws FileNotFoundException;
 	
-	List<NmdFaseProfiel> getFaseProfielenByIds(List<String> ids);
+	Boolean getProfielSetsByProductCard(NmdProductCard product);
+	
+	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids);
 	
 	Boolean getIsConnected();
+
 
 
 

@@ -22,8 +22,12 @@ public interface NmdFaseProfiel {
 	String getFase();
 
 	NmdUnit getUnit();
+
+	Integer getCategory();
 	
 	Set<MpgCostFactor> calculateFactors(double cost);
 
 	double getProfielCoefficient(String milieuCategorie);
+	
+	void setProfielCoefficient(String milieuCategorie, double value);
 }

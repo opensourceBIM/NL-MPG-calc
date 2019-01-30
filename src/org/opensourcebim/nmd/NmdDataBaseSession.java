@@ -1,17 +1,20 @@
 package org.opensourcebim.nmd;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
+import java.util.Optional;
 
+import org.apache.commons.lang3.tuple.MutableTriple;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -23,13 +26,12 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.bimserver.shared.reflector.KeyValuePair;
-import org.opensourcebim.ifccollection.MpgElement;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -49,6 +51,7 @@ public class NmdDataBaseSession implements NmdDataService {
 	private HttpClient httpclient;
 	private boolean isConnected = false;
 	private String token;
+	private NmdReferenceResources resources;
 
 	public NmdDataBaseSession(NmdDatabaseConfig config) {
 		this.config = config;
@@ -104,25 +107,38 @@ public class NmdDataBaseSession implements NmdDataService {
 			this.isConnected = false;
 			System.out.println("authentication failed: " + response.getStatusLine().toString());
 		}
+
+		loadResources();
 	}
 
 	@Override
 	public void logout() {
 		this.setToken("");
 		this.isConnected = false;
+		this.resources = null;
+	}
+
+	private void loadResources() {
+		if (this.resources == null) {
+			this.resources = this.getReferenceResources();
+		}
+	}
+
+	public NmdReferenceResources getResources() {
+		loadResources();
+		return this.resources;
 	}
 
 	/*
 	 * Get the reference resources to map database ids to meaningful fieldnames
 	 */
 	public NmdReferenceResources getReferenceResources() {
-
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 		NmdReferenceResources resources = new NmdReferenceResources();
 
 		try {
-			// fasen
+			// lifecycle fasen
 			HttpResponse faseResponse = this.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/Fasen",
 					params);
 			JsonNode fasen_node = this.responseToJson(faseResponse).get("results");
@@ -220,9 +236,76 @@ public class NmdDataBaseSession implements NmdDataService {
 
 		return null;
 	}
+	
+	@Override
+	public Boolean getProfielSetsByProductCard(NmdProductCard product) {
+		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
+		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
+		params.add(new KeyValuePair("ElementID", product.getRAWCode()));
+
+		try {
+			HttpResponse response = this
+					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/ProductenBijElement", params);
+
+			// do something with the entity to get the token
+			JsonNode resp_node = this.responseToJson(response);
+			JsonNode profielsets = resp_node.get("results");
+			
+			// determine candidate sets that could be matched to this product
+			List<NmdProfileSet> candidateSets = new ArrayList<NmdProfileSet>();
+			profielsets.forEach(set -> {
+				// only get items that are relevant for us.
+				if(TryParseJsonNode(set.get("ProfielSetGekoppeld"), false)) {
+					NmdProfileSetImpl profielSet = new NmdProfileSetImpl();
+					profielSet.setProfielId(TryParseJsonNode(set.get("ProductID"), -1));
+					profielSet.setParentProfielId(TryParseJsonNode(set.get("OuderProductID"), -1));
+					profielSet.setIsFullProfile(TryParseJsonNode(set.get("IsElementDekkend"), false));
+					profielSet.setName(TryParseJsonNode(set.get("ProductNaam"), ""));
+
+					try {
+						profielSet.setProductLifeTime(TryParseJsonNode(set.get("Levensduur"), 0));
+					} catch (InvalidInputException e) {
+						System.out.println("Could not find levensduur for profile");
+						e.printStackTrace();
+					}
+					candidateSets.add(profielSet);
+				}
+			});
+			
+			// ToDo: recursively determine full set of profiles. For now just take the first one that has a profile and is 'dekkend'.
+			// See issue BOUW-42
+			Optional<NmdProfileSet> chosenSet = candidateSets.stream().findFirst();
+			if (chosenSet.isPresent()) {
+				NmdProfileSet fullSet = this.getAdditionalProfileDataForSet((NmdProfileSetImpl)chosenSet.get());
+				product.addProfileSet(fullSet);
+				return true;
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+
+	/*
+	 * Add missing data to the NmdProfileSet
+	 */
+	private NmdProfileSet getAdditionalProfileDataForSet(NmdProfileSetImpl chosenSet) {
+		
+		HashMap<Integer, NmdProfileSet> setData = getProfileSetsByIds(Arrays.asList(chosenSet.getProfielId().toString()));
+		
+		NmdProfileSet data = setData.entrySet().stream().findFirst().get().getValue();
+		data.getDefinedProfiles().forEach(fase -> {
+			chosenSet.addBasisProfiel(fase, data.getFaseProfiel(fase));
+			chosenSet.setUnit(data.getUnit());
+		});
+
+		return chosenSet;
+	}
 
 	@Override
-	public List<NmdFaseProfiel> getFaseProfielenByIds(List<String> ids) {
+	public HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids) {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 		params.add(new KeyValuePair("ProductIDs", String.join(",", ids)));
@@ -235,26 +318,53 @@ public class NmdDataBaseSession implements NmdDataService {
 			// do something with the entity to get the token
 			JsonNode resp_node = this.responseToJson(response);
 
-			List<NmdFaseProfiel> profiles = new ArrayList<NmdFaseProfiel>();
+			HashMap<Integer, NmdProfileSet> profileSets = new HashMap<Integer, NmdProfileSet>();
 
 			JsonNode profielSetNodes = resp_node.get("results").get(0).get("ProfielSet");
-			profielSetNodes.forEach(profielSet -> {
-				JsonNode profielen = profielSet.get("Profiel");
-				Integer duration = TryParseJsonNode(profielSet.get("Levensduur"), -1);
+			profielSetNodes.forEach(profielSetNode -> {
 
+				NmdProfileSetImpl set = new NmdProfileSetImpl();
+				Integer profielSetId = TryParseJsonNode(profielSetNode.get("ProfielSetID"), -1);
+				
+				// laad set specifieke data
+				try {
+					set.setProductLifeTime(TryParseJsonNode(profielSetNode.get("Levensduur"), -1));
+					set.setUnit(this.getReferenceResources().getUnitMapping()
+							.get(TryParseJsonNode(profielSetNode.get("ProfielSetEenheidID"), -1)));
+					set.setName(TryParseJsonNode(profielSetNode, ""));
+					set.setProfielId(profielSetId);
+				} catch (InvalidInputException e) {
+					System.out.println("error parsing general profielset data");
+				}
+
+				// laad faseprofiel specifieke data
+				JsonNode profielen = profielSetNode.get("Profiel");
 				profielen.forEach(p -> {
 					Integer category = TryParseJsonNode(p.get("CategorieID"), -1);
 					Integer fase = TryParseJsonNode(p.get("FaseID"), -1);
-					HashMap<Integer, Double> profielWaarden = new HashMap<Integer, Double>();
+					String faseName = this.getResources().getFaseMapping().get(fase);
+					
+					NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(
+							faseName,
+							this.getResources());
+
+					profiel.setCategory(category);
+
 					p.get("ProfielMilieuEffecten").forEach(val -> {
 						Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
 						Double catVal = TryParseJsonNode(val.get("MilieuWaarde"), Double.NaN);
-						profielWaarden.putIfAbsent(catId, catVal);
+
+						profiel.setProfielCoefficient(
+								this.getResources().getMilieuCategorieMapping().get(catId).getDescription(), catVal);
 					});
+
+					set.addBasisProfiel(faseName, profiel);
+
 				});
+				profileSets.put(profielSetId, set);
 			});
 
-			return profiles;
+			return profileSets;
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -325,5 +435,9 @@ public class NmdDataBaseSession implements NmdDataService {
 
 	private String TryParseJsonNode(JsonNode node, String defaultValue) {
 		return (node == null) ? defaultValue : node.asText(defaultValue);
+	}
+	
+	private Boolean TryParseJsonNode(JsonNode node, Boolean defaultValue) {
+		return (node == null) ? defaultValue : node.asBoolean(defaultValue);
 	}
 }

@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 
 import org.junit.After;
@@ -112,7 +113,19 @@ public class NmdInterfaceTests {
 	public void testCanRetrieveProfileSetsBySingleId() {
 		connect();
 		List<String> ids = Arrays.asList("19");
-		db.getFaseProfielenByIds(ids);
+		HashMap<Integer, NmdProfileSet> profileSets = db.getProfileSetsByIds(ids);
+		assertTrue(0 < profileSets.size());
+	}
+		
+	@Test
+	public void testCanRetrieveFullProductByProductId()
+	{
+		NmdProductCardImpl product = new NmdProductCardImpl();
+		product.setRAWCode("204");
+		
+		connect();
+		assertTrue(db.getProfielSetsByProductCard(product));
+		assertTrue(0 < product.getProfileSets().size());
 	}
 	
 	@Test
