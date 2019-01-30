@@ -34,6 +34,7 @@ public interface MpgObjectStore {
 
 	MpgElement getElementByName(String name);
 	List<MpgElement> getElementsByProductType(String productType);
+	
 	double getTotalVolumeOfMaterial(String name);
 	double getTotalVolumeOfProductType(String productType);
 	

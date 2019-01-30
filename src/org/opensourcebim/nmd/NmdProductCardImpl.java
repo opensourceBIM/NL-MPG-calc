@@ -16,6 +16,8 @@ public class NmdProductCardImpl implements NmdProductCard {
 	
 	public NmdProductCardImpl() {
 		this.specifications = new HashSet<NmdProfileSet>();
+		this.setRAWCode("");
+		this.setNLsfbCode("");
 	}
 	
 	@Override

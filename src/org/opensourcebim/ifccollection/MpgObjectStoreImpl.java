@@ -366,7 +366,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			System.out.println(" - with total volume : " + getTotalVolumeOfProductType(productType));
 			System.out.println("Materials found relating to product: ");
 			for (MpgElement element : getElementsByProductType(productType)) {
-				System.out.println(" - " + element == null ? "" : element.getIfcName());
+				if (element != null) {
+					System.out.println(" - " + element.getIfcName());
+				}
 			}
 			System.out.println();
 		}

@@ -178,12 +178,10 @@ public class MpgIfcObjectCollector {
 				MpgObjectImpl mpgObject = new MpgObjectImpl(element.getOid(), element.getGlobalId(), element.getName(),
 						element.getClass().getSimpleName(), "", objectStore);
 
-				Pair<Double, Double> geom = getGeometryFromProduct(element);
-				mpgObject.setVolume(geom.getRight());
-
+				
 				this.getPropertySetsFromIfcProduct(element, mpgObject);
 
-				// set volume if only defined in properties
+				// first try to set the geometry by properties
 				Double vol = null;
 				if(mpgObject.getProperties().containsKey("volume")) {
 					vol = ((double)mpgObject.getProperties().get("volume"));
@@ -191,9 +189,29 @@ public class MpgIfcObjectCollector {
 				if(mpgObject.getProperties().containsKey("netvolume") && vol == null) {
 					vol = ((double)mpgObject.getProperties().get("netvolume"));
 				}
-				if (vol != null && mpgObject.getVolume() == 0.0) {
+				if (vol != null) {
 					mpgObject.setVolume(vol);
 				}
+				
+				Double area = null;
+				if(mpgObject.getProperties().containsKey("grosssidearea")) {
+					area = ((double)mpgObject.getProperties().get("grosssidearea"));
+				}
+				if(mpgObject.getProperties().containsKey("area")) {
+					area = ((double)mpgObject.getProperties().get("area"));
+				}
+				if(mpgObject.getProperties().containsKey("netarea") && area == null) {
+					area = ((double)mpgObject.getProperties().get("netarea"));
+				}
+				if (area != null) {
+					mpgObject.setArea(area);
+				}
+				
+				// if we cannot find the properties do it through ifcOpenShell plugin geometry (area is not correct!)
+				Pair<Double, Double> geom = getGeometryFromProduct(element);
+				if (mpgObject.getVolume() == null) {mpgObject.setVolume(geom.getRight());}
+				if (mpgObject.getArea() == null) {mpgObject.setArea(geom.getLeft());}
+				
 					
 				// set Pset materials
 				if (mpgObject.getProperties().containsKey("material")) {
@@ -218,7 +236,7 @@ public class MpgIfcObjectCollector {
 	}
 
 	/**
-	 * retireve the volume of an element based on itself, the template type and any
+	 * retrieve the volume of an element based on itself, the template type and any
 	 * decomposed elements
 	 * 
 	 * @param prod the product to evaluate
@@ -229,7 +247,7 @@ public class MpgIfcObjectCollector {
 		double area = 0.0;
 		double volume = 0.0;
 
-		if (geometry != null) {
+		if (geometry != null) {			
 			area = this.getAreaUnit().convert(geometry.getArea(), modelAreaUnit);
 			volume = this.getVolumeUnit().convert(geometry.getVolume(), modelVolumeUnit);
 		} 

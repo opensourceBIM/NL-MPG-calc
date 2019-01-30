@@ -9,7 +9,6 @@ import org.opensourcebim.nmd.NmdProductCard;
  */
 public class MpgElement {
 	// id's
-	private String nmdIdentifier;
 	private String BimBotIdentifier;
 	
 	private String ifcName;
@@ -42,7 +41,7 @@ public class MpgElement {
 	 * @return a string with the nmd identifier
 	 */
 	public String getNmdIdentifier() {
-		return nmdProductCard.getNLsfbCode();
+		return nmdProductCard == null ? "" : nmdProductCard.getNLsfbCode();
 	}
 
 	/**
@@ -64,7 +63,7 @@ public class MpgElement {
 	public String print() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("material : " + ifcName + " with properties" + System.getProperty("line.separator"));
-		sb.append("NMD ID: " + nmdIdentifier + System.getProperty("line.separator"));
+		sb.append("NMD ID: " + getNmdIdentifier() + System.getProperty("line.separator"));
 		sb.append("nmd material(s) linked to MpgMaterial: " + System.getProperty("line.separator"));
 		sb.append("specs undefined " + System.getProperty("line.separator"));
 		

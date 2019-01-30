@@ -26,7 +26,8 @@ public class MpgObjectImpl implements MpgObject {
 	private Supplier<MpgObjectStore> store;
 	private List<MaterialSource> listedMaterials;
 
-	private double volume;
+	private Double volume;
+	private Double area;
 
 	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId,
 			MpgObjectStore objectStore) {
@@ -98,12 +99,21 @@ public class MpgObjectImpl implements MpgObject {
 	}
 
 	@Override
-	public double getVolume() {
+	public Double getVolume() {
 		return this.volume;
 	}
 
 	public void setVolume(double value) {
 		this.volume = value;
+	}
+		
+	@Override
+	public Double getArea() {
+		return this.area;
+	}
+	
+	public void setArea(double value) {
+		this.area = value;
 	}
 
 	@Override
