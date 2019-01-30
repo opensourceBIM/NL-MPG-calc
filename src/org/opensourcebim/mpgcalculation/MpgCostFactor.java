@@ -1,24 +1,24 @@
 package org.opensourcebim.mpgcalculation;
 
 public class MpgCostFactor {
-	private NmdLifeCycleStage stage;
-	private NmdImpactFactor factor;
+	private String fase;
+	private String milieuCategorie;
 	private String productName; // name of productCard
 	private String specName; // name of meterialSpec
 	private double value;
 
-	public MpgCostFactor(NmdLifeCycleStage stage, NmdImpactFactor factor, double value) {
-		this.stage = stage;
-		this.factor = factor;
+	public MpgCostFactor(String fase, String milieuCategorie, double value) {
+		this.fase = fase;
+		this.milieuCategorie = milieuCategorie;
 		this.value = value;
 	}
 
-	public NmdLifeCycleStage getStage() {
-		return stage;
+	public String getFase() {
+		return fase;
 	}
 
-	public NmdImpactFactor getFactor() {
-		return this.factor;
+	public String getMilieuCategorie() {
+		return this.milieuCategorie;
 	}
 
 	public String getProductName() {
@@ -54,8 +54,8 @@ public class MpgCostFactor {
 		}
 		MpgCostFactor testFactor = (MpgCostFactor) otherFactor;
 
-		return testFactor.getFactor() == this.getFactor() 
-				&& testFactor.getStage() == this.getStage()
+		return testFactor.getMilieuCategorie() == this.getMilieuCategorie() 
+				&& testFactor.getFase() == this.getFase()
 				&& testFactor.getProductName() == this.getProductName() 
 				&& testFactor.getSpecName() == this.getSpecName();
 	}

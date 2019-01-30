@@ -14,7 +14,44 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.geometry.GeometryInfo;
-import org.bimserver.models.ifc2x3tc1.*;
+import org.bimserver.models.ifc2x3tc1.IfcAnnotation;
+import org.bimserver.models.ifc2x3tc1.IfcBoolean;
+import org.bimserver.models.ifc2x3tc1.IfcBuilding;
+import org.bimserver.models.ifc2x3tc1.IfcBuildingStorey;
+import org.bimserver.models.ifc2x3tc1.IfcElementQuantity;
+import org.bimserver.models.ifc2x3tc1.IfcFurnishingElement;
+import org.bimserver.models.ifc2x3tc1.IfcIdentifier;
+import org.bimserver.models.ifc2x3tc1.IfcLabel;
+import org.bimserver.models.ifc2x3tc1.IfcMaterial;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialLayer;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialLayerSet;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialLayerSetUsage;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialList;
+import org.bimserver.models.ifc2x3tc1.IfcMaterialSelect;
+import org.bimserver.models.ifc2x3tc1.IfcObjectDefinition;
+import org.bimserver.models.ifc2x3tc1.IfcOpeningElement;
+import org.bimserver.models.ifc2x3tc1.IfcPhysicalQuantity;
+import org.bimserver.models.ifc2x3tc1.IfcPhysicalSimpleQuantity;
+import org.bimserver.models.ifc2x3tc1.IfcProduct;
+import org.bimserver.models.ifc2x3tc1.IfcProperty;
+import org.bimserver.models.ifc2x3tc1.IfcPropertySet;
+import org.bimserver.models.ifc2x3tc1.IfcPropertySetDefinition;
+import org.bimserver.models.ifc2x3tc1.IfcPropertySingleValue;
+import org.bimserver.models.ifc2x3tc1.IfcQuantityArea;
+import org.bimserver.models.ifc2x3tc1.IfcQuantityLength;
+import org.bimserver.models.ifc2x3tc1.IfcQuantityVolume;
+import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
+import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesMaterial;
+import org.bimserver.models.ifc2x3tc1.IfcRelDecomposes;
+import org.bimserver.models.ifc2x3tc1.IfcRelDefines;
+import org.bimserver.models.ifc2x3tc1.IfcRelDefinesByProperties;
+import org.bimserver.models.ifc2x3tc1.IfcRelDefinesByType;
+import org.bimserver.models.ifc2x3tc1.IfcSite;
+import org.bimserver.models.ifc2x3tc1.IfcSpace;
+import org.bimserver.models.ifc2x3tc1.IfcTypeObject;
+import org.bimserver.models.ifc2x3tc1.IfcTypeProduct;
+import org.bimserver.models.ifc2x3tc1.IfcValue;
+import org.bimserver.models.ifc2x3tc1.IfcVirtualElement;
 import org.bimserver.models.ifc2x3tc1.impl.IfcAnnotationImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcBuildingImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcBuildingStoreyImpl;
@@ -80,7 +117,7 @@ public class MpgIfcObjectCollector {
 		// loop through IfcSpaces
 		for (IfcSpace space : ifcModel.getAllWithSubTypes(IfcSpace.class)) {
 			
-			// omit any eternal spaces.
+			// omit any external spaces.
 			if (space.getBoundedBy().size() == 0) {
 				continue;
 			}
@@ -113,8 +150,12 @@ public class MpgIfcObjectCollector {
 			// ignore any elements that are irrelevant for the mpg calculations
 			if (!this.ignoredProducts.contains(element.getClass())) {
 
-				String guid = element.getGlobalId();
-				if (StringUtils.isBlank(guid)) {
+				// create the mpg element
+				String newMpgElementId = element.getName() + "-" + element.getGlobalId();
+				this.objectStore.addElement(newMpgElementId);
+				MpgElement newMpgElement = this.objectStore.getElementByName(newMpgElementId);
+				
+				if (StringUtils.isBlank(element.getGlobalId())) {
 					continue;
 				}
 				
@@ -165,6 +206,7 @@ public class MpgIfcObjectCollector {
 
 				// all properties are set. add it to the store.
 				objectStore.getObjects().add(mpgObject);
+				newMpgElement.setMpgObject(mpgObject);
 			}
 		}
 
@@ -190,19 +232,7 @@ public class MpgIfcObjectCollector {
 		if (geometry != null) {
 			area = this.getAreaUnit().convert(geometry.getArea(), modelAreaUnit);
 			volume = this.getVolumeUnit().convert(geometry.getVolume(), modelVolumeUnit);
-		} else {
-			// get volume of product by summing the volumes of its children
-//			if (prod.getIsDecomposedBy().size() > 0) {
-//				Double totalVolume = prod.getIsDecomposedBy().stream().flatMap(rel -> rel.getRelatedObjects().stream())
-//						.filter(o -> o instanceof IfcProduct).map(o -> ((IfcProduct) o).getGeometry())
-//						.map(g -> (g != null) ? g.getVolume() : 0.0).collect(Collectors.summingDouble(v -> v));
-//
-//				volume = this.getVolumeUnit().convert(totalVolume, modelVolumeUnit);
-//			} else {
-//				System.out.println(prod.getGlobalId());
-//			}
-		}
-
+		} 
 		return new ImmutablePair<Double, Double>(area, volume);
 	}
 
@@ -326,7 +356,7 @@ public class MpgIfcObjectCollector {
 	private void getMaterialsFromObject(IfcObjectDefinition sourceObject, MpgObjectImpl targetObject) {
 
 		EList<IfcRelAssociates> associates = sourceObject.getHasAssociations();
-		if (!associates.isEmpty()) {
+		if (associates != null && !associates.isEmpty()) {
 
 			String matSource = null;
 			if (sourceObject instanceof IfcTypeProduct) {

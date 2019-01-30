@@ -3,11 +3,10 @@ package org.opensourcebim.mpgcalculation;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import org.opensourcebim.ifccollection.MpgMaterial;
+import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.nmd.MaterialSpecification;
-import org.opensourcebim.nmd.NmdBasisProfiel;
 import org.opensourcebim.nmd.NmdProductCard;
+import org.opensourcebim.nmd.NmdProfileSet;
 
 /**
  * Do the MPG calculations based on a read in object model. with material data
@@ -20,13 +19,9 @@ public class MpgCalculator {
 
 	private MpgObjectStore objectStore = null;
 	private MpgCalculationResults results;
-	private HashMap<NmdImpactFactor, Double> costWeightFactors = new HashMap<NmdImpactFactor, Double>();
 
 	public MpgCalculator() {
 		setResults(new MpgCalculationResults());
-		for (NmdImpactFactor nmdImpactFactor : NmdImpactFactor.values()) {
-			costWeightFactors.put(nmdImpactFactor, 1.0);
-		}
 	}
 
 	public MpgCalculationResults calculate(double designLife) {
@@ -36,7 +31,7 @@ public class MpgCalculator {
 			return results;
 		}
 
-		if (!(objectStore.isIfcDataComplete() && objectStore.isMaterialDataComplete())) {
+		if (!(objectStore.isIfcDataComplete() && objectStore.isElementDataComplete())) {
 			results.SetResultsStatus(ResultStatus.IncompleteData);
 			return results;
 		}
@@ -46,7 +41,7 @@ public class MpgCalculator {
 			results.setTotalFloorArea(objectStore.getTotalFloorArea());
 
 			// for each building material found:
-			for (MpgMaterial mpgMaterial : objectStore.getMaterials().values()) {
+			for (MpgElement mpgMaterial : objectStore.getElements()) {
 
 				// this total volume can be in m3 or possible also in kWh depending on the unit
 				// in the product card
@@ -59,7 +54,7 @@ public class MpgCalculator {
 				// a single building material can be composed of individual materials.
 				double specsMatSumKg = 0.0;
 
-				for (MaterialSpecification matSpec : specs.getMaterials()) {
+				for (NmdProfileSet matSpec : specs.getProfileSets()) {
 
 					// Determine replacements required.
 					// this is usually 1 for regular materials and > 1 for cyclic maintenance
@@ -75,30 +70,28 @@ public class MpgCalculator {
 
 					// ----- Production ----
 					results.incrementCostFactors(
-							matSpec.getBasisProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
-									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier, costWeightFactors),
+							matSpec.getFaseProfiel("ConstructionAndReplacements")
+									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier),
 							specs.getName(), matSpec.getName());
 
 					// ----- DISPOSAL ----
 					// assumptions are the the category multiplioer does not need to be applied for
 					// disposal stages
 					// see: Rekenregels_materiaalgebonden_milieuprestatie_gebouwen.pdf for more info
-					for (Entry<NmdLifeCycleStage, Double> entry : matSpec.getDisposalRatios().entrySet()) {
+					for (Entry<String, Double> entry : matSpec.getDisposalRatios().entrySet()) {
 						double cost = lifeTimeTotalMassKg * entry.getValue();
 
 						results.incrementCostFactors(
-								matSpec.getBasisProfiel(entry.getKey()).calculateFactors(cost, costWeightFactors),
+								matSpec.getFaseProfiel(entry.getKey()).calculateFactors(cost),
 								specs.getName(), matSpec.getName());
 
 						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than
 						// per product
 						results.incrementCostFactors(
-								matSpec.getBasisProfiel(NmdLifeCycleStage.TransportForRemoval).calculateFactors(
-										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey()), costWeightFactors),
+								matSpec.getFaseProfiel("TransportForRemoval").calculateFactors(
+										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey())),
 								specs.getName(), matSpec.getName());
 					}
-
-					// DISPOSALTRANSPORT - done per individual material rather than per product
 
 					// ----- OPERATION COST ---- - apply different units of measure (l / m3 / kWh
 					// etc.)
@@ -112,8 +105,7 @@ public class MpgCalculator {
 				// determine tranport costs per composed material in tonnes * km .
 				// the factor 2 has been removed since May 2015
 				results.incrementCostFactors(specs.getTransportProfile().calculateFactors(
-						categoryMultiplier * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0),
-						costWeightFactors), specs.getName());
+						categoryMultiplier * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0)), specs.getName());
 			}
 
 			results.SetResultsStatus(ResultStatus.Success);

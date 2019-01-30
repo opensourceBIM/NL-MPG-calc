@@ -1,19 +1,39 @@
 package org.opensourcebim.nmd;
 
-import org.opensourcebim.ifccollection.MpgMaterial;
+import java.io.FileNotFoundException;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+
+import org.opensourcebim.ifccollection.MpgElement;
 
 /**
- * Stadard interface to provide material data from the source to the user.
+ * Standard interface to provide material data from the source to the user.
  * 
  * @author vijj
  *
  */
 public interface NmdDataService {
 
-	void start();
+	void login();
 
-	void stop();
+	void logout();
+	
+	Calendar getRequestDate();
 
-	NmdProductCard retrieveMaterial(MpgMaterial material);
+	void setRequestDate(Calendar newDate);
+
+	List<NmdProductCard> getAllProductSets();
+	
+	List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) throws FileNotFoundException;
+	
+	Boolean getProfielSetsByProductCard(NmdProductCard product);
+	
+	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids);
+	
+	Boolean getIsConnected();
+
+
+
 
 }

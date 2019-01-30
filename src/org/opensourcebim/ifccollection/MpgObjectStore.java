@@ -1,6 +1,5 @@
 package org.opensourcebim.ifccollection;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public interface MpgObjectStore {
 
-	HashMap<String, MpgMaterial> getMaterials();
+	HashSet<MpgElement> getElements();
 	List<MpgObject> getObjects();
 	List<MpgSpace> getSpaces();
 	
@@ -31,17 +30,20 @@ public interface MpgObjectStore {
 	
 	Stream<MpgObject> getChildren(String parentGuid);
 	
-	void addMaterial(String string);
-	Set<String> getAllMaterialNames();
-	MpgMaterial getMaterialByName(String name);
-	List<MpgMaterial> getMaterialsByProductType(String productType);
+	void addElement(String string);
+
+	MpgElement getElementByName(String name);
+	List<MpgElement> getElementsByProductType(String productType);
 	double getTotalVolumeOfMaterial(String name);
 	double getTotalVolumeOfProductType(String productType);
 	
 	void addSpace(MpgSpace space);
 	double getTotalFloorArea();
 	
+	
+	void validateIfcDataCollection();
 	boolean isIfcDataComplete();
+	
 	@JsonIgnore
 	GuidCollection getGuidsWithoutMaterial();
 	GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials();
@@ -51,9 +53,9 @@ public interface MpgObjectStore {
 	GuidCollection getGuidsWithRedundantMaterials();
 	GuidCollection getGuidsWithUndefinedLayerMats();
 	
-	void setProductCardForMaterial(String string, NmdProductCard specs);
-	boolean isMaterialDataComplete();
-	
-	void SummaryReport();
+	void setProductCardForElement(String string, NmdProductCard specs);
+	boolean isElementDataComplete();
+	Stream<String> getAllMaterialNames();
 
+	void SummaryReport();
 }

@@ -3,7 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opensourcebim.ifccollection.MpgMaterial;
+import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 
 /**
@@ -20,8 +20,8 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 
 	public NmdDataResolverImpl() {
 		services = new ArrayList<NmdDataService>();
-
-		this.addService(new NmdDataBaseSession());
+		NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
+		this.addService(new NmdDataBaseSession(config));
 		this.addService(new BimMaterialDatabaseSession());
 
 	}
@@ -34,20 +34,19 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 		try {
 			// start any subscribed services
 			for (NmdDataService nmdDataService : services) {
-				nmdDataService.start();
+				nmdDataService.login();
 			}
 
 			// get data per material - run through services in order
-			for (MpgMaterial material : ifcResults.getMaterials().values()) {
-				NmdProductCard nmdMaterial = tryGetMaterialProperties(material);
+			for (MpgElement element : ifcResults.getElements()) {
+				NmdProductCard nmdMaterial = tryGetMaterialProperties(element);
 				
 				if (nmdMaterial == null)
 				{
 					
 				} else {
-					ifcResults.setProductCardForMaterial(material.getIfcName(), nmdMaterial);
+					element.setProductCard(nmdMaterial);
 				}
-					
 			}
 
 		} catch (ArrayIndexOutOfBoundsException ex) {
@@ -56,17 +55,20 @@ public class NmdDataResolverImpl implements NmdDataResolverService {
 
 		finally {
 			for (NmdDataService nmdDataService : services) {
-				nmdDataService.stop();
+				nmdDataService.logout();
 			}
 		}
 
 		return nmdResults;
 	}
 
-	private NmdProductCard tryGetMaterialProperties(MpgMaterial material) {
+	private NmdProductCard tryGetMaterialProperties(MpgElement material) {
 		NmdProductCard retrievedMaterial = null;
 		for (NmdDataService nmdDataService : services) {
-			retrievedMaterial = nmdDataService.retrieveMaterial(material);
+			
+			// resolve which product card to retrieve based on the input MpgElement
+			
+			
 			if (retrievedMaterial != null) {
 				break;
 			}

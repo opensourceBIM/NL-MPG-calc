@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.eclipse.jdt.core.compiler.InvalidInputException;
-import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 
 /**
  * Material specification. contains Basis Profiel data for every lifecycle stage
@@ -13,11 +12,21 @@ import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
  * @author vijj
  *
  */
-public interface MaterialSpecification {
+public interface NmdProfileSet {
 	String getName();
 
-	String getCode();
+	Integer getProfielId();
 
+	/*
+	 * Flag to indicate whether this profile covers for all of its children profiles
+	 */
+	Boolean getIsFullProfile();
+	
+	/*
+	 * reference to ProfielId of parent profiel
+	 */
+	Integer getParentProfielId();
+	
 	String getUnit();
 	
 	/**
@@ -26,7 +35,7 @@ public interface MaterialSpecification {
 	 */
 	double getMassPerUnit();
 
-	double getProductLifeTime();
+	Integer getProductLifeTime();
 
 	/**
 	 * factor between 0 and < 1 where 0 is no losses
@@ -34,17 +43,17 @@ public interface MaterialSpecification {
 	 */
 	double getConstructionLosses();
 
-	HashMap<NmdLifeCycleStage, Double> getDisposalRatios();
+	HashMap<String, Double> getDisposalRatios();
 	
-	void setDisposalRatio(NmdLifeCycleStage stage, double ratio) throws InvalidInputException;
+	void setDisposalRatio(String fase, double ratio) throws InvalidInputException;
 
-	double getDisposalDistance(NmdLifeCycleStage stage);
+	double getDisposalDistance(String fase);
 	
-	NmdBasisProfiel getBasisProfiel(NmdLifeCycleStage lifeCycleStage);
+	NmdFaseProfiel getFaseProfiel(String fase);
 
-	Set<NmdLifeCycleStage> getDefinedProfiles();
+	Set<String> getDefinedProfiles();
 
-	void setDisposalDistance(NmdLifeCycleStage lifeCycleStage, double disposalDistance) throws InvalidInputException;
+	void setDisposalDistance(String fase, double disposalDistance) throws InvalidInputException;
 
 	Boolean getIsMaintenanceSpec();
 

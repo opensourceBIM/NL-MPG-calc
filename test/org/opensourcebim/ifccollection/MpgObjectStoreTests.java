@@ -23,34 +23,26 @@ public class MpgObjectStoreTests {
 	@Test 
 	public void testObjectStoreIsInitiallReturnsNoMaterials()
 	{
-		assertEquals(0, objectStore.getAllMaterialNames().size());
+		assertEquals(0, objectStore.getElements().size());
 	}
 	
 	@Test
 	public void testObjectStoreCanAddMaterials() {
-		objectStore.addMaterial("steel");
-		assertEquals(1, objectStore.getAllMaterialNames().size());
+		objectStore.addElement("steel");
+		assertEquals(1, objectStore.getElements().size());
 	}
-	
-	@Test 
-	public void testObjectStoreContainsOnlyUniqueMaterials() {
-		objectStore.addMaterial("steel");
-		objectStore.addMaterial("steel");
-		
-		assertEquals(1, objectStore.getAllMaterialNames().size());
-	}
-		
+			
 	@Test
 	public void testChangingAMaterialWillChangeAnyRelatedObjectMaterials() {
-		objectStore.addMaterial("dummyMaterial");
+		objectStore.addElement("dummyMaterial");
 		
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
 		mpgObject.addLayer(new MpgLayerImpl(2, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
-		
+		mpgObject.addMaterialSource("dummyMaterial", "", "layer");
 		objectStore.addObject(mpgObject);
-		objectStore.getMaterialByName("dummyMaterial").setBimBotIdentifier("some id");
+		objectStore.getElementByName("dummyMaterial").setBimBotIdentifier("some id");
 		
-		assertEquals("some id", objectStore.getMaterialsByProductType("Wall").get(0).getBimBotIdentifier());
+		assertEquals("some id", objectStore.getElementsByProductType("Wall").get(0).getBimBotIdentifier());
 	}
 	
 	@Test
@@ -60,7 +52,7 @@ public class MpgObjectStoreTests {
 	
 	@Test 
 	public void testVolumePerMaterialWithNoVolumesReturnZero() {
-		objectStore.addMaterial("dummyMaterial");
+		objectStore.addElement("dummyMaterial");
 		
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
 		mpgObject.addLayer(new MpgLayerImpl(0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
@@ -74,8 +66,8 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testTotalVolumeWithDifferentMaterialsReturnsOnlySelectedMaterialSum() {
-		objectStore.addMaterial("dummyMaterial");
-		objectStore.addMaterial("ignoredMaterial");
+		objectStore.addElement("dummyMaterial");
+		objectStore.addElement("ignoredMaterial");
 		
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
 		mpgObject.addLayer(new MpgLayerImpl(10, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
@@ -100,11 +92,13 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnOrphanMaterials() {
-		objectStore.addMaterial("orphan material");
-		objectStore.addMaterial("a linked material");
+		objectStore.addElement("orphan material");
+		objectStore.addElement("a linked material");
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
 		mpgObject.addLayer(new MpgLayerImpl(10, "a linked material", Integer.toString("a linked material".hashCode())));
 		objectStore.addObject(mpgObject);
+		
+		objectStore.validateIfcDataCollection();
 		
 		assertFalse("warning checker did not find the orphan material",
 				objectStore.isIfcDataComplete());
@@ -116,16 +110,20 @@ public class MpgObjectStoreTests {
 		mpgObject.addLayer(new MpgLayerImpl(10, null, null));
 		objectStore.addObject(mpgObject);
 		
+		objectStore.validateIfcDataCollection();
+		
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
 	}
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterialAndOrphanMaterial() {
-		objectStore.addMaterial("orphan material");
+		objectStore.addElement("orphan material");
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
 		mpgObject.addLayer(new MpgLayerImpl(10, null, null));
 		objectStore.addObject(mpgObject);
+		
+		objectStore.validateIfcDataCollection();
 		
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
@@ -138,13 +136,15 @@ public class MpgObjectStoreTests {
 		mpgObject.addMaterialSource("brick", Integer.toString("brick".hashCode()), null );
 		objectStore.addObject(mpgObject);
 		
+		objectStore.validateIfcDataCollection();
+		
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
 	}
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnPartiallyUndefinedMaterial() {
-		objectStore.addMaterial("steel");
+		objectStore.addElement("steel");
 		MpgObject mpgObject1 = new MpgObjectImpl(1, "aaaa", "custom wall", "Wall", "", objectStore);
 		mpgObject1.addLayer(new MpgLayerImpl(10, null, null));
 		mpgObject1.addLayer(new MpgLayerImpl(10, "steel", Integer.toString("steel".hashCode())));
@@ -154,6 +154,8 @@ public class MpgObjectStoreTests {
 		mpgObject2.addLayer(new MpgLayerImpl(10, "steel", Integer.toString("steel".hashCode())));
 		objectStore.addObject(mpgObject2);
 		
+		objectStore.validateIfcDataCollection();
+		
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
 		assertEquals(1, objectStore.getGuidsWithUndefinedLayerMats().getSize());
@@ -161,7 +163,7 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testWarningCheckReturnsTrueWhenInformationIsComplete() {
-		objectStore.addMaterial("test material");
+		objectStore.addElement("test material");
 		objectStore.addSpace(new MpgSpaceImpl("space_guid", 20, 60));
 
 		MpgObjectImpl obj = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
@@ -170,6 +172,8 @@ public class MpgObjectStoreTests {
 		// mock volume as this will not be added in this way
 		obj.setVolume(layer.getVolume());
 		objectStore.addObject(obj);
+		
+		objectStore.validateIfcDataCollection();
 		
 		assertTrue("warning found in objectstore while it should not be there.",
 				objectStore.isIfcDataComplete());

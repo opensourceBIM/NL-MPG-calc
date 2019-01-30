@@ -1,6 +1,10 @@
 package org.opensourcebim.nmd;
 
-import org.opensourcebim.ifccollection.MpgMaterial;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+
+import org.opensourcebim.ifccollection.MpgElement;
 
 
 /**
@@ -10,21 +14,57 @@ import org.opensourcebim.ifccollection.MpgMaterial;
  */
 public class BimMaterialDatabaseSession implements EditableDataService {
 
+	private Calendar requestDate;
+	
 	@Override
-	public void start() {
+	public void login() {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void stop() {
+	public void logout() {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	@Override
+	public void setRequestDate(Calendar newDate) {
+		this.requestDate = newDate;
+	}
+	
+	@Override
+	public Calendar getRequestDate() {
+		return this.requestDate;
+	}
 
 	@Override
-	public NmdProductCard retrieveMaterial(MpgMaterial material) {
+	public Boolean getIsConnected() {
+		return true;
+	}
+
+	@Override
+	public List<NmdProductCard> getAllProductSets() {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override
+	public List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public Boolean getProfielSetsByProductCard(NmdProductCard product) {
+		return false;
+	}
+	
+	@Override
+	public HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
 }

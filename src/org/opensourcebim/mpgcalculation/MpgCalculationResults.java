@@ -5,8 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.management.openmbean.KeyAlreadyExistsException;
-
 /**
  * Class to store all the calculation results broken down by a series of
  * properties as defined in the CostFactor class. This class will also
@@ -63,13 +61,13 @@ public class MpgCalculationResults {
 		return getTotalCost() / totalFloorArea / totalLifeTime;
 	}
 
-	public double getCostPerLifeCycle(NmdLifeCycleStage stage) {
-		return costFactors.stream().filter(f -> f.getStage() == stage)
+	public double getCostPerLifeCycle(String fase) {
+		return costFactors.stream().filter(f -> f.getFase() == fase)
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
-	public double getCostPerImpactFactor(NmdImpactFactor factor) {
-		return costFactors.stream().filter(f -> f.getFactor() == factor)
+	public double getCostPerImpactFactor(String factor) {
+		return costFactors.stream().filter(f -> f.getMilieuCategorie() == factor)
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 

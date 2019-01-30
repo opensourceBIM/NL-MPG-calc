@@ -22,33 +22,30 @@ public interface NmdProductCard {
 
 	int getDataCategory();
 
-	String getProductCode();
+	String getNLsfbCode();
 
-	String getElementCode();
+	String getRAWCode();
 
 	String getElementName();
 
 	default double getDensity() {
-		return getMaterials().stream().collect(Collectors.summingDouble(mat -> mat.getMassPerUnit()));
+		return getProfileSets().stream().collect(Collectors.summingDouble(mat -> mat.getMassPerUnit()));
 	}
 	
-	default double getDensityOfSpec(String specName) {
-		Optional<MaterialSpecification> foundSpec = getMaterials().stream().filter(spec -> specName.equals(spec.getName())).findFirst();
+	default double getDensityOfProfile(String profileName) {
+		Optional<NmdProfileSet> foundSpec = getProfileSets().stream().filter(spec -> profileName.equals(spec.getName())).findFirst();
 		return foundSpec.isPresent() ? foundSpec.get().getMassPerUnit() : 0.0;
 	}
-
-
-	String getUnit();
-
+	
 	double getDistanceFromProducer();
 
 	double getLifeTime();
 
-	NmdBasisProfiel getTransportProfile();
+	NmdFaseProfiel getTransportProfile();
 
-	Set<MaterialSpecification> getMaterials();
+	Set<NmdProfileSet> getProfileSets();
 
-	void addSpecification(MaterialSpecification spec);
+	void addProfileSet(NmdProfileSet spec);
 
 	String print();
 
