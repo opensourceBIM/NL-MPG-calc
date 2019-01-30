@@ -36,7 +36,7 @@ public class MpgCalculationResultsTests {
 	@Test
 	public void testCanAddSingleFactorToResults() {
 		results.incrementCostFactor(
-				new MpgCostFactor(NmdLifeCycleStage.TransportToSite, "AbioticDepletionFuel", 1.0),
+				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
 				"concrete", "");
 		assertEquals(1.0, results.getTotalCost(), 1e-8);
 	}
@@ -44,15 +44,15 @@ public class MpgCalculationResultsTests {
 	@Test
 	public void testGetResultsByStageReturnsZeroOnNoFactorsFound() {
 		results.incrementCostFactor(
-				new MpgCostFactor(NmdLifeCycleStage.TransportToSite, "AbioticDepletionFuel", 1.0),
+				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
 				"concrete", "");
-		assertEquals(0.0, results.getCostPerLifeCycle(NmdLifeCycleStage.ConstructionAndReplacements), 1e-8);
+		assertEquals(0.0, results.getCostPerLifeCycle("ConstructionAndReplacements"), 1e-8);
 	}
 
 	@Test
 	public void testGetResultsByImpcatFactorReturnsZeroOnNoFactorsFound() {
 		results.incrementCostFactor(
-				new MpgCostFactor(NmdLifeCycleStage.TransportToSite, "AbioticDepletionFuel", 1.0),
+				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
 				"concrete", "");
 		assertEquals(0.0, results.getCostPerImpactFactor("Acidifcation"), 1e-8);
 	}
@@ -60,7 +60,7 @@ public class MpgCalculationResultsTests {
 	@Test
 	public void testGetResultsByNameReturnsZeroOnNoFactorsFound() {
 		results.incrementCostFactor(
-				new MpgCostFactor(NmdLifeCycleStage.TransportToSite, "AbioticDepletionFuel", 1.0),
+				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
 				"concrete", "");
 		assertEquals(0.0, results.getCostPerProductName("no concrete"), 1e-8);
 	}
@@ -68,10 +68,10 @@ public class MpgCalculationResultsTests {
 	@Test
 	public void testCostFactorsAddToOriginalOnDuplicateKey() {
 		results.incrementCostFactor(
-				new MpgCostFactor(NmdLifeCycleStage.TransportToSite, "AbioticDepletionFuel", 1.0),
+				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
 				"concrete", "");
 		results.incrementCostFactor(
-				new MpgCostFactor(NmdLifeCycleStage.TransportToSite, "AbioticDepletionFuel", 1.0),
+				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
 				"concrete", "");
 		assertEquals(2.0, results.getTotalCost(), 1e-8);
 	}
@@ -79,7 +79,7 @@ public class MpgCalculationResultsTests {
 	@Test
 	public void testCanCollectResultsByStage() {
 		addFactorsTestSet();
-		assertEquals(3.0, results.getCostPerLifeCycle(NmdLifeCycleStage.TransportToSite), 1e-8);
+		assertEquals(3.0, results.getCostPerLifeCycle("TransportToSite"), 1e-8);
 	}
 
 	@Test
@@ -96,14 +96,14 @@ public class MpgCalculationResultsTests {
 
 	private void addFactorsTestSet() {
 		results.incrementCostFactor(
-				new MpgCostFactor(NmdLifeCycleStage.TransportToSite, "Acidifcation", 1.0), "concrete",
+				new MpgCostFactor("TransportToSite", "Acidifcation", 1.0), "concrete",
 				"");
 		results.incrementCostFactor(
-				new MpgCostFactor(NmdLifeCycleStage.TransportToSite, "AbioticDepletionFuel", 2.0),
+				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 2.0),
 				"brick", "");
 		results.incrementCostFactor(
-				new MpgCostFactor(NmdLifeCycleStage.Disposal, "AbioticDepletionFuel", 4.0), "steel", "");
-		results.incrementCostFactor(new MpgCostFactor(NmdLifeCycleStage.Recycling, "Eutrophication", 8.0),
+				new MpgCostFactor("Disposal", "AbioticDepletionFuel", 4.0), "steel", "");
+		results.incrementCostFactor(new MpgCostFactor("Recycling", "Eutrophication", 8.0),
 				"steel", "");
 	}
 

@@ -34,17 +34,17 @@ public interface NmdProfileSet {
 	 */
 	double getConstructionLosses();
 
-	HashMap<NmdLifeCycleStage, Double> getDisposalRatios();
+	HashMap<String, Double> getDisposalRatios();
 	
-	void setDisposalRatio(NmdLifeCycleStage stage, double ratio) throws InvalidInputException;
+	void setDisposalRatio(String fase, double ratio) throws InvalidInputException;
 
-	double getDisposalDistance(NmdLifeCycleStage stage);
+	double getDisposalDistance(String fase);
 	
-	NmdFaseProfiel getFaseProfiel(NmdLifeCycleStage lifeCycleStage);
+	NmdFaseProfiel getFaseProfiel(String fase);
 
-	Set<NmdLifeCycleStage> getDefinedProfiles();
+	Set<String> getDefinedProfiles();
 
-	void setDisposalDistance(NmdLifeCycleStage lifeCycleStage, double disposalDistance) throws InvalidInputException;
+	void setDisposalDistance(String fase, double disposalDistance) throws InvalidInputException;
 
 	Boolean getIsMaintenanceSpec();
 

@@ -70,7 +70,7 @@ public class MpgCalculator {
 
 					// ----- Production ----
 					results.incrementCostFactors(
-							matSpec.getFaseProfiel(NmdLifeCycleStage.ConstructionAndReplacements)
+							matSpec.getFaseProfiel("ConstructionAndReplacements")
 									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier),
 							specs.getName(), matSpec.getName());
 
@@ -78,7 +78,7 @@ public class MpgCalculator {
 					// assumptions are the the category multiplioer does not need to be applied for
 					// disposal stages
 					// see: Rekenregels_materiaalgebonden_milieuprestatie_gebouwen.pdf for more info
-					for (Entry<NmdLifeCycleStage, Double> entry : matSpec.getDisposalRatios().entrySet()) {
+					for (Entry<String, Double> entry : matSpec.getDisposalRatios().entrySet()) {
 						double cost = lifeTimeTotalMassKg * entry.getValue();
 
 						results.incrementCostFactors(
@@ -88,7 +88,7 @@ public class MpgCalculator {
 						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than
 						// per product
 						results.incrementCostFactors(
-								matSpec.getFaseProfiel(NmdLifeCycleStage.TransportForRemoval).calculateFactors(
+								matSpec.getFaseProfiel("TransportForRemoval").calculateFactors(
 										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey())),
 								specs.getName(), matSpec.getName());
 					}

@@ -61,8 +61,8 @@ public class MpgCalculationResults {
 		return getTotalCost() / totalFloorArea / totalLifeTime;
 	}
 
-	public double getCostPerLifeCycle(NmdLifeCycleStage stage) {
-		return costFactors.stream().filter(f -> f.getStage() == stage)
+	public double getCostPerLifeCycle(String fase) {
+		return costFactors.stream().filter(f -> f.getFase() == fase)
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 

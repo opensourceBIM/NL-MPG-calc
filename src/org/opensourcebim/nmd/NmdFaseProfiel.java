@@ -5,7 +5,6 @@ import java.util.Set;
 
 import org.opensourcebim.mpgcalculation.MpgCostFactor;
 import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
-import org.opensourcebim.mpgcalculation.NmdLifeCycleStage;
 
 /**
  * Interface class to provide the impact factor coefficients for a single
@@ -20,7 +19,7 @@ public interface NmdFaseProfiel {
 
 	String getDescription();
 	
-	NmdLifeCycleStage getStage();
+	String getFase();
 
 	NmdUnit getUnit();
 	
