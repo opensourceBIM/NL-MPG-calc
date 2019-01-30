@@ -11,9 +11,7 @@ public class NmdProductCardImpl implements NmdProductCard {
 	private String rawCode;
 	private String elementName;
 	private String unit;
-	private double distanceToProducer;
 	private double lifeTime;
-	private NmdFaseProfiel transportProfile;
 	private Set<NmdProfileSet> specifications;
 	
 	public NmdProductCardImpl() {
@@ -44,26 +42,23 @@ public class NmdProductCardImpl implements NmdProductCard {
 	public String getRAWCode() {
 		return this.rawCode;
 	}
+	
+	@Override
+	public String getUnit() {
+		return this.unit;
+	}
 
 	@Override
 	public String getElementName() {
 		return this.elementName;
 	}
 
-	@Override
-	public double getDistanceFromProducer() {
-		return this.distanceToProducer;
-	}
 
 	@Override
 	public double getLifeTime() {
 		return this.lifeTime;
 	}
 
-	@Override
-	public NmdFaseProfiel getTransportProfile() {
-		return this.transportProfile;
-	}
 
 	@Override
 	public Set<NmdProfileSet> getProfileSets() {
@@ -108,19 +103,7 @@ public class NmdProductCardImpl implements NmdProductCard {
 		this.unit = unit;
 	}
 
-	public double getDistanceToProducer() {
-		return distanceToProducer;
-	}
-
-	public void setDistanceToProducer(double distanceToProducer) {
-		this.distanceToProducer = distanceToProducer;
-	}
-
 	public void setLifeTime(double lifeTime) {
 		this.lifeTime = lifeTime;
-	}
-
-	public void setTransportProfile(NmdFaseProfiel transportProfile) {
-		this.transportProfile = transportProfile;
 	}
 }

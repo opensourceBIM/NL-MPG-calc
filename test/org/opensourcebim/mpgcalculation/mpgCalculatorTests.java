@@ -1,11 +1,8 @@
 package org.opensourcebim.mpgcalculation;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -19,14 +16,13 @@ import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
-import org.opensourcebim.nmd.NmdProfileSetImpl;
-import org.opensourcebim.nmd.NmdFaseProfielImpl;
 import org.opensourcebim.nmd.NmdFaseProfiel;
+import org.opensourcebim.nmd.NmdFaseProfielImpl;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProductCardImpl;
 import org.opensourcebim.nmd.NmdProfileSet;
+import org.opensourcebim.nmd.NmdProfileSetImpl;
 import org.opensourcebim.nmd.NmdReferenceResources;
-import org.opensourcebim.nmd.NmdUnit;
 
 public class mpgCalculatorTests {
 
@@ -190,99 +186,6 @@ public class mpgCalculatorTests {
 	}
 
 	@Test
-	public void testDisposalRatioOfZeroWillReturnNoCostForRelevantLifeCycle() {
-		addMaterialsWithDisposalProductCard("steel", "Stainless Steel", 1.0, 1);
-		addUnitObject("steel");
-
-		startCalculations(1);
-
-		Double totalCost = results.getTotalCost();
-
-		Optional<NmdProfileSet> spec = store.getElementByName("steel").getNmdProductCard().getProfileSets().stream()
-				.findFirst();
-		for (Entry<String, Double> entry : spec.get().getDisposalRatios().entrySet()) {
-			assertEquals(totalCost * entry.getValue(), results.getCostPerLifeCycle(entry.getKey()), 1e-8);
-		}
-	}
-
-	@Test
-	public void testMaterialWithEqualDisposalRatiosSplitBetweenTwoDisposalTypes() {
-		addMaterialsWithDisposalProductCard("steel", "Stainless Steel", 0.0, 1);
-		addUnitObject("steel");
-
-		// set some disposal ratios and leave all other items empty (no production or
-		// tranport cost)
-		NmdProfileSet mat = store.getElementByName("steel").getNmdProductCard().getProfileSets().iterator().next();
-		try {
-			mat.setDisposalRatio("Disposal", 0.5);
-			mat.setDisposalRatio("Incineration", 0.5);
-		} catch (InvalidInputException e) {
-			e.printStackTrace();
-		}
-
-		startCalculations(1);
-
-		Double totalCost = results.getTotalCost();
-		// test that the disposal stages have the correct values.
-		assertEquals(0.5 * totalCost, results.getCostPerLifeCycle("Disposal"), 1e-8);
-		assertEquals(0.5 * totalCost, results.getCostPerLifeCycle("Incineration"), 1e-8);
-		assertEquals(0.0, results.getCostPerLifeCycle("Recycling"), 1e-8);
-		assertEquals(0.0, results.getCostPerLifeCycle("Reuse"), 1e-8);
-	}
-
-	@Test
-	public void testMaterialWithZeroDisposalRatiosHasNoDisposalTransportCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 0.0, 0.0, 1);
-		addUnitObject("steel");
-
-		// set some disposal ratios and leave all other items empty (no production or
-		// tranport cost)
-		NmdProfileSet mat = store.getElementByName("steel").getNmdProductCard().getProfileSets().iterator().next();
-		try {
-			mat.setDisposalRatio("Disposal", 0.0);
-		} catch (InvalidInputException e) {
-			e.printStackTrace();
-		}
-
-		startCalculations(1);
-		assertEquals(0, results.getCostPerLifeCycle("TransportToSite"), 1e-8);
-	}
-
-	@Test
-	public void testMaterialWithOnlyReuseHasNoDisposalTransportCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 0.0, 0.0, 1);
-		addUnitObject("steel");
-
-		// set some disposal ratios and leave all other items empty (no production or
-		// tranport cost)
-		NmdProfileSet mat = store.getElementByName("steel").getNmdProductCard().getProfileSets().iterator().next();
-		try {
-			mat.setDisposalRatio("Disposal", 0.0);
-			mat.setDisposalRatio("Reuse", 1.0);
-		} catch (InvalidInputException e) {
-			e.printStackTrace();
-		}
-
-		startCalculations(1);
-		assertTrue(0 < results.getTotalCost());
-		assertEquals(0, results.getCostPerLifeCycle("TransportForRemoval"), 1e-8);
-	}
-
-	@Test
-	public void testMaterialWithNonReuseHasNonZeroDisposalTransportCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 1);
-		addUnitObject("steel");
-
-		// set some disposal ratios and leave all other items empty (no production or
-		// tranport cost)
-		NmdProfileSet mat = store.getElementByName("steel").getNmdProductCard().getProfileSets().iterator().next();
-
-		startCalculations(1);
-		double dispTranspCost = results.getCostPerLifeCycle("TransportForRemoval");
-		assertTrue(0.0 < dispTranspCost);
-	}
-
-	@Test
 	public void testProductCardWithMultipleMaterialSpecsWillReturnCostBasedOnDensityRatio() {
 		// create a product card without transport costs and split out over two material
 		// specifications evenly
@@ -290,8 +193,7 @@ public class mpgCalculatorTests {
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
 		productCard.setName("Brick and mortar");
 		productCard.setDataCategory(1);
-		productCard.setDistanceToProducer(1.0);
-		productCard.setTransportProfile(createZeroProfile("TransportToSite"));
+
 		// mortar to bricks mass ratio per unit mass is assumed to be 1 to 10
 		productCard.addProfileSet(createNamedMaterialSpec("bricks", 10.0, 0.0, 1));
 		productCard.addProfileSet(createNamedMaterialSpec("mortar", 1.0, 0.0, 1));
@@ -321,7 +223,7 @@ public class mpgCalculatorTests {
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
-		productCard.setDistanceToProducer(1.0);
+
 		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 0.0, 5));
 		store.setProductCardForElement("Paint", productCard);
 		addUnitObject("Paint");
@@ -335,7 +237,7 @@ public class mpgCalculatorTests {
 		productCard = new NmdProductCardImpl();
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
-		productCard.setDistanceToProducer(1.0);
+
 		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 0.0, 5);
 		maintenanceSpec.setIsMaintenanceSpec(true);
 		productCard.addProfileSet(maintenanceSpec);
@@ -357,7 +259,7 @@ public class mpgCalculatorTests {
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
-		productCard.setDistanceToProducer(1.0);
+
 		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 0.0, 10));
 		store.setProductCardForElement("Paint", productCard);
 		addUnitObject("Paint");
@@ -373,7 +275,7 @@ public class mpgCalculatorTests {
 		productCard = new NmdProductCardImpl();
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
-		productCard.setDistanceToProducer(1.0);
+
 		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 0.0, 10));
 
 		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 0.0, 5);
@@ -411,12 +313,6 @@ public class mpgCalculatorTests {
 				createUnitProductCard(nmdMatName, producerDistance, lossFactor, category));
 	}
 
-	private void addMaterialsWithDisposalProductCard(String ifcMatName, String nmdMatName, double producerDistance,
-			int category) {
-		store.addElement(ifcMatName);
-		store.setProductCardForElement(ifcMatName, createDisposalProductCard(nmdMatName, producerDistance, category));
-	}
-
 	private void addUnitObject(String material) {
 		MpgObject mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), material + " element", "Slab", "",
 				store);
@@ -440,19 +336,8 @@ public class mpgCalculatorTests {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
 		specs.setName(name);
 		specs.setDataCategory(category);
-		specs.setDistanceToProducer(transportDistance);
-		specs.setTransportProfile(createUnitProfile("TransportToSite"));
-		specs.addProfileSet(createDummySpec(1.0, lossFactor));
-		return specs;
-	}
 
-	private NmdProductCard createDisposalProductCard(String name, double transportDistance, int category) {
-		NmdProductCardImpl specs = new NmdProductCardImpl();
-		specs.setName(name);
-		specs.setDataCategory(category);
-		specs.setDistanceToProducer(transportDistance);
-		specs.setTransportProfile(createZeroProfile("TransportToSite"));
-		specs.addProfileSet(createOnlyDisposalSpec(1.0));
+		specs.addProfileSet(createDummySpec(1.0, lossFactor));
 		return specs;
 	}
 
@@ -463,8 +348,6 @@ public class mpgCalculatorTests {
 	private NmdProfileSet createNamedMaterialSpec(String name, double massPerUnit, double lossFactor, int lifetime) {
 		NmdProfileSetImpl spec = new NmdProfileSetImpl();
 		try {
-			spec.setDisposalRatio("Disposal", 1.0);
-			spec.setConstructionLossFactor(lossFactor);
 			spec.setProductLifeTime(lifetime);
 			spec.addBasisProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements"));
 			spec.addBasisProfiel("Disposal", createUnitProfile("Disposal"));
@@ -487,40 +370,8 @@ public class mpgCalculatorTests {
 		return spec;
 	}
 
-	private NmdProfileSet createOnlyDisposalSpec(double massPerUnit) {
-		NmdProfileSetImpl spec = new NmdProfileSetImpl();
-
-		try {
-			spec.setDisposalRatio("Disposal", 1.0);
-			spec.setConstructionLossFactor(0.0);
-			spec.setProductLifeTime(1);
-			spec.addBasisProfiel("ConstructionAndReplacements", createZeroProfile("ConstructionAndReplacements"));
-			spec.addBasisProfiel("Disposal", createUnitProfile("Disposal"));
-			spec.addBasisProfiel("Incineration", createUnitProfile("Incineration"));
-			spec.addBasisProfiel("Recycling", createUnitProfile("Recycling"));
-			spec.addBasisProfiel("Reuse", createUnitProfile("Reuse"));
-			spec.addBasisProfiel("OwnDisposalProfile", createUnitProfile("OwnDisposalProfile"));
-			spec.addBasisProfiel("TransportForRemoval", createZeroProfile("TransportForRemoval"));
-			spec.addBasisProfiel("Operation", createZeroProfile("Operation"));
-		} catch (InvalidInputException e) {
-			// do nothing as we should be able not to mess it up ourselves
-			System.out.println("test input is incorrect.");
-		}
-
-		spec.setMassPerUnit(massPerUnit);
-		spec.setUnit("kg/m3");
-		spec.setProfielId(1);
-		spec.setName("unitMaterialSpec");
-
-		return spec;
-	}
-
 	private NmdFaseProfiel createUnitProfile(String fase) {
 		return createConstantValueProfile(fase, 1.0);
-	}
-
-	private NmdFaseProfiel createZeroProfile(String fase) {
-		return createConstantValueProfile(fase, 0.0);
 	}
 
 	private NmdFaseProfiel createConstantValueProfile(String fase, Double constantValue) {
@@ -547,8 +398,8 @@ public class mpgCalculatorTests {
 		milieuCats.put(13, new NmdMileuCategorie("TotalNonRenewableEnergy", "MJ", 1.0));
 		milieuCats.put(14, new NmdMileuCategorie("TotalEnergy", "MJ", 1.0));
 		milieuCats.put(15, new NmdMileuCategorie("FreshWaterUse", "m3", 1.0));
-
 		resources.setMilieuCategorieMapping(milieuCats);
+		
 		HashMap<Integer, String> fasen = new HashMap<Integer, String>();
 		fasen.put(1, "productie");
 		fasen.put(2, "transport -> bouwplaats");
@@ -565,6 +416,31 @@ public class mpgCalculatorTests {
 		fasen.put(13, "Baten en lasten voorbij de systeemgrenzen");
 		resources.setFaseMapping(fasen);
 
+		HashMap<Integer, String> units = new HashMap<Integer, String>();
+		units.put(1, "MJ");
+		units.put(2, "kWh");
+		units.put(3, "kg");
+		units.put(4, "kg*jaar");
+		units.put(5, "m1");
+		units.put(6, "m1*jaar");
+		units.put(7, "m2");
+		units.put(8, "m2*jaar");
+		units.put(9, "m2*km");
+		units.put(10, "m2K/W");
+		units.put(11, "m2K/W*jaar");
+		units.put(12, "m2gbo");
+		units.put(13, "m2gbo*jaar");
+		units.put(14, "m3");
+		units.put(15, "m3*jaar");
+		units.put(16, "mm");
+		units.put(17, "p");
+		units.put(18, "p*jaar");
+		units.put(19, "t*km");
+		units.put(20, "tkm");
+		units.put(21, "onbekend");
+		units.put(22, "Samengesteld");
+		resources.setUnitMapping(units);
+		
 		return resources;
 	}
 }

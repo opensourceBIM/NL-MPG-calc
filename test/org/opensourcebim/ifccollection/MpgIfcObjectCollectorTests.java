@@ -81,10 +81,7 @@ public class MpgIfcObjectCollectorTests {
 
 		factory.addProductToModel(ifcModel, "a", null);
 		IfcProduct parent = ifcModel.getAllWithSubTypes(IfcProduct.class).get(0);
-		
-		
 		factory.addProductToModel(ifcModel, "b", parent.getGlobalId());
-		IfcProduct element = ifcModel.getAllWithSubTypes(IfcProduct.class).get(1);
 		
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(parent.getGlobalId(), collector.results().getObjects().get(1).getParentId());

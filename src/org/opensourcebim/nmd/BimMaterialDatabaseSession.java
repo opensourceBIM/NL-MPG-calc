@@ -4,8 +4,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
-import org.opensourcebim.ifccollection.MpgElement;
-
 
 /**
  * Implementation of the EditableDataService to collect edits to the NMD material data

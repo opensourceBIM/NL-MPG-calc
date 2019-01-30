@@ -1,8 +1,5 @@
 package org.opensourcebim.mpgcalculation;
 
-import java.util.HashMap;
-import java.util.Map.Entry;
-
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.nmd.NmdProductCard;
@@ -51,9 +48,6 @@ public class MpgCalculator {
 				// category 3 data requires a 30% penalty
 				double categoryMultiplier = specs.getDataCategory() == 3 ? 1.3 : 1.0;
 
-				// a single building material can be composed of individual materials.
-				double specsMatSumKg = 0.0;
-
 				for (NmdProfileSet matSpec : specs.getProfileSets()) {
 
 					// Determine replacements required.
@@ -65,49 +59,13 @@ public class MpgCalculator {
 					// calculate total mass taking into account construction losses and replacements
 					// TODO: how does the current approach tackle issues with plate materials etc.?
 					double lifeTimeVolumePerSpec = replacements * totalVolume;
-					double lifeTimeMassPerSpec = lifeTimeVolumePerSpec * matSpec.getMassPerUnit();
-					double lifeTimeTotalMassKg = lifeTimeMassPerSpec * (1 + matSpec.getConstructionLosses());
+					double lifeTimeTotalMassKg = lifeTimeVolumePerSpec * matSpec.getMassPerUnit();
 
-					// ----- Production ----
-					results.incrementCostFactors(
-							matSpec.getFaseProfiel("ConstructionAndReplacements")
-									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier),
-							specs.getName(), matSpec.getName());
-
-					// ----- DISPOSAL ----
-					// assumptions are the the category multiplioer does not need to be applied for
-					// disposal stages
-					// see: Rekenregels_materiaalgebonden_milieuprestatie_gebouwen.pdf for more info
-					for (Entry<String, Double> entry : matSpec.getDisposalRatios().entrySet()) {
-						double cost = lifeTimeTotalMassKg * entry.getValue();
-
-						results.incrementCostFactors(
-								matSpec.getFaseProfiel(entry.getKey()).calculateFactors(cost),
-								specs.getName(), matSpec.getName());
-
-						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than
-						// per product
-						results.incrementCostFactors(
-								matSpec.getFaseProfiel("TransportForRemoval").calculateFactors(
-										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey())),
-								specs.getName(), matSpec.getName());
-					}
-
-					// ----- OPERATION COST ---- - apply different units of measure (l / m3 / kWh
-					// etc.)
-
-					// add the individual material to the composite material mass for transport
-					// calculations
-					specsMatSumKg += lifeTimeTotalMassKg;
+					// example for production
+					results.incrementCostFactors(matSpec.getFaseProfiel("ConstructionAndReplacements").calculateFactors(
+							lifeTimeTotalMassKg * categoryMultiplier), specs.getName(), matSpec.getName());
 				}
-
-				// TODO: add correction factor for volume transport (standard 1)?
-				// determine tranport costs per composed material in tonnes * km .
-				// the factor 2 has been removed since May 2015
-				results.incrementCostFactors(specs.getTransportProfile().calculateFactors(
-						categoryMultiplier * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0)), specs.getName());
 			}
-
 			results.SetResultsStatus(ResultStatus.Success);
 
 		} catch (Exception e) {

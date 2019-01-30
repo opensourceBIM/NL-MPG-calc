@@ -25,6 +25,8 @@ public interface NmdProductCard {
 	String getNLsfbCode();
 
 	String getRAWCode();
+	
+	String getUnit();
 
 	String getElementName();
 
@@ -36,17 +38,13 @@ public interface NmdProductCard {
 		Optional<NmdProfileSet> foundSpec = getProfileSets().stream().filter(spec -> profileName.equals(spec.getName())).findFirst();
 		return foundSpec.isPresent() ? foundSpec.get().getMassPerUnit() : 0.0;
 	}
-	
-	double getDistanceFromProducer();
+	;
 
 	double getLifeTime();
-
-	NmdFaseProfiel getTransportProfile();
 
 	Set<NmdProfileSet> getProfileSets();
 
 	void addProfileSet(NmdProfileSet spec);
 
 	String print();
-
 }

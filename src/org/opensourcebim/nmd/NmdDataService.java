@@ -5,8 +5,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
-import org.opensourcebim.ifccollection.MpgElement;
-
 /**
  * Standard interface to provide material data from the source to the user.
  * 
