@@ -83,4 +83,27 @@ public class MpgElement {
 	public void removeProductCard() {
 		// unmap any child elements.
 	}
+
+	public Double getRequiredNumberOfUnits() {
+		if (this.mpgObject == null || this.getNmdProductCard() == null) {
+			return Double.NaN;
+		}
+		
+		String productUnit = this.getNmdProductCard().getUnit();
+		if (productUnit == "m1") {
+			return mpgObject.getVolume() / mpgObject.getArea();
+		}
+		if (productUnit == "m2") {
+			return mpgObject.getArea();
+		}
+		if (productUnit == "m3") {
+			return mpgObject.getVolume();
+		}
+		if (productUnit == "kg") {
+			return Double.NaN;
+		}
+		
+		return Double.NaN;
+		
+	}
 }

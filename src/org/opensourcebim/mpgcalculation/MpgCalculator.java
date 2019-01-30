@@ -38,12 +38,11 @@ public class MpgCalculator {
 			results.setTotalFloorArea(objectStore.getTotalFloorArea());
 
 			// for each building material found:
-			for (MpgElement mpgMaterial : objectStore.getElements()) {
+			for (MpgElement element : objectStore.getElements()) {
 
-				// this total volume can be in m3 or possible also in kWh depending on the unit
-				// in the product card
-				double totalVolume = objectStore.getTotalVolumeOfMaterial(mpgMaterial.getIfcName());
-				NmdProductCard specs = mpgMaterial.getNmdProductCard();
+				// get number of product units based on geometry of ifcproduct and unit of productcard
+				double unitsRequired = element.getRequiredNumberOfUnits();
+				NmdProductCard specs = element.getNmdProductCard();
 
 				// category 3 data requires a 30% penalty
 				double categoryMultiplier = specs.getDataCategory() == 3 ? 1.3 : 1.0;
@@ -52,18 +51,20 @@ public class MpgCalculator {
 
 					// Determine replacements required.
 					// this is usually 1 for regular materials and > 1 for cyclic maintenance
-					// materials
+					// materials. ToDo: check whether these calculations are still correct
 					double replacements = this.calculateReplacements(designLife, matSpec.getProductLifeTime(),
 							matSpec.getIsMaintenanceSpec());
 
 					// calculate total mass taking into account construction losses and replacements
-					// TODO: how does the current approach tackle issues with plate materials etc.?
-					double lifeTimeVolumePerSpec = replacements * totalVolume;
-					double lifeTimeTotalMassKg = lifeTimeVolumePerSpec * matSpec.getMassPerUnit();
+					// ToDo: how does the current approach tackle issues with plate materials etc.?
+					// ToDo: We do not have desnities of materials in the DB. How to get the masses of products?
+					double lifeTimeUnitsPerSpec = replacements * unitsRequired;
 
 					// example for production
-					results.incrementCostFactors(matSpec.getFaseProfiel("ConstructionAndReplacements").calculateFactors(
-							lifeTimeTotalMassKg * categoryMultiplier), specs.getName(), matSpec.getName());
+					matSpec.getDefinedProfiles().forEach(profileName -> {
+						results.incrementCostFactors(matSpec.getFaseProfiel(profileName).calculateFactors(
+								lifeTimeUnitsPerSpec * categoryMultiplier), specs.getName(), matSpec.getName());
+					});
 				}
 			}
 			results.SetResultsStatus(ResultStatus.Success);

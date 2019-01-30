@@ -121,6 +121,14 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			el.setProductCard(specs);
 		}
 	}
+	
+	@Override
+	public void setObjectForElement(String name, MpgObject mpgObject) {
+		MpgElement el = getElementByName(name);
+		if( el != null) {
+			el.setMpgObject(mpgObject);
+		}
+	}
 
 	@Override
 	public List<MpgObject> getObjects() {

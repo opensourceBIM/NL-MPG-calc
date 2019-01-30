@@ -1,6 +1,7 @@
 package org.opensourcebim.mpgcalculation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -57,7 +58,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testReturnIncompleteDataStatusWhenIfcModelIsNotComplete() {
-		// no objects are linked to the material which shoudl return an warning
+		// no objects are linked to the material which should return an warning
 		this.store.addElement("steel");
 
 		startCalculations(1.0);
@@ -68,7 +69,6 @@ public class mpgCalculatorTests {
 	public void testReturnIncompleteDataStatusWhenNMdDataIsIncomplete() {
 		// no material spec is added which should return a warning
 		store.addElement("steel");
-		this.addUnitObject("steel");
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.IncompleteData, results.getStatus());
@@ -76,8 +76,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testResultsReturnSuccessStatusWhenCalculationsSucceed() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 0.0, 0.0, 1);
-		addUnitObject("steel");
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.Success, results.getStatus());
@@ -85,8 +84,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testZeroDistanceToProducerResultsInNoTransportCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 0.0, 0.0, 1);
-		addUnitObject("steel");
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
 
 		startCalculations(1.0);
 		assertEquals(0.0, results.getCostPerLifeCycle("TransportToSite"), 1e-8);
@@ -94,8 +92,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testUnitDistanceToProducerResultsInNonZeroTransportCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 1);
-		addUnitObject("steel");
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
 
 		startCalculations(1.0);
 		// we have added a unit value for every ImpactFactor
@@ -104,20 +101,16 @@ public class mpgCalculatorTests {
 	}
 
 	@Test
-	public void testLossFactorOfMaterialInducesExtraTransportCost() {
-		double loss = 0.5;
-		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, loss, 1);
-		addUnitObject("steel");
+	public void testTotalCostCannotBeNaN() {
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
 
 		startCalculations(1.0);
-		assertEquals((double) (getDummyReferences().getMilieuCategorieMapping().size()) * (1.0 + loss) / 1000.0,
-				results.getCostPerLifeCycle("TransportToSite"), 1e-8);
+		assertFalse(results.getTotalCost().isNaN());
 	}
-
+	
 	@Test
 	public void testCategory3DataIncreasesTotalCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 3);
-		addUnitObject("steel");
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 3);
 
 		startCalculations(1.0);
 		assertEquals(1.3 * (double) (getDummyReferences().getMilieuCategorieMapping().size()) / 1000.0,
@@ -126,8 +119,8 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerSquareMeterFloorArea() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 1);
-		addUnitObject("steel");
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
+
 		Double totalArea = 10.0;
 		addSpace(totalArea);
 
@@ -138,8 +131,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperationYear() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 1);
-		addUnitObject("steel");
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
 		addSpace(1.0);
 
 		Double totalLifeTime = 10.0;
@@ -150,8 +142,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperatingYearAndFloorArea() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 1);
-		addUnitObject("steel");
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
 
 		Double factor = 10.0;
 		addSpace(factor);
@@ -161,8 +152,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostPerMaterialReturnsZeroWhenMaterialNotPresent() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 1);
-		addUnitObject("steel");
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
 
 		startCalculations(1);
 
@@ -171,12 +161,9 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostPerMaterialReturnsOnlyCostOfRelevantMaterial() {
-		addMaterialWithproductCard("steel", "Stainless Steel", 1.0, 0.0, 1);
-		addUnitObject("steel");
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
 
-		addMaterialWithproductCard("brick", "brick and mortar", 1.0, 0.0, 1);
-		addUnitObject("brick");
-		addUnitObject("brick");
+		addMaterialWithproductCard("brick", "brick and mortar", "m2", 1);
 
 		String nmdMatName = store.getElementByName("steel").getNmdProductCard().getName();
 
@@ -195,11 +182,9 @@ public class mpgCalculatorTests {
 		productCard.setDataCategory(1);
 
 		// mortar to bricks mass ratio per unit mass is assumed to be 1 to 10
-		productCard.addProfileSet(createNamedMaterialSpec("bricks", 10.0, 0.0, 1));
-		productCard.addProfileSet(createNamedMaterialSpec("mortar", 1.0, 0.0, 1));
+		productCard.addProfileSet(createNamedMaterialSpec("bricks", 10.0, 1));
+		productCard.addProfileSet(createNamedMaterialSpec("mortar", 1.0, 1));
 		store.setProductCardForElement("Brick", productCard);
-
-		addUnitObject("Brick");
 
 		startCalculations(1);
 
@@ -224,9 +209,8 @@ public class mpgCalculatorTests {
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 
-		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 0.0, 5));
+		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 5));
 		store.setProductCardForElement("Paint", productCard);
-		addUnitObject("Paint");
 		// paint will last 5 year, so will need to be applied 2 during lifetime
 		startCalculations(10);
 		double totalCost = results.getTotalCost();
@@ -238,11 +222,10 @@ public class mpgCalculatorTests {
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 
-		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 0.0, 5);
+		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 5);
 		maintenanceSpec.setIsMaintenanceSpec(true);
 		productCard.addProfileSet(maintenanceSpec);
 		store.setProductCardForElement("Paint", productCard);
-		addUnitObject("Paint");
 		// as this is a miantenance material it only needs to be applied once (after 5
 		// year)
 		startCalculations(10);
@@ -260,9 +243,9 @@ public class mpgCalculatorTests {
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 
-		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 0.0, 10));
+		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 10));
 		store.setProductCardForElement("Paint", productCard);
-		addUnitObject("Paint");
+
 		// paint will last 5 year, so will need to be applied 2 during lifetime
 		startCalculations(10);
 		double totalCost = results.getTotalCost();
@@ -276,14 +259,13 @@ public class mpgCalculatorTests {
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 
-		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 0.0, 10));
+		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 10));
 
-		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 0.0, 5);
+		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 5);
 		maintenanceSpec.setIsMaintenanceSpec(true);
 		productCard.addProfileSet(maintenanceSpec);
 
 		store.setProductCardForElement("Paint", productCard);
-		addUnitObject("Paint");
 		// as this is a miantenance material it only needs to be applied once (after 5
 		// year)
 		startCalculations(10);
@@ -306,19 +288,22 @@ public class mpgCalculatorTests {
 		this.results = calculator.getResults();
 	}
 
-	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, double producerDistance,
-			double lossFactor, int category) {
+	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category) {
 		store.addElement(ifcMatName);
 		store.setProductCardForElement(ifcMatName,
-				createUnitProductCard(nmdMatName, producerDistance, lossFactor, category));
-	}
-
-	private void addUnitObject(String material) {
-		MpgObject mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), material + " element", "Slab", "",
+				createUnitProductCard(nmdMatName, unit, category));
+		
+		MpgObjectImpl mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), ifcMatName + " element", "Slab", "",
 				store);
-		MpgLayer testObject = new MpgLayerImpl(1.0, material, Integer.toString(material.hashCode()));
+		mpgObject.setArea(1.0);
+		mpgObject.setVolume(1.0);
+		
+		MpgLayer testObject = new MpgLayerImpl(1.0, ifcMatName, Integer.toString(ifcMatName.hashCode()));
 		mpgObject.addLayer(testObject);
+		
 		store.addObject(mpgObject);
+		
+		store.setObjectForElement(ifcMatName, mpgObject);
 	}
 
 	/**
@@ -331,21 +316,22 @@ public class mpgCalculatorTests {
 		store.addSpace(new MpgSpaceImpl(UUID.randomUUID().toString(), floorArea * 3, floorArea));
 	}
 
-	private NmdProductCard createUnitProductCard(String name, double transportDistance, double lossFactor,
+	private NmdProductCard createUnitProductCard(String name, String unit,
 			int category) {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
 		specs.setName(name);
 		specs.setDataCategory(category);
+		specs.setUnit(unit);
 
-		specs.addProfileSet(createDummySpec(1.0, lossFactor));
+		specs.addProfileSet(createDummySpec(1.0));
 		return specs;
 	}
 
-	private NmdProfileSet createDummySpec(double massPerUnit, double lossFactor) {
-		return createNamedMaterialSpec("dummy spec", massPerUnit, lossFactor, 1);
+	private NmdProfileSet createDummySpec(double massPerUnit) {
+		return createNamedMaterialSpec("dummy spec", massPerUnit, 1);
 	}
 
-	private NmdProfileSet createNamedMaterialSpec(String name, double massPerUnit, double lossFactor, int lifetime) {
+	private NmdProfileSet createNamedMaterialSpec(String name, double massPerUnit, int lifetime) {
 		NmdProfileSetImpl spec = new NmdProfileSetImpl();
 		try {
 			spec.setProductLifeTime(lifetime);

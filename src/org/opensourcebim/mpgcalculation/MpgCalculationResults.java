@@ -48,7 +48,7 @@ public class MpgCalculationResults {
 		return this.status;
 	}
 
-	public double getTotalCost() {
+	public Double getTotalCost() {
 		return costFactors.stream().collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 

@@ -55,6 +55,8 @@ public interface MpgObjectStore {
 	GuidCollection getGuidsWithUndefinedLayerMats();
 	
 	void setProductCardForElement(String string, NmdProductCard specs);
+	void setObjectForElement(String name, MpgObject mpgObject);
+	
 	boolean isElementDataComplete();
 	Stream<String> getAllMaterialNames();
 
