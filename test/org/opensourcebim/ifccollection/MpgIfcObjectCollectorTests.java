@@ -298,11 +298,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		factory.setGeometry(factory.getGeometryInfoMock(1, 10));
 		factory.setAssociations(new BasicEList<IfcRelAssociates>());
-		
-		// add a materialList with just two materials
-		factory.addMaterialList(Arrays.asList("Steel", "Brick"));
-		factory.addProductToModel(ifcModel, null, null);
-		
+				
 		collector.collectIfcModelObjects(ifcModel);
 		
 		// material names of layers are null

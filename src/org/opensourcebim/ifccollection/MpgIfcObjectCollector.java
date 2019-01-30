@@ -117,7 +117,7 @@ public class MpgIfcObjectCollector {
 		// loop through IfcSpaces
 		for (IfcSpace space : ifcModel.getAllWithSubTypes(IfcSpace.class)) {
 			
-			// omit any eternal spaces.
+			// omit any external spaces.
 			if (space.getBoundedBy().size() == 0) {
 				continue;
 			}
@@ -356,7 +356,7 @@ public class MpgIfcObjectCollector {
 	private void getMaterialsFromObject(IfcObjectDefinition sourceObject, MpgObjectImpl targetObject) {
 
 		EList<IfcRelAssociates> associates = sourceObject.getHasAssociations();
-		if (!associates.isEmpty()) {
+		if (associates != null && !associates.isEmpty()) {
 
 			String matSource = null;
 			if (sourceObject instanceof IfcTypeProduct) {

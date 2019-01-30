@@ -390,7 +390,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public Stream<String> getAllMaterialNames() {
 		return this.getElements().stream()
 				.flatMap(e -> e.getMpgObject().getListedMaterials().stream())
-				.map(s -> s.getName())
+				.map(s -> s.getName()).filter(n -> {
+					return (n != null && !n.isEmpty());
+				})
 				.distinct();
 	}
 }
