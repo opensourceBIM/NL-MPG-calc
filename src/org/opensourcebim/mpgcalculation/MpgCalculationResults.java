@@ -62,12 +62,12 @@ public class MpgCalculationResults {
 	}
 
 	public double getCostPerLifeCycle(String fase) {
-		return costFactors.stream().filter(f -> f.getFase() == fase)
+		return costFactors.stream().filter(f -> f.getFase().equals(fase))
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
 	public double getCostPerImpactFactor(String factor) {
-		return costFactors.stream().filter(f -> f.getMilieuCategorie() == factor)
+		return costFactors.stream().filter(f -> f.getMilieuCategorie().equals(factor))
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 

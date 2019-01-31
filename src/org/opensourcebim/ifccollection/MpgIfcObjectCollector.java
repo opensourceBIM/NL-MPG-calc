@@ -424,7 +424,8 @@ public class MpgIfcObjectCollector {
 				String materialName = layer.getLeft();
 				String materialGuid = layer.getMiddle();
 				double volumeRatio = layer.getRight() / totalThickness * targetObject.getVolume();
-				targetObject.addLayer(new MpgLayerImpl(volumeRatio, materialName, materialGuid));
+				double area = targetObject.getVolume() * volumeRatio / layer.getRight();
+				targetObject.addLayer(new MpgLayerImpl(volumeRatio, area, materialName, materialGuid));
 				targetObject.addMaterialSource(materialName, materialGuid, matSourceLayer);
 			});
 		}

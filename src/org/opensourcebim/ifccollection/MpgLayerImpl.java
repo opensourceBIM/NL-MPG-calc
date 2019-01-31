@@ -13,8 +13,8 @@ public class MpgLayerImpl extends MpgSpaceImpl implements MpgLayer {
 	 * @param volume Volume of object
 	 * @param mat    material of object
 	 */
-	public MpgLayerImpl(double volume, String mat, String guid) {
-		super(guid, volume, 0.0); // TODO: what to do with area?
+	public MpgLayerImpl(double volume, double area,  String mat, String guid) {
+		super(guid, volume, area); // TODO: what to do with area?
 		this.setMaterialName(mat);
 	}
 
