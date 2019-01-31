@@ -17,6 +17,10 @@ public interface NmdDataService {
 
 	void logout();
 	
+	Boolean getIsConnected();
+
+	void preLoadData();
+	
 	Calendar getRequestDate();
 
 	void setRequestDate(Calendar newDate);
@@ -28,10 +32,6 @@ public interface NmdDataService {
 	Boolean getProfielSetsByProductCard(NmdProductCard product);
 	
 	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids);
-	
-	Boolean getIsConnected();
 
-
-
-
+	List<NmdProductCard> getData();
 }

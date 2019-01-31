@@ -64,5 +64,16 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 		return null;
 	}
 
+	@Override
+	public void preLoadData() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public List<NmdProductCard> getData() {
+		return null;
+	}
+
 
 }

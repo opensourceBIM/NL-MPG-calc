@@ -25,7 +25,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.bimserver.shared.reflector.KeyValuePair;
-import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -48,11 +47,14 @@ public class NmdDataBaseSession implements NmdDataService {
 	private boolean isConnected = false;
 	private String token;
 	private NmdReferenceResources resources;
+	
+	private List<NmdProductCard> data;
 
 	public NmdDataBaseSession(NmdDatabaseConfig config) {
 		this.config = config;
 		this.requestDate = Calendar.getInstance();
 		httpclient = HttpClients.createDefault();
+		this.data = new ArrayList<NmdProductCard>();
 	}
 
 	public void setToken(String token) {
@@ -73,6 +75,11 @@ public class NmdDataBaseSession implements NmdDataService {
 	public Boolean getIsConnected() {
 		// TODO Auto-generated method stub
 		return this.isConnected;
+	}
+	
+	@Override
+	public List<NmdProductCard> getData() {
+		return data;
 	}
 
 	@Override
@@ -105,6 +112,11 @@ public class NmdDataBaseSession implements NmdDataService {
 		}
 
 		loadResources();
+	}
+	
+	@Override
+	public void preLoadData() {
+		this.data =this.getAllProductSets();
 	}
 
 	@Override
@@ -245,6 +257,8 @@ public class NmdDataBaseSession implements NmdDataService {
 
 			// do something with the entity to get the token
 			JsonNode resp_node = this.responseToJson(response);
+			if (resp_node == null) {return false;}
+
 			JsonNode profielsets = resp_node.get("results");
 			
 			// determine candidate sets that could be matched to this product
@@ -253,17 +267,7 @@ public class NmdDataBaseSession implements NmdDataService {
 				// only get items that are relevant for us.
 				if(TryParseJsonNode(set.get("ProfielSetGekoppeld"), false)) {
 					NmdProfileSetImpl profielSet = new NmdProfileSetImpl();
-					profielSet.setProfielId(TryParseJsonNode(set.get("ProductID"), -1));
-					profielSet.setParentProfielId(TryParseJsonNode(set.get("OuderProductID"), -1));
-					profielSet.setIsFullProfile(TryParseJsonNode(set.get("IsElementDekkend"), false));
-					profielSet.setName(TryParseJsonNode(set.get("ProductNaam"), ""));
-
-					try {
-						profielSet.setProductLifeTime(TryParseJsonNode(set.get("Levensduur"), 0));
-					} catch (InvalidInputException e) {
-						System.out.println("Could not find levensduur for profile");
-						e.printStackTrace();
-					}
+					this.getProfielSetDataFromJson(set, profielSet);
 					candidateSets.add(profielSet);
 				}
 			});
@@ -294,7 +298,6 @@ public class NmdDataBaseSession implements NmdDataService {
 		NmdProfileSet data = setData.entrySet().stream().findFirst().get().getValue();
 		data.getDefinedProfiles().forEach(fase -> {
 			chosenSet.addBasisProfiel(fase, data.getFaseProfiel(fase));
-			chosenSet.setUnit(data.getUnit());
 		});
 
 		return chosenSet;
@@ -323,16 +326,8 @@ public class NmdDataBaseSession implements NmdDataService {
 				Integer profielSetId = TryParseJsonNode(profielSetNode.get("ProfielSetID"), -1);
 				
 				// laad set specifieke data
-				try {
-					set.setProductLifeTime(TryParseJsonNode(profielSetNode.get("Levensduur"), -1));
-					set.setUnit(this.getReferenceResources().getUnitMapping()
-							.get(TryParseJsonNode(profielSetNode.get("ProfielSetEenheidID"), -1)));
-					set.setName(TryParseJsonNode(profielSetNode, ""));
-					set.setProfielId(profielSetId);
-				} catch (InvalidInputException e) {
-					System.out.println("error parsing general profielset data");
-				}
-
+				this.getProfielSetDataFromJson(profielSetNode, set);
+					
 				// laad faseprofiel specifieke data
 				JsonNode profielen = profielSetNode.get("Profiel");
 				profielen.forEach(p -> {
@@ -368,6 +363,21 @@ public class NmdDataBaseSession implements NmdDataService {
 		return null;
 	}
 
+	/*
+	 * Try to get a set of profiel set data from the json node to populate the NmdProfielSetobject
+	 */
+	private void getProfielSetDataFromJson(JsonNode profielSetNode, NmdProfileSetImpl set) {
+		set.setProductLifeTime(TryParseJsonNode(profielSetNode.get("Levensduur"), -1));
+		set.setUnit(this.getReferenceResources().getUnitMapping()
+				.get(TryParseJsonNode(profielSetNode.get("FunctioneleEenheidID"), -1)));		
+		set.setProfielId(TryParseJsonNode(profielSetNode.get("ProductID"), -1));
+		set.setParentProfielId(TryParseJsonNode(profielSetNode.get("OuderProductID"), -1));
+		set.setIsFullProfile(TryParseJsonNode(profielSetNode.get("IsElementDekkend"), false));
+		set.setName(TryParseJsonNode(profielSetNode.get("ProductNaam"), ""));
+		set.setCategory(TryParseJsonNode(profielSetNode.get("CategorieID"), 3));
+
+	}
+
 	private HttpResponse performGetRequestWithParams(String url, List<KeyValuePair> params) throws URISyntaxException {
 		URIBuilder builder = new URIBuilder();
 		builder.setScheme("https").setHost("www.Milieudatabase-datainvoer.nl").setPath(url);
@@ -400,7 +410,7 @@ public class NmdDataBaseSession implements NmdDataService {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			e.printStackTrace();
+			return null;
 		}
 		return responseNode;
 	}
