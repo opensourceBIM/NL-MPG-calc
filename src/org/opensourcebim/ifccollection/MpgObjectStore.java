@@ -14,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public interface MpgObjectStore {
 
 	HashSet<MpgElement> getElements();
+	
+	@JsonIgnore
 	List<MpgObject> getObjects();
 	List<MpgSpace> getSpaces();
 	

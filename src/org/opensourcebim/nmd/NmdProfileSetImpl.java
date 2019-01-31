@@ -4,13 +4,15 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.eclipse.jdt.core.compiler.InvalidInputException;
+import org.opensourcebim.ifccollection.MpgObject;
 
 public class NmdProfileSetImpl implements NmdProfileSet {
 	private String name;
 	private Integer profielId;
 	private String unit;
-	private double massPerUnit;
+
 	private int productLifeTime;
+	private int category;
 
 	private Boolean isMaintenanceSpec;
 	
@@ -56,12 +58,12 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	}
 
 	@Override
-	public double getMassPerUnit() {
-		return this.massPerUnit;
+	public Integer getCategory() {
+		return this.category;
 	}
 
-	public void setMassPerUnit(double mass) {
-		this.massPerUnit = mass;
+	public void setCategory(Integer category) {
+		this.category = category;
 	}
 
 	@Override
@@ -69,11 +71,7 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 		return this.productLifeTime;
 	}
 
-	public void setProductLifeTime(Integer lifetime) throws InvalidInputException {
-		if (lifetime <= 0) {
-			throw new InvalidInputException("lifetime has to be larger than 0");
-		}
-
+	public void setProductLifeTime(Integer lifetime) {
 		this.productLifeTime = lifetime;
 	}
 
@@ -117,5 +115,28 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	
 	public void setParentProfielId(Integer id) {
 		this.parentProfileId = id;
+	}
+	
+	public Double getRequiredNumberOfUnits(MpgObject object) {
+		if (object == null || this.profiles.size() == 0) {
+			return Double.NaN;
+		}
+		
+		String productUnit = this.getUnit();
+		if (productUnit.equals("m1")) {
+			return object.getVolume() / object.getArea();
+		}
+		if (productUnit.equals("m2")) {
+			return object.getArea();
+		}
+		if (productUnit.equals("m3")) {
+			return object.getVolume();
+		}
+		if (productUnit.equals("kg")) {
+			return Double.NaN;
+		}
+		
+		return Double.NaN;
+		
 	}
 }

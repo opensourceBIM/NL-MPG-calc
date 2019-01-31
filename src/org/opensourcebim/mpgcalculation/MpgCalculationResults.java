@@ -77,19 +77,13 @@ public class MpgCalculationResults {
 	}
 
 	public Double getCostPerSpecification(String specName) {
-		return costFactors.stream().filter(f -> specName.equals(f.getSpecName()))
+		return costFactors.stream().filter(f -> specName.equals(f.getProfielSetName()))
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
 	public void incrementCostFactors(Set<MpgCostFactor> factors, String product, String specName) {
 		for (MpgCostFactor costFactor : factors) {
 			this.incrementCostFactor(costFactor, product, specName);
-		}
-	}
-
-	public void incrementCostFactors(Set<MpgCostFactor> factors, String product) {
-		for (MpgCostFactor costFactor : factors) {
-			this.incrementCostFactor(costFactor, product, "");
 		}
 	}
 
@@ -106,7 +100,7 @@ public class MpgCalculationResults {
 	public void incrementCostFactor(MpgCostFactor mpgCostFactor, String product, String specName) {
 
 		mpgCostFactor.setProductName(product);
-		mpgCostFactor.setSpecName(specName);
+		mpgCostFactor.setProfielSetName(specName);
 
 		Optional<MpgCostFactor> foundFactor = costFactors.stream().filter(f -> f.equals(mpgCostFactor)).findFirst();
 		if (foundFactor.isPresent()) {

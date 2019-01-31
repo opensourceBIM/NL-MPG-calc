@@ -107,7 +107,7 @@ public class mpgCalculatorTests {
 		startCalculations(1.0);
 		assertFalse(results.getTotalCost().isNaN());
 	}
-	
+
 	@Test
 	public void testCategory3DataIncreasesTotalCost() {
 		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 3);
@@ -182,22 +182,20 @@ public class mpgCalculatorTests {
 		productCard.setDataCategory(1);
 
 		// mortar to bricks mass ratio per unit mass is assumed to be 1 to 10
-		productCard.addProfileSet(createNamedMaterialSpec("bricks", 10.0, 1));
-		productCard.addProfileSet(createNamedMaterialSpec("mortar", 1.0, 1));
+		productCard.addProfileSet(createNamedMaterialSpec("bricks", "m2", 1));
+		productCard.addProfileSet(createNamedMaterialSpec("mortar", "m2", 1));
 		store.setProductCardForElement("Brick", productCard);
 
 		startCalculations(1);
 
 		Double totalCost = results.getTotalCost();
-		double totalWeight = store.getElementByName("Brick").getNmdProductCard().getDensity();
 
 		assertEquals(totalCost, results.getCostPerProductName("Brick and mortar"), 1e-8);
 
-		for (NmdProfileSet spec : store.getElementByName("Brick").getNmdProductCard().getProfileSets().stream()
+		for (NmdProfileSet profileSet : store.getElementByName("Brick").getNmdProductCard().getProfileSets().stream()
 				.collect(Collectors.toList())) {
-			Double specCost = results.getCostPerSpecification(spec.getName());
-			Double density = productCard.getDensityOfProfile(spec.getName());
-			assertEquals(totalCost * density / totalWeight, specCost, 1e-8);
+			Double specCost = results.getCostPerSpecification(profileSet.getName());
+			assertEquals(totalCost , specCost, 1e-8);
 		}
 	}
 
@@ -209,7 +207,7 @@ public class mpgCalculatorTests {
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 
-		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 5));
+		productCard.addProfileSet(createNamedMaterialSpec("verf", "m2", 5));
 		store.setProductCardForElement("Paint", productCard);
 		// paint will last 5 year, so will need to be applied 2 during lifetime
 		startCalculations(10);
@@ -222,7 +220,7 @@ public class mpgCalculatorTests {
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 
-		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 5);
+		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", "m2", 5);
 		maintenanceSpec.setIsMaintenanceSpec(true);
 		productCard.addProfileSet(maintenanceSpec);
 		store.setProductCardForElement("Paint", productCard);
@@ -243,7 +241,7 @@ public class mpgCalculatorTests {
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 
-		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 10));
+		productCard.addProfileSet(createNamedMaterialSpec("verf", "m2", 10));
 		store.setProductCardForElement("Paint", productCard);
 
 		// paint will last 5 year, so will need to be applied 2 during lifetime
@@ -259,9 +257,9 @@ public class mpgCalculatorTests {
 		productCard.setName("Verflaag");
 		productCard.setDataCategory(1);
 
-		productCard.addProfileSet(createNamedMaterialSpec("verf", 1.0, 10));
+		productCard.addProfileSet(createNamedMaterialSpec("verf", "m2", 10));
 
-		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", 1.0, 5);
+		NmdProfileSet maintenanceSpec = createNamedMaterialSpec("verf", "m2", 5);
 		maintenanceSpec.setIsMaintenanceSpec(true);
 		productCard.addProfileSet(maintenanceSpec);
 
@@ -290,19 +288,18 @@ public class mpgCalculatorTests {
 
 	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category) {
 		store.addElement(ifcMatName);
-		store.setProductCardForElement(ifcMatName,
-				createUnitProductCard(nmdMatName, unit, category));
-		
-		MpgObjectImpl mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), ifcMatName + " element", "Slab", "",
-				store);
+		store.setProductCardForElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category));
+
+		MpgObjectImpl mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), ifcMatName + " element", "Slab",
+				"", store);
 		mpgObject.setArea(1.0);
 		mpgObject.setVolume(1.0);
-		
+
 		MpgLayer testObject = new MpgLayerImpl(1.0, ifcMatName, Integer.toString(ifcMatName.hashCode()));
 		mpgObject.addLayer(testObject);
-		
+
 		store.addObject(mpgObject);
-		
+
 		store.setObjectForElement(ifcMatName, mpgObject);
 	}
 
@@ -316,40 +313,33 @@ public class mpgCalculatorTests {
 		store.addSpace(new MpgSpaceImpl(UUID.randomUUID().toString(), floorArea * 3, floorArea));
 	}
 
-	private NmdProductCard createUnitProductCard(String name, String unit,
-			int category) {
+	private NmdProductCard createUnitProductCard(String name, String unit, int category) {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
 		specs.setName(name);
 		specs.setDataCategory(category);
-		specs.setUnit(unit);
 
-		specs.addProfileSet(createDummySpec(1.0));
+		specs.addProfileSet(createDummySpec(1.0, unit));
 		return specs;
 	}
 
-	private NmdProfileSet createDummySpec(double massPerUnit) {
-		return createNamedMaterialSpec("dummy spec", massPerUnit, 1);
+	private NmdProfileSet createDummySpec(double massPerUnit, String unit) {
+		return createNamedMaterialSpec("dummy spec", unit, 1);
 	}
 
-	private NmdProfileSet createNamedMaterialSpec(String name, double massPerUnit, int lifetime) {
+	private NmdProfileSet createNamedMaterialSpec(String name, String unit, int lifetime) {
 		NmdProfileSetImpl spec = new NmdProfileSetImpl();
-		try {
-			spec.setProductLifeTime(lifetime);
-			spec.addBasisProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements"));
-			spec.addBasisProfiel("Disposal", createUnitProfile("Disposal"));
-			spec.addBasisProfiel("Incineration", createUnitProfile("Incineration"));
-			spec.addBasisProfiel("Recycling", createUnitProfile("Recycling"));
-			spec.addBasisProfiel("Reuse", createUnitProfile("Reuse"));
-			spec.addBasisProfiel("OwnDisposalProfile", createUnitProfile("OwnDisposalProfile"));
-			spec.addBasisProfiel("TransportForRemoval", createUnitProfile("TransportForRemoval"));
-			spec.addBasisProfiel("Operation", createUnitProfile("Operation"));
-		} catch (InvalidInputException e) {
-			// do nothing as we should be able not to mess it up ourselves
-			System.out.println("test input is incorrect.");
-		}
+		
+		spec.setProductLifeTime(lifetime);
+		spec.addBasisProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements"));
+		spec.addBasisProfiel("Disposal", createUnitProfile("Disposal"));
+		spec.addBasisProfiel("Incineration", createUnitProfile("Incineration"));
+		spec.addBasisProfiel("Recycling", createUnitProfile("Recycling"));
+		spec.addBasisProfiel("Reuse", createUnitProfile("Reuse"));
+		spec.addBasisProfiel("OwnDisposalProfile", createUnitProfile("OwnDisposalProfile"));
+		spec.addBasisProfiel("TransportForRemoval", createUnitProfile("TransportForRemoval"));
+		spec.addBasisProfiel("Operation", createUnitProfile("Operation"));
 
-		spec.setMassPerUnit(massPerUnit);
-		spec.setUnit("kg/m3");
+		spec.setUnit(unit);
 		spec.setProfielId(1);
 		spec.setName(name);
 
@@ -385,7 +375,7 @@ public class mpgCalculatorTests {
 		milieuCats.put(14, new NmdMileuCategorie("TotalEnergy", "MJ", 1.0));
 		milieuCats.put(15, new NmdMileuCategorie("FreshWaterUse", "m3", 1.0));
 		resources.setMilieuCategorieMapping(milieuCats);
-		
+
 		HashMap<Integer, String> fasen = new HashMap<Integer, String>();
 		fasen.put(1, "productie");
 		fasen.put(2, "transport -> bouwplaats");
@@ -426,7 +416,7 @@ public class mpgCalculatorTests {
 		units.put(21, "onbekend");
 		units.put(22, "Samengesteld");
 		resources.setUnitMapping(units);
-		
+
 		return resources;
 	}
 }

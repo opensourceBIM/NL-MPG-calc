@@ -28,6 +28,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	private HashSet<MpgElement> mpgElements;
 
+	
+	@JsonIgnore
 	private List<MpgObject> mpgObjects;
 
 	private List<MpgSpace> spaces;

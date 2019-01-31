@@ -30,7 +30,6 @@ public class MpgCalculator {
 
 		if (!(objectStore.isIfcDataComplete() && objectStore.isElementDataComplete())) {
 			results.SetResultsStatus(ResultStatus.IncompleteData);
-			return results;
 		}
 
 		try {
@@ -39,21 +38,23 @@ public class MpgCalculator {
 
 			// for each building material found:
 			for (MpgElement element : objectStore.getElements()) {
+				if (element.getNmdProductCard() == null) {continue;}
+				
+				NmdProductCard product = element.getNmdProductCard();
 
-				// get number of product units based on geometry of ifcproduct and unit of productcard
-				double unitsRequired = element.getRequiredNumberOfUnits();
-				NmdProductCard specs = element.getNmdProductCard();
-
-				// category 3 data requires a 30% penalty
-				double categoryMultiplier = specs.getDataCategory() == 3 ? 1.3 : 1.0;
-
-				for (NmdProfileSet matSpec : specs.getProfileSets()) {
-
+				for (NmdProfileSet profielSet : product.getProfileSets()) {
+					
+					// get number of product units based on geometry of ifcproduct and unit of productcard
+					double unitsRequired = profielSet.getRequiredNumberOfUnits(element.getMpgObject());
+					
+					// category 3 data requires a 30% penalty
+					double categoryMultiplier = profielSet.getCategory() == 3 ? 1.3 : 1.0;
+					
 					// Determine replacements required.
 					// this is usually 1 for regular materials and > 1 for cyclic maintenance
 					// materials. ToDo: check whether these calculations are still correct
-					double replacements = this.calculateReplacements(designLife, matSpec.getProductLifeTime(),
-							matSpec.getIsMaintenanceSpec());
+					double replacements = this.calculateReplacements(designLife, profielSet.getProductLifeTime(),
+							profielSet.getIsMaintenanceSpec());
 
 					// calculate total mass taking into account construction losses and replacements
 					// ToDo: how does the current approach tackle issues with plate materials etc.?
@@ -61,13 +62,15 @@ public class MpgCalculator {
 					double lifeTimeUnitsPerSpec = replacements * unitsRequired;
 
 					// example for production
-					matSpec.getDefinedProfiles().forEach(profileName -> {
-						results.incrementCostFactors(matSpec.getFaseProfiel(profileName).calculateFactors(
-								lifeTimeUnitsPerSpec * categoryMultiplier), specs.getName(), matSpec.getName());
+					profielSet.getDefinedProfiles().forEach(profileName -> {
+						results.incrementCostFactors(profielSet.getFaseProfiel(profileName).calculateFactors(
+								lifeTimeUnitsPerSpec * categoryMultiplier), product.getName(), profielSet.getName());
 					});
 				}
 			}
-			results.SetResultsStatus(ResultStatus.Success);
+			if (results.getStatus() != ResultStatus.IncompleteData) {
+				results.SetResultsStatus(ResultStatus.Success);
+			}
 
 		} catch (Exception e) {
 			results.SetResultsStatus(ResultStatus.ValueError);

@@ -2,6 +2,8 @@ package org.opensourcebim.nmd;
 
 import java.util.Set;
 
+import org.opensourcebim.ifccollection.MpgObject;
+
 /**
  * Material specification. contains Basis Profiel data for every lifecycle stage
  * relevant for the material
@@ -26,12 +28,6 @@ public interface NmdProfileSet {
 	
 	String getUnit();
 	
-	/**
-	 * Unlike density this is the mass per construction unit. (mass per wall area or mass per meter piping)
-	 * @return the mass per volume, area or unit length of construction material
-	 */
-	double getMassPerUnit();
-
 	Integer getProductLifeTime();
 	
 	NmdFaseProfiel getFaseProfiel(String fase);
@@ -41,4 +37,9 @@ public interface NmdProfileSet {
 	Boolean getIsMaintenanceSpec();
 
 	void setIsMaintenanceSpec(boolean b);
+
+	Integer getCategory();
+	
+	Double getRequiredNumberOfUnits(MpgObject mpgObject);
+	
 }

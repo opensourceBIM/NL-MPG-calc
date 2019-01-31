@@ -1,8 +1,5 @@
 package org.opensourcebim.nmd;
-
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Storage container to contain the lifecycle coefficients to do the MPG
@@ -25,21 +22,9 @@ public interface NmdProductCard {
 	String getNLsfbCode();
 
 	String getRAWCode();
-	
-	String getUnit();
 
 	String getElementName();
-
-	default double getDensity() {
-		return getProfileSets().stream().collect(Collectors.summingDouble(mat -> mat.getMassPerUnit()));
-	}
 	
-	default double getDensityOfProfile(String profileName) {
-		Optional<NmdProfileSet> foundSpec = getProfileSets().stream().filter(spec -> profileName.equals(spec.getName())).findFirst();
-		return foundSpec.isPresent() ? foundSpec.get().getMassPerUnit() : 0.0;
-	}
-	;
-
 	double getLifeTime();
 
 	Set<NmdProfileSet> getProfileSets();

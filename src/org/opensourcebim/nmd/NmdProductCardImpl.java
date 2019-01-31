@@ -10,7 +10,6 @@ public class NmdProductCardImpl implements NmdProductCard {
 	private String nlsfbCode;
 	private String rawCode;
 	private String elementName;
-	private String unit;
 	private double lifeTime;
 	private Set<NmdProfileSet> specifications;
 	
@@ -45,11 +44,6 @@ public class NmdProductCardImpl implements NmdProductCard {
 		return this.rawCode;
 	}
 	
-	@Override
-	public String getUnit() {
-		return this.unit;
-	}
-
 	@Override
 	public String getElementName() {
 		return this.elementName;
@@ -99,10 +93,6 @@ public class NmdProductCardImpl implements NmdProductCard {
 
 	public void setElementName(String elementName) {
 		this.elementName = elementName;
-	}
-
-	public void setUnit(String unit) {
-		this.unit = unit;
 	}
 
 	public void setLifeTime(double lifeTime) {
