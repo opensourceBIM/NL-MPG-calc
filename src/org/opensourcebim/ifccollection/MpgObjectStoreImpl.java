@@ -28,6 +28,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	private HashSet<MpgElement> mpgElements;
 
+	
+	@JsonIgnore
 	private List<MpgObject> mpgObjects;
 
 	private List<MpgSpace> spaces;
@@ -119,6 +121,14 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		MpgElement el = getElementByName(name);
 		if( el != null) {
 			el.setProductCard(specs);
+		}
+	}
+	
+	@Override
+	public void setObjectForElement(String name, MpgObject mpgObject) {
+		MpgElement el = getElementByName(name);
+		if( el != null) {
+			el.setMpgObject(mpgObject);
 		}
 	}
 
@@ -366,7 +376,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			System.out.println(" - with total volume : " + getTotalVolumeOfProductType(productType));
 			System.out.println("Materials found relating to product: ");
 			for (MpgElement element : getElementsByProductType(productType)) {
-				System.out.println(" - " + element == null ? "" : element.getIfcName());
+				if (element != null) {
+					System.out.println(" - " + element.getIfcName());
+				}
 			}
 			System.out.println();
 		}

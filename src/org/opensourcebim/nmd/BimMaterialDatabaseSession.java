@@ -4,8 +4,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
-import org.opensourcebim.ifccollection.MpgElement;
-
 
 /**
  * Implementation of the EditableDataService to collect edits to the NMD material data
@@ -63,6 +61,17 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	@Override
 	public HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids) {
 		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void preLoadData() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public List<NmdProductCard> getData() {
 		return null;
 	}
 

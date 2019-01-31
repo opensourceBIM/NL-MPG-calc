@@ -5,8 +5,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
-import org.opensourcebim.ifccollection.MpgElement;
-
 /**
  * Standard interface to provide material data from the source to the user.
  * 
@@ -19,6 +17,10 @@ public interface NmdDataService {
 
 	void logout();
 	
+	Boolean getIsConnected();
+
+	void preLoadData();
+	
 	Calendar getRequestDate();
 
 	void setRequestDate(Calendar newDate);
@@ -30,10 +32,6 @@ public interface NmdDataService {
 	Boolean getProfielSetsByProductCard(NmdProductCard product);
 	
 	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids);
-	
-	Boolean getIsConnected();
 
-
-
-
+	List<NmdProductCard> getData();
 }

@@ -1,10 +1,8 @@
 package org.opensourcebim.nmd;
 
-import java.util.HashMap;
 import java.util.Set;
 
 import org.opensourcebim.mpgcalculation.MpgCostFactor;
-import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
 
 /**
  * Interface class to provide the impact factor coefficients for a single

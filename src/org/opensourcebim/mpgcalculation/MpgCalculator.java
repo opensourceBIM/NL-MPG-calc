@@ -1,8 +1,5 @@
 package org.opensourcebim.mpgcalculation;
 
-import java.util.HashMap;
-import java.util.Map.Entry;
-
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.nmd.NmdProductCard;
@@ -33,7 +30,6 @@ public class MpgCalculator {
 
 		if (!(objectStore.isIfcDataComplete() && objectStore.isElementDataComplete())) {
 			results.SetResultsStatus(ResultStatus.IncompleteData);
-			return results;
 		}
 
 		try {
@@ -41,74 +37,40 @@ public class MpgCalculator {
 			results.setTotalFloorArea(objectStore.getTotalFloorArea());
 
 			// for each building material found:
-			for (MpgElement mpgMaterial : objectStore.getElements()) {
+			for (MpgElement element : objectStore.getElements()) {
+				if (element.getNmdProductCard() == null) {continue;}
+				
+				NmdProductCard product = element.getNmdProductCard();
 
-				// this total volume can be in m3 or possible also in kWh depending on the unit
-				// in the product card
-				double totalVolume = objectStore.getTotalVolumeOfMaterial(mpgMaterial.getIfcName());
-				NmdProductCard specs = mpgMaterial.getNmdProductCard();
-
-				// category 3 data requires a 30% penalty
-				double categoryMultiplier = specs.getDataCategory() == 3 ? 1.3 : 1.0;
-
-				// a single building material can be composed of individual materials.
-				double specsMatSumKg = 0.0;
-
-				for (NmdProfileSet matSpec : specs.getProfileSets()) {
-
+				for (NmdProfileSet profielSet : product.getProfileSets()) {
+					
+					// get number of product units based on geometry of ifcproduct and unit of productcard
+					double unitsRequired = profielSet.getRequiredNumberOfUnits(element.getMpgObject());
+					
+					// category 3 data requires a 30% penalty
+					double categoryMultiplier = profielSet.getCategory() == 3 ? 1.3 : 1.0;
+					
 					// Determine replacements required.
 					// this is usually 1 for regular materials and > 1 for cyclic maintenance
-					// materials
-					double replacements = this.calculateReplacements(designLife, matSpec.getProductLifeTime(),
-							matSpec.getIsMaintenanceSpec());
+					// materials. ToDo: check whether these calculations are still correct
+					double replacements = this.calculateReplacements(designLife, profielSet.getProductLifeTime(),
+							profielSet.getIsMaintenanceSpec());
 
 					// calculate total mass taking into account construction losses and replacements
-					// TODO: how does the current approach tackle issues with plate materials etc.?
-					double lifeTimeVolumePerSpec = replacements * totalVolume;
-					double lifeTimeMassPerSpec = lifeTimeVolumePerSpec * matSpec.getMassPerUnit();
-					double lifeTimeTotalMassKg = lifeTimeMassPerSpec * (1 + matSpec.getConstructionLosses());
+					// ToDo: how does the current approach tackle issues with plate materials etc.?
+					// ToDo: We do not have desnities of materials in the DB. How to get the masses of products?
+					double lifeTimeUnitsPerSpec = replacements * unitsRequired;
 
-					// ----- Production ----
-					results.incrementCostFactors(
-							matSpec.getFaseProfiel("ConstructionAndReplacements")
-									.calculateFactors(lifeTimeTotalMassKg * categoryMultiplier),
-							specs.getName(), matSpec.getName());
-
-					// ----- DISPOSAL ----
-					// assumptions are the the category multiplioer does not need to be applied for
-					// disposal stages
-					// see: Rekenregels_materiaalgebonden_milieuprestatie_gebouwen.pdf for more info
-					for (Entry<String, Double> entry : matSpec.getDisposalRatios().entrySet()) {
-						double cost = lifeTimeTotalMassKg * entry.getValue();
-
-						results.incrementCostFactors(
-								matSpec.getFaseProfiel(entry.getKey()).calculateFactors(cost),
-								specs.getName(), matSpec.getName());
-
-						// DISPOSALTRANSPORT - done per individual material and disposaltype rather than
-						// per product
-						results.incrementCostFactors(
-								matSpec.getFaseProfiel("TransportForRemoval").calculateFactors(
-										cost / 1000.0 * matSpec.getDisposalDistance(entry.getKey())),
-								specs.getName(), matSpec.getName());
-					}
-
-					// ----- OPERATION COST ---- - apply different units of measure (l / m3 / kWh
-					// etc.)
-
-					// add the individual material to the composite material mass for transport
-					// calculations
-					specsMatSumKg += lifeTimeTotalMassKg;
+					// example for production
+					profielSet.getDefinedProfiles().forEach(profileName -> {
+						results.incrementCostFactors(profielSet.getFaseProfiel(profileName).calculateFactors(
+								lifeTimeUnitsPerSpec * categoryMultiplier), product.getName(), profielSet.getName());
+					});
 				}
-
-				// TODO: add correction factor for volume transport (standard 1)?
-				// determine tranport costs per composed material in tonnes * km .
-				// the factor 2 has been removed since May 2015
-				results.incrementCostFactors(specs.getTransportProfile().calculateFactors(
-						categoryMultiplier * specs.getDistanceFromProducer() * (specsMatSumKg / 1000.0)), specs.getName());
 			}
-
-			results.SetResultsStatus(ResultStatus.Success);
+			if (results.getStatus() != ResultStatus.IncompleteData) {
+				results.SetResultsStatus(ResultStatus.Success);
+			}
 
 		} catch (Exception e) {
 			results.SetResultsStatus(ResultStatus.ValueError);

@@ -4,7 +4,7 @@ public class MpgCostFactor {
 	private String fase;
 	private String milieuCategorie;
 	private String productName; // name of productCard
-	private String specName; // name of meterialSpec
+	private String profielSetName; // name of meterialSpec
 	private double value;
 
 	public MpgCostFactor(String fase, String milieuCategorie, double value) {
@@ -36,12 +36,12 @@ public class MpgCostFactor {
 		this.value = val;
 	}
 	
-	public String getSpecName() {
-		return specName;
+	public String getProfielSetName() {
+		return profielSetName;
 	}
 
-	public void setSpecName(String specName) {
-		this.specName = specName;
+	public void setProfielSetName(String specName) {
+		this.profielSetName = specName;
 	}
 
 	/**
@@ -57,6 +57,6 @@ public class MpgCostFactor {
 		return testFactor.getMilieuCategorie() == this.getMilieuCategorie() 
 				&& testFactor.getFase() == this.getFase()
 				&& testFactor.getProductName() == this.getProductName() 
-				&& testFactor.getSpecName() == this.getSpecName();
+				&& testFactor.getProfielSetName() == this.getProfielSetName();
 	}
 }

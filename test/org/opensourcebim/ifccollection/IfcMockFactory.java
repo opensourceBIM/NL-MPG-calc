@@ -3,7 +3,6 @@ package org.opensourcebim.ifccollection;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -13,9 +12,6 @@ import java.util.stream.Collectors;
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.geometry.GeometryInfo;
 import org.bimserver.models.ifc2x3tc1.IfcBuildingElement;
-import org.bimserver.models.ifc2x3tc1.IfcConnectionGeometry;
-import org.bimserver.models.ifc2x3tc1.IfcElement;
-import org.bimserver.models.ifc2x3tc1.IfcInternalOrExternalEnum;
 import org.bimserver.models.ifc2x3tc1.IfcMaterial;
 import org.bimserver.models.ifc2x3tc1.IfcMaterialLayer;
 import org.bimserver.models.ifc2x3tc1.IfcMaterialLayerSet;
@@ -23,8 +19,6 @@ import org.bimserver.models.ifc2x3tc1.IfcMaterialLayerSetUsage;
 import org.bimserver.models.ifc2x3tc1.IfcMaterialList;
 import org.bimserver.models.ifc2x3tc1.IfcMaterialSelect;
 import org.bimserver.models.ifc2x3tc1.IfcObjectDefinition;
-import org.bimserver.models.ifc2x3tc1.IfcOwnerHistory;
-import org.bimserver.models.ifc2x3tc1.IfcPhysicalOrVirtualEnum;
 import org.bimserver.models.ifc2x3tc1.IfcProduct;
 import org.bimserver.models.ifc2x3tc1.IfcProject;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
@@ -38,17 +32,8 @@ import org.bimserver.models.ifc2x3tc1.IfcSpace;
 import org.bimserver.models.ifc2x3tc1.IfcUnit;
 import org.bimserver.models.ifc2x3tc1.IfcUnitAssignment;
 import org.bimserver.models.ifc2x3tc1.IfcUnitEnum;
-import org.eclipse.emf.common.notify.Adapter;
-import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
-import org.eclipse.emf.common.util.TreeIterator;
-import org.eclipse.emf.ecore.EClass;
-import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.EOperation;
-import org.eclipse.emf.ecore.EReference;
-import org.eclipse.emf.ecore.EStructuralFeature;
-import org.eclipse.emf.ecore.resource.Resource;
 
 /**
  * Factory class to create IfcModel objects to test various methods
