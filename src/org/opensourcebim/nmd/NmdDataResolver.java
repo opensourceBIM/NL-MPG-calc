@@ -11,7 +11,7 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
  * @author vijj
  *
  */
-public interface NmdDataResolverService {
+public interface NmdDataResolver {
 
 	MpgObjectStore NmdToMpg(MpgObjectStore ifcResults);
 
