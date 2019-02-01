@@ -27,9 +27,14 @@ public interface NmdProductCard {
 	
 	double getLifeTime();
 
+	Boolean getIsTotaalProduct();
+	
 	Set<NmdProfileSet> getProfileSets();
 
 	void addProfileSet(NmdProfileSet spec);
 
 	String print();
+
+	boolean isFullyCovered();
+
 }

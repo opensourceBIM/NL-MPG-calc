@@ -30,6 +30,8 @@ public interface NmdProfileSet {
 	
 	Integer getProductLifeTime();
 	
+	Integer getCuasCode();
+	
 	NmdFaseProfiel getFaseProfiel(String fase);
 
 	Set<String> getDefinedProfiles();
@@ -41,5 +43,5 @@ public interface NmdProfileSet {
 	Integer getCategory();
 	
 	Double getRequiredNumberOfUnits(MpgObject mpgObject);
-	
+
 }
