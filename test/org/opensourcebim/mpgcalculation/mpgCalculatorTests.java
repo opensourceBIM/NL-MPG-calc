@@ -73,45 +73,77 @@ public class mpgCalculatorTests {
 		startCalculations(1.0);
 		assertEquals(ResultStatus.IncompleteData, results.getStatus());
 	}
-
+	
 	@Test
-	public void testResultsReturnSuccessStatusWhenCalculationsSucceed() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
+	public void testReturnIncompleteDataStatusWhenMpgObjectsAreNotFullyCovered() {
+		// adding a profile set that is not a totaalproduct will trigger a warning
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
+
+		startCalculations(1.0);
+		assertEquals(ResultStatus.IncompleteData, results.getStatus());
+	}
+	@Test
+	public void testReturnSuccessWhenMpgObjectFullyCoveredWithDeelProducten() {
+		// adding a profile set that is not a totaalproduct will trigger a warning
+		String ifcName = "steel";
+		store.addElement(ifcName);
+		String name = "steel beam";
+		String unit = "m3";
+		int category = 1;
+		NmdProductCardImpl card = new NmdProductCardImpl();
+		card.setName(name);
+		card.setDataCategory(category);
+
+		// since we're not adding a totaalproduct we need to cover every CUAS stage individually
+		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 1));
+		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 2));
+		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 3));
+		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 4));
+		card.setIsTotaalProduct(false);
+		store.setProductCardForElement(ifcName, card);
+		addUnitIfcObjectForElement(ifcName, 1.0, 1.0);
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.Success, results.getStatus());
 	}
 
 	@Test
-	public void testUnitDistanceToProducerResultsInNonZeroTransportCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
+	public void testResultsReturnSuccessStatusWhenCalculationsSucceed() {
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
 
 		startCalculations(1.0);
-		// we have added a unit value for every ImpactFactor
-		assertEquals((double) (getDummyReferences().getMilieuCategorieMapping().size()),
-				results.getCostPerLifeCycle("TransportToSite"), 1e-8);
+		assertEquals(ResultStatus.Success, results.getStatus());
 	}
 
 	@Test
 	public void testTotalCostCannotBeNaN() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
 
 		startCalculations(1.0);
 		assertFalse(results.getTotalCost().isNaN());
 	}
+	
+	@Test
+	public void testTotalCostIsNonZeroOnCompleteProduct() {
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
+
+		startCalculations(1.0);
+		assertFalse(results.getTotalCost() == 0);
+	}
 
 	@Test
 	public void testCategory3DataIncreasesTotalCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 3);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 3, 5);
 
 		startCalculations(1.0);
+		// 30% increase in cost for category 3 data
 		assertEquals(1.3 * (double) (getDummyReferences().getMilieuCategorieMapping().size()),
 				results.getCostPerLifeCycle("TransportToSite"), 1e-8);
 	}
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerSquareMeterFloorArea() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
 
 		Double totalArea = 10.0;
 		addSpace(totalArea);
@@ -123,7 +155,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperationYear() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
 		addSpace(1.0);
 
 		Double totalLifeTime = 10.0;
@@ -134,17 +166,17 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperatingYearAndFloorArea() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
 
 		Double factor = 10.0;
-		addSpace(factor);
-		startCalculations(factor);
+		addSpace(factor); // 10m2 floor
+		startCalculations(factor); // 10 years of designlife
 		assertEquals(results.getTotalCost() / (factor * factor), results.getTotalCorrectedCost(), 1e-8);
 	}
 
 	@Test
 	public void testTotalCostPerMaterialReturnsZeroWhenMaterialNotPresent() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
 
 		startCalculations(1);
 
@@ -153,115 +185,56 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostPerMaterialReturnsOnlyCostOfRelevantMaterial() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1);
-		addMaterialWithproductCard("brick", "brick and mortar", "m2", 1);
-		addMaterialWithproductCard("brick2", "brick and mortar", "m2", 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
+		addMaterialWithproductCard("brick", "brick and mortar", "m2", 1, 5);
+		addMaterialWithproductCard("brick2", "brick and mortar", "m2", 1, 5);
 		
 		startCalculations(1);
 
 		assertEquals(results.getTotalCost() / 3.0, results.getCostPerProductName("Stainless Steel"), 1e-8);
 	}
 
+	/**
+	 * When there are multiple deel producten linked to a single product set the replacement calculations should
+	 * be done for the entire product based on the construction profiel that is first encountered 
+	 * TODO : why not longest duration? the current approach would result in different scores based on the selection order.
+	 */
 	@Test
-	public void testProductCardWithMultipleMaterialSpecsWillReturnCostBasedOnDensityRatio() {
-		// create a product card without transport costs and split out over two material
-		// specifications evenly
-		store.addElement("Brick");
+	public void testProductCardWithDeelProductenWillUseReplacementsOfFirstConstructionProfile() {		
+		
+		store.addElement("Brick Wall");
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
 		productCard.setName("Brick and mortar");
 		productCard.setDataCategory(1);
 
-		// mortar to bricks mass ratio per unit mass is assumed to be 1 to 10
-		productCard.addProfileSet(createProfileSet("bricks", "m2", 1, 1));
-		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1));
-		store.setProductCardForElement("Brick", productCard);
-
-		startCalculations(1);
-
-		Double totalCost = results.getTotalCost();
-
-		assertEquals(totalCost, results.getCostPerProductName("Brick and mortar"), 1e-8);
-
-		for (NmdProfileSet profileSet : store.getElementByName("Brick").getNmdProductCard().getProfileSets().stream()
-				.collect(Collectors.toList())) {
-			Double specCost = results.getCostPerSpecification(profileSet.getName());
-			assertEquals(totalCost , specCost, 1e-8);
-		}
-	}
-
-	@Test
-	public void TestCyclicMaintenanceMaterialsDoNotHaveInitialApplication() {
-		// create a product card with a regular material
-		store.addElement("Paint");
-		NmdProductCardImpl productCard = new NmdProductCardImpl();
-		productCard.setName("Verflaag");
-		productCard.setDataCategory(1);
-
-		productCard.addProfileSet(createProfileSet("verf", "m2", 5, 1));
-		store.setProductCardForElement("Paint", productCard);
-		// paint will last 5 year, so will need to be applied 2 during lifetime
+		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1, false, 1));
+		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1, false, 1));
+		store.setProductCardForElement("Brick Wall", productCard);
+		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
+		
 		startCalculations(10);
-		double totalCost = results.getTotalCost();
-		results.reset();
-
+		Double totalCostBrickFirst = results.getTotalCost();
+		
 		store.reset();
-		store.addElement("Paint");
+		
+		// repeat the calculation with mortar added first - different replacement time
+		store.addElement("Brick Wall");
 		productCard = new NmdProductCardImpl();
-		productCard.setName("Verflaag");
+		productCard.setName("Brick and mortar");
 		productCard.setDataCategory(1);
 
-		NmdProfileSet maintenanceSpec = createProfileSet("verf", "m2", 5, 1);
-		maintenanceSpec.setIsMaintenanceSpec(true);
-		productCard.addProfileSet(maintenanceSpec);
-		store.setProductCardForElement("Paint", productCard);
-		// as this is a miantenance material it only needs to be applied once (after 5
-		// year)
+		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1, false, 1));
+		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1, false, 1));
+
+		store.setProductCardForElement("Brick Wall", productCard);
+		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
+		
 		startCalculations(10);
-		double totalMaintenanceCost = results.getTotalCost();
+		Double totalCostMortarFirst = results.getTotalCost();
 
-		assertEquals(totalCost, 2 * totalMaintenanceCost, 1e-8);
-	}
-
-	@Test
-	public void TestCyclicMaintenanceCostIsAddedToRegularCost() {
-
-		// create a product card with a initial paint layer
-		store.addElement("Paint");
-		NmdProductCardImpl productCard = new NmdProductCardImpl();
-		productCard.setName("Verflaag");
-		productCard.setDataCategory(1);
-
-		productCard.addProfileSet(createProfileSet("verf", "m2", 10, 1));
-		store.setProductCardForElement("Paint", productCard);
-
-		// paint will last 5 year, so will need to be applied 2 during lifetime
-		startCalculations(10);
-		double totalCost = results.getTotalCost();
-
-		results.reset();
-		store.reset();
-
-		// now add a first layer and maintenance for every 5 year
-		store.addElement("Paint");
-		productCard = new NmdProductCardImpl();
-		productCard.setName("Verflaag");
-		productCard.setDataCategory(1);
-
-		productCard.addProfileSet(createProfileSet("verf", "m2", 10, 1));
-
-		NmdProfileSet maintenanceSpec = createProfileSet("verf", "m2", 5, 1);
-		maintenanceSpec.setIsMaintenanceSpec(true);
-		productCard.addProfileSet(maintenanceSpec);
-
-		store.setProductCardForElement("Paint", productCard);
-		// as this is a miantenance material it only needs to be applied once (after 5
-		// year)
-		startCalculations(10);
-		double totalCostWithMaintenance = results.getTotalCost();
-
-		// instead of the single paint layer another maintenance layer is applied
-		// halfway during is designLife
-		assertEquals(totalCostWithMaintenance, 2 * totalCost, 1e-8);
+		// the first construction element lifespan should be taken for all of the elements
+		// changing the order should therefore change the results (bad design?)
+		assertFalse((totalCostBrickFirst - totalCostMortarFirst) < 1e-8);
 	}
 
 	/**
@@ -271,21 +244,25 @@ public class mpgCalculatorTests {
 	 * @param lifecycleduration
 	 */
 	private void startCalculations(double lifecycleduration) {
+		calculator.reset();
 		calculator.setObjectStore(store);
 		calculator.calculate(lifecycleduration);
 		this.results = calculator.getResults();
 	}
 
-	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category) {
+	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int cuasCode) {
 		store.addElement(ifcMatName);
-		store.setProductCardForElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category));
-
+		store.setProductCardForElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category, cuasCode));
+		addUnitIfcObjectForElement(ifcMatName, 1.0, 1.0);
+	}
+	
+	private void addUnitIfcObjectForElement(String ifcMatName, double volume, double area) {
 		MpgObjectImpl mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), ifcMatName + " element", "Slab",
 				"", store);
 		mpgObject.setArea(1.0);
 		mpgObject.setVolume(1.0);
 
-		MpgLayer testObject = new MpgLayerImpl(1.0, 1.0, ifcMatName, Integer.toString(ifcMatName.hashCode()));
+		MpgLayer testObject = new MpgLayerImpl(volume, area, ifcMatName, Integer.toString(ifcMatName.hashCode()));
 		mpgObject.addLayer(testObject);
 
 		store.addObject(mpgObject);
@@ -303,47 +280,44 @@ public class mpgCalculatorTests {
 		store.addSpace(new MpgSpaceImpl(UUID.randomUUID().toString(), floorArea * 3, floorArea));
 	}
 
-	private NmdProductCard createUnitProductCard(String name, String unit, int category) {
+	private NmdProductCard createUnitProductCard(String name, String unit, int category, int cuasCode) {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
 		specs.setName(name);
 		specs.setDataCategory(category);
 
-		specs.addProfileSet(createDummySpec(1.0, unit, category));
+		specs.addProfileSet(createProfileSet(name, unit, 1, category, false, cuasCode));
+		specs.setIsTotaalProduct(cuasCode == 5);
+
 		return specs;
 	}
 
-	private NmdProfileSet createDummySpec(double massPerUnit, String unit, int category) {
-		return createProfileSet("dummy spec", unit, 1, category);
-	}
-
-	private NmdProfileSet createProfileSet(String name, String unit, int lifetime, int category) {
+	private NmdProfileSet createProfileSet(String name, String unit, int lifetime, int category, Boolean isTotaalProfiel, int cuasCode) {
 		NmdProfileSetImpl spec = new NmdProfileSetImpl();
+		
 		spec.setCategory(category);
 		spec.setProductLifeTime(lifetime);
-		spec.addBasisProfiel("TransportToSite", createUnitProfile("TransportToSite"));
-		spec.addBasisProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements"));
-		spec.addBasisProfiel("Disposal", createUnitProfile("Disposal"));
-		spec.addBasisProfiel("Incineration", createUnitProfile("Incineration"));
-		spec.addBasisProfiel("Recycling", createUnitProfile("Recycling"));
-		spec.addBasisProfiel("Reuse", createUnitProfile("Reuse"));
-		spec.addBasisProfiel("OwnDisposalProfile", createUnitProfile("OwnDisposalProfile"));
-		spec.addBasisProfiel("TransportForRemoval", createUnitProfile("TransportForRemoval"));
-		spec.addBasisProfiel("Operation", createUnitProfile("Operation"));
+		spec.addFaseProfiel("TransportToSite", createUnitProfile("TransportToSite"));
+		spec.addFaseProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements"));
+		spec.addFaseProfiel("Disposal", createUnitProfile("Disposal"));
+		spec.addFaseProfiel("Incineration", createUnitProfile("Incineration"));
+		spec.addFaseProfiel("Recycling", createUnitProfile("Recycling"));
+		spec.addFaseProfiel("Reuse", createUnitProfile("Reuse"));
+		spec.addFaseProfiel("OwnDisposalProfile", createUnitProfile("OwnDisposalProfile"));
+		spec.addFaseProfiel("TransportForRemoval", createUnitProfile("TransportForRemoval"));
+		spec.addFaseProfiel("Operation", createUnitProfile("Operation"));
 
 		spec.setUnit(unit);
 		spec.setProfielId(1);
 		spec.setName(name);
-
+		spec.setIsFullProfile(isTotaalProfiel);
+		spec.setCuasCode(cuasCode);
+		
 		return spec;
 	}
 
 	private NmdFaseProfiel createUnitProfile(String fase) {
-		return createConstantValueProfile(fase, 1.0);
-	}
-
-	private NmdFaseProfiel createConstantValueProfile(String fase, Double constantValue) {
 		NmdFaseProfielImpl profile = new NmdFaseProfielImpl(fase, this.getDummyReferences());
-		profile.setAll(constantValue);
+		profile.setAll(1.0);
 		return profile;
 	}
 
@@ -407,7 +381,14 @@ public class mpgCalculatorTests {
 		units.put(21, "onbekend");
 		units.put(22, "Samengesteld");
 		resources.setUnitMapping(units);
-
+		
+		HashMap<Integer, String> cuasCategorien = new HashMap<Integer, String>();
+		cuasCategorien.put(1, "Constructie");
+		cuasCategorien.put(2, "Uitrusting");
+		cuasCategorien.put(1, "Afwerking");
+		cuasCategorien.put(1, "Schilderwerk");
+		resources.setCuasCategorieMapping(cuasCategorien);
+		
 		return resources;
 	}
 }
