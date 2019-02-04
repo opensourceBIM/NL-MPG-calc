@@ -1,5 +1,7 @@
 package org.opensourcebim.mpgcalculation;
 
+import java.util.Set;
+
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.nmd.NmdProductCard;
@@ -64,12 +66,12 @@ public class MpgCalculator {
 					// calculate total mass taking into account construction losses and replacements
 					// ToDo: how does the current approach tackle issues with plate materials etc.?
 					// ToDo: We do not have desnities of materials in the DB. How to get the masses of products?
-					double lifeTimeUnitsPerSpec = replacements * unitsRequired;
+					double lifeTimeUnitsPerSpec = replacements * unitsRequired * categoryMultiplier;
 
 					// example for production
 					profielSet.getDefinedProfiles().forEach(profileName -> {
-						results.incrementCostFactors(profielSet.getFaseProfiel(profileName).calculateFactors(
-								lifeTimeUnitsPerSpec * categoryMultiplier), product.getName(), profielSet.getName());
+						Set<MpgCostFactor> factors = profielSet.getFaseProfiel(profileName).calculateFactors( lifeTimeUnitsPerSpec);
+						results.incrementCostFactors(factors, product.getName(), profielSet.getName());
 					});
 				}
 			}
