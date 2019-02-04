@@ -150,4 +150,12 @@ public class NmdInterfaceTests {
 		// only 5 categories should be in there CUAST (T = Totaal)
 		assertTrue(5 == mappings.getCuasCategorieMapping().size()); 
 	}
+	
+	@Test
+	public void getReferenceScalingFormulaeReturnsScalingInformation() {
+		connect();
+		NmdReferenceResources mappings = db.getReferenceResources();
+		// only 5 categories should be in there CUAST (T = Totaal)
+		assertTrue(0 < mappings.getScalingFormula().size()); 
+	}
 }

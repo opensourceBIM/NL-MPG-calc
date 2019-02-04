@@ -131,7 +131,7 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 			return 1.0; // product per piece. always return 1 per profielset.
 		}
 		if (productUnit.equals("kg")) {
-			return Double.NaN;
+			return Double.NaN; // we do not have densities of products, we will need to figure out how to fix this.
 		}
 		
 		return Double.NaN;

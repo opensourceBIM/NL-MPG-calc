@@ -1,6 +1,5 @@
 package org.opensourcebim.mpgcalculation;
 
-
 /**
  * class for the various impact factors that can be present in a single
  * basisprofiel These coeficients can be multiplied with the total mass, volume

@@ -197,8 +197,20 @@ public class NmdDataBaseSession implements NmdDataService {
 			});
 			resources.setCuasCategorieMapping(cuasCategorien);
 
-			// rekenregels - use : NMD_30_API_v0.2/api/NMD30_Web_API/SchalingsFormules
+			// rekenregels
+			HttpResponse scalingRepsonse = this
+					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/SchalingsFormules", params);
+			JsonNode scaling_node = this.responseToJson(scalingRepsonse).get("results");
+			HashMap<Integer, String> scalingFormula = new HashMap<Integer, String>();
+			scaling_node.forEach(scaling_formula -> {
 
+				scalingFormula.putIfAbsent(TryParseJsonNode(scaling_formula.get("SchalingsFormuleID"), -1),
+						TryParseJsonNode(scaling_formula.get("SoortFormule"), "") + " : " + 
+						TryParseJsonNode(scaling_formula.get("Formule"), ""));
+
+			});
+			resources.setScalingFormula(scalingFormula);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
