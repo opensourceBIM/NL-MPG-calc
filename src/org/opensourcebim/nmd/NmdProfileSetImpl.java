@@ -12,8 +12,6 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 
 	private int productLifeTime;
 	private int category;
-
-	private Boolean isMaintenanceSpec;
 	
 	/**
 	 * NmdBasisProfiles available for this material specification.
@@ -26,8 +24,6 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 
 	public NmdProfileSetImpl() {		
 		this.profiles = new HashMap<String, NmdFaseProfiel>();
-	
-		this.setIsMaintenanceSpec(false);
 	}
 	
 	@Override
@@ -96,16 +92,6 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	@Override
 	public Set<String> getDefinedProfiles() {
 		return profiles.keySet();
-	}
-
-	@Override
-	public Boolean getIsMaintenanceSpec() {
-		return isMaintenanceSpec;
-	}
-
-	@Override
-	public void setIsMaintenanceSpec(boolean flag) {
-		this.isMaintenanceSpec = flag;
 	}
 
 	@Override

@@ -36,10 +36,6 @@ public interface NmdProfileSet {
 
 	Set<String> getDefinedProfiles();
 
-	Boolean getIsMaintenanceSpec();
-
-	void setIsMaintenanceSpec(boolean b);
-
 	Integer getCategory();
 	
 	Double getRequiredNumberOfUnits(MpgObject mpgObject);

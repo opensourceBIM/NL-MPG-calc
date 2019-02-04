@@ -354,8 +354,6 @@ public class NmdDataBaseSession implements NmdDataService {
 
 					NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(faseName, this.getResources());
 
-					profiel.setCategory(category);
-
 					p.get("ProfielMilieuEffecten").forEach(val -> {
 						Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
 						Double catVal = TryParseJsonNode(val.get("MilieuWaarde"), Double.NaN);
