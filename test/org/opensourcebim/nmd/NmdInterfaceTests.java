@@ -2,15 +2,18 @@ package org.opensourcebim.nmd;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensourcebim.nmd.scaling.NmdScaler;
 
 public class NmdInterfaceTests {
 
@@ -109,6 +112,20 @@ public class NmdInterfaceTests {
 		List<String> ids = Arrays.asList("19");
 		HashMap<Integer, NmdProfileSet> profileSets = db.getProfileSetsByIds(ids);
 		assertTrue(0 < profileSets.size());
+	}
+	
+	@Test
+	public void testCanRetrieveProfileSetsWithScalerInformation() {
+		connect();
+		List<String> ids = Arrays.asList("9", "19");
+		HashMap<Integer, NmdProfileSet> profileSets = db.getProfileSetsByIds(ids);
+		assertTrue(2 == profileSets.size());
+		Entry<Integer, NmdProfileSet> set = profileSets.entrySet().iterator().next();
+		assertTrue(set.getValue().getIsScalable());
+		NmdScaler scaler = set.getValue().getScaler();
+		Double factor = scaler.scale(400);
+		
+		assertTrue(0> factor);
 	}
 		
 	@Test

@@ -153,4 +153,9 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	public void setScaler(NmdScaler scaler) {
 		this.scaler = scaler;
 	}
+
+	@Override
+	public NmdScaler getScaler() {
+		return this.scaler;
+	}
 }

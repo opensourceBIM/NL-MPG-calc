@@ -3,6 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.Set;
 
 import org.opensourcebim.ifccollection.MpgObject;
+import org.opensourcebim.nmd.scaling.NmdScaler;
 
 /**
  * Material specification. contains Basis Profiel data for every lifecycle stage
@@ -41,5 +42,7 @@ public interface NmdProfileSet {
 	Double getRequiredNumberOfUnits(MpgObject mpgObject);
 
 	Boolean getIsScalable();
+
+	NmdScaler getScaler();
 
 }
