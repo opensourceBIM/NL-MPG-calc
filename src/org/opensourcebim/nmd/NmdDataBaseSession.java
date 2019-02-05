@@ -427,8 +427,6 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 				double scalerMinDim2 = TryParseJsonNode(profielSetNode.get("MinX2"), Double.NaN);
 				double scalerMaxDim1 = TryParseJsonNode(profielSetNode.get("MaxX1"), Double.NaN);
 				double scalerMaxDim2 = TryParseJsonNode(profielSetNode.get("MaxX2"), Double.NaN);
-				double scalerTestVal1 = TryParseJsonNode(profielSetNode.get("TestWaarde1"), Double.NaN);
-				double scalerTestVal2 = TryParseJsonNode(profielSetNode.get("TestWaarde2"), Double.NaN);
 
 				String scalerTypeName = this.getReferenceResources().getScalingFormula().get(scalerType);
 				String scalerUnitName = this.getReferenceResources().getUnitMapping().get(scalerUnit);
@@ -437,7 +435,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 					scaler = scalerFactor.create(scalerTypeName, scalerUnitName,
 							new Double[] { scalerCoeffA, scalerCoeffB, scalerCoeffC },
 							new Double[] { scalerMinDim1, scalerMaxDim1, scalerMinDim2 , scalerMaxDim2 },
-							new Double[] { scalerTestVal1, scalerTestVal2});
+							new Double[] { scalerDim1, scalerDim2});
 					set.setScaler(scaler);
 				} catch (InvalidInputException e) {
 					System.out.println("encountered invalid input combinations in scaler creation");
