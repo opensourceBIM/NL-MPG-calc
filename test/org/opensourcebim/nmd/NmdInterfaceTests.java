@@ -86,12 +86,12 @@ public class NmdInterfaceTests {
 	}
 	
 	@Test
-	public void testGetChildProductsWillReturnNullOnNonExistentProductCode() {
+	public void testGetChildProductsWillReturnEmptyArrayOnNonExistentProductCode() {
 		connect();
 		
 		NmdProductCardImpl card = new NmdProductCardImpl();
 		card.setRAWCode("-42");
-		assertTrue(null == db.getChildProductSetsForProductSet(card));
+		assertTrue(0 == db.getChildProductSetsForProductSet(card).size());
 	}
 	
 	@Test

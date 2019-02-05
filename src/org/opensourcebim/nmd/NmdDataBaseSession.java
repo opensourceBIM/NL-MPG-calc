@@ -37,28 +37,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author vijj
  *
  */
-public class NmdDataBaseSession implements NmdDataService {
+public class NmdDataBaseSession extends AuthorizedDatabaseSession implements NmdDataService {
 
 	private static final DateFormat dbDateFormat = new SimpleDateFormat("yyyyMMdd"); // according to docs thi should be
 																						// correct
 	private Calendar requestDate;
 	private NmdDatabaseConfig config = null;
-	private HttpClient httpclient;
 	private boolean isConnected = false;
-	private String token;
 	private NmdReferenceResources resources;
+
+	NmdScalerFactory scalerFactor = new NmdScalerFactory();
 
 	private List<NmdProductCard> data;
 
 	public NmdDataBaseSession(NmdDatabaseConfig config) {
+		this.setHost("www.Milieudatabase-datainvoer.nl") ;
 		this.config = config;
 		this.requestDate = Calendar.getInstance();
-		httpclient = HttpClients.createDefault();
 		this.data = new ArrayList<NmdProductCard>();
-	}
-
-	public void setToken(String token) {
-		this.token = token;
 	}
 
 	@Override
@@ -84,7 +80,7 @@ public class NmdDataBaseSession implements NmdDataService {
 
 	@Override
 	public void login() {
-
+		// Try add a Post request to the base class.
 		HttpPost httppost = new HttpPost(
 				"https://www.milieudatabase-datainvoer.nl/NMD_30_AuthenticationServer/NMD_30_API_Authentication/getToken");
 
@@ -99,10 +95,10 @@ public class NmdDataBaseSession implements NmdDataService {
 		HttpResponse response = null;
 		try {
 			httppost.setEntity(new UrlEncodedFormEntity(params));
-			response = httpclient.execute(httppost);
+			response = httpClient.execute(httppost);
 			JsonNode responseNode = this.responseToJson(response);
 			JsonNode tokenNode = responseNode.get("TOKEN");
-			this.token = tokenNode.asText();
+			this.setToken(tokenNode.asText());
 
 			this.isConnected = true;
 			httppost.releaseConnection();
@@ -143,78 +139,98 @@ public class NmdDataBaseSession implements NmdDataService {
 	public NmdReferenceResources getReferenceResources() {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
-		NmdReferenceResources resources = new NmdReferenceResources();
+		resources = new NmdReferenceResources();
 
 		try {
-			// lifecycle fasen
-			HttpResponse faseResponse = this.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/Fasen",
-					params);
-			JsonNode fasen_node = this.responseToJson(faseResponse).get("results");
-			HashMap<Integer, String> fasen = new HashMap<Integer, String>();
-			fasen_node.forEach(fase -> {
-				fasen.putIfAbsent(Integer.parseInt(fase.get("FaseID").asText()), fase.get("FaseNaam").asText());
+			loadLifeCycleFasen(params);
 
-			});
-			resources.setFaseMapping(fasen);
+			loadMilieuCategorien(params);
 
-			// milieucategorien
-			HttpResponse categorieResponse = this
-					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/MilieuCategorien", params);
-			JsonNode categorie_node = this.responseToJson(categorieResponse).get("results");
-			HashMap<Integer, NmdMileuCategorie> categorien = new HashMap<Integer, NmdMileuCategorie>();
-			categorie_node.forEach(categorie -> {
-				NmdMileuCategorie factor = new NmdMileuCategorie(categorie.get("Milieueffect").asText(),
-						categorie.get("Eenheid").asText(),
-						categorie.get("Wegingsfactor") != null ? categorie.get("Wegingsfactor").asDouble() : 0.0);
-				categorien.putIfAbsent(Integer.parseInt(categorie.get("MilieuCategorieID").asText()), factor);
+			loadUnitDefinitions(params);
 
-			});
-			resources.setMilieuCategorieMapping(categorien);
+			loadCUASCodes(params);
 
-			// eenheden
-			HttpResponse eenheidResponse = this
-					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/Eenheden", params);
-			JsonNode eenheid_node = this.responseToJson(eenheidResponse).get("results");
-			HashMap<Integer, String> eenheden = new HashMap<Integer, String>();
-			eenheid_node.forEach(eenheid -> {
-
-				eenheden.putIfAbsent(TryParseJsonNode(eenheid.get("EenheidID"), -1),
-						TryParseJsonNode(eenheid.get("Code"), ""));
-
-			});
-			resources.setUnitMapping(eenheden);
-			
-			// cuasCodes
-			HttpResponse cuasResponse = this
-					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/CUAScategorien", params);
-			JsonNode cuas_node = this.responseToJson(cuasResponse).get("results");
-			HashMap<Integer, String> cuasCategorien = new HashMap<Integer, String>();
-			cuas_node.forEach(cuas_code -> {
-
-				cuasCategorien.putIfAbsent(TryParseJsonNode(cuas_code.get("ID"), -1),
-						TryParseJsonNode(cuas_code.get("CUAS_code"), ""));
-
-			});
-			resources.setCuasCategorieMapping(cuasCategorien);
-
-			// rekenregels
-			HttpResponse scalingRepsonse = this
-					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/SchalingsFormules", params);
-			JsonNode scaling_node = this.responseToJson(scalingRepsonse).get("results");
-			HashMap<Integer, String> scalingFormula = new HashMap<Integer, String>();
-			scaling_node.forEach(scaling_formula -> {
-
-				scalingFormula.putIfAbsent(TryParseJsonNode(scaling_formula.get("SchalingsFormuleID"), -1),
-						TryParseJsonNode(scaling_formula.get("SoortFormule"), "") + " : " + 
-						TryParseJsonNode(scaling_formula.get("Formule"), ""));
-
-			});
-			resources.setScalingFormula(scalingFormula);
-			
+			loadScalingTypes(params);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return resources;
+	}
+
+	private void loadScalingTypes(List<KeyValuePair> params) {
+		// rekenregels
+		HttpResponse scalingResponse = this.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/SchalingsFormules", params);
+		JsonNode scaling_node = this.responseToJson(scalingResponse).get("results");
+		HashMap<Integer, String> scalingFormula = new HashMap<Integer, String>();
+		scaling_node.forEach(scaling_formula -> {
+
+			scalingFormula.putIfAbsent(TryParseJsonNode(scaling_formula.get("SchalingsFormuleID"), -1),
+					TryParseJsonNode(scaling_formula.get("SoortFormule"), "") + " : "
+							+ TryParseJsonNode(scaling_formula.get("Formule"), ""));
+
+		});
+		resources.setScalingFormula(scalingFormula);
+
+	}
+
+	private void loadCUASCodes(List<KeyValuePair> params) {
+		// cuasCodes
+		HttpResponse cuasResponse = this
+				.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/CUAScategorien", params);
+		JsonNode cuas_node = this.responseToJson(cuasResponse).get("results");
+		HashMap<Integer, String> cuasCategorien = new HashMap<Integer, String>();
+		cuas_node.forEach(cuas_code -> {
+
+			cuasCategorien.putIfAbsent(TryParseJsonNode(cuas_code.get("ID"), -1),
+					TryParseJsonNode(cuas_code.get("CUAS_code"), ""));
+
+		});
+		resources.setCuasCategorieMapping(cuasCategorien);
+
+	}
+
+	private void loadUnitDefinitions(List<KeyValuePair> params) {
+		// eenheden
+		HttpResponse eenheidResponse = this.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/Eenheden",
+				params);
+		JsonNode eenheid_node = this.responseToJson(eenheidResponse).get("results");
+		HashMap<Integer, String> eenheden = new HashMap<Integer, String>();
+		eenheid_node.forEach(eenheid -> {
+
+			eenheden.putIfAbsent(TryParseJsonNode(eenheid.get("EenheidID"), -1),
+					TryParseJsonNode(eenheid.get("Code"), ""));
+
+		});
+		resources.setUnitMapping(eenheden);
+	}
+
+	private void loadMilieuCategorien(List<KeyValuePair> params) {
+		// milieucategorien
+		HttpResponse categorieResponse = this
+				.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/MilieuCategorien", params);
+		JsonNode categorie_node = this.responseToJson(categorieResponse).get("results");
+		HashMap<Integer, NmdMileuCategorie> categorien = new HashMap<Integer, NmdMileuCategorie>();
+		categorie_node.forEach(categorie -> {
+			NmdMileuCategorie factor = new NmdMileuCategorie(categorie.get("Milieueffect").asText(),
+					categorie.get("Eenheid").asText(),
+					categorie.get("Wegingsfactor") != null ? categorie.get("Wegingsfactor").asDouble() : 0.0);
+			categorien.putIfAbsent(Integer.parseInt(categorie.get("MilieuCategorieID").asText()), factor);
+
+		});
+		resources.setMilieuCategorieMapping(categorien);
+	}
+
+	private void loadLifeCycleFasen(List<KeyValuePair> params) {
+		// lifecycle fasen
+		HttpResponse faseResponse = this.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/Fasen",
+				params);
+		JsonNode fasen_node = this.responseToJson(faseResponse).get("results");
+		HashMap<Integer, String> fasen = new HashMap<Integer, String>();
+		fasen_node.forEach(fase -> {
+			fasen.putIfAbsent(Integer.parseInt(fase.get("FaseID").asText()), fase.get("FaseNaam").asText());
+
+		});
+		resources.setFaseMapping(fasen);
 	}
 
 	@Override
@@ -223,23 +239,16 @@ public class NmdDataBaseSession implements NmdDataService {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 
-		try {
-			HttpResponse response = this
-					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/NLsfB_RAW_Elementen", params);
-			// do something with the entity to get the token
-			JsonNode resp_node = this.responseToJson(response);
+		HttpResponse response = this
+				.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/NLsfB_RAW_Elementen", params);
+		// do something with the entity to get the token
+		JsonNode resp_node = this.responseToJson(response);
 
-			// convert reponseNode to NmdProductCard info.
-			List<NmdProductCard> results = new ArrayList<NmdProductCard>();
-			resp_node.get("results").forEach(f -> results.add(this.getProductCardIdsFromJson(f)));
+		// convert reponseNode to NmdProductCard info.
+		List<NmdProductCard> results = new ArrayList<NmdProductCard>();
+		resp_node.get("results").forEach(f -> results.add(this.getProductCardIdsFromJson(f)));
 
-			return results;
-
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}
-
-		return null;
+		return results;
 	}
 
 	@Override
@@ -248,26 +257,19 @@ public class NmdDataBaseSession implements NmdDataService {
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 		params.add(new KeyValuePair("ElementID", product.getRAWCode()));
 
-		try {
-			HttpResponse response = this
-					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/ElementOnderdelen", params);
+		HttpResponse response = this.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/ElementOnderdelen",
+				params);
 
-			// do something with the entity to get the token
-			JsonNode resp_node = this.responseToJson(response);
-			if (resp_node != null) {
-				List<NmdProductCard> childCards = new ArrayList<NmdProductCard>();
-				resp_node.get("results").forEach(res -> {
-					childCards.add(getProductCardIdsFromJson(res));
-				});
+		// do something with the entity to get the token
+		JsonNode resp_node = this.responseToJson(response);
+		List<NmdProductCard> childCards = new ArrayList<NmdProductCard>();
+		if (resp_node != null) {
 
-				return childCards;
-			}
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			resp_node.get("results").forEach(res -> {
+				childCards.add(getProductCardIdsFromJson(res));
+			});
 		}
-
-		return null;
+		return childCards;
 	}
 
 	@Override
@@ -339,53 +341,47 @@ public class NmdDataBaseSession implements NmdDataService {
 		params.add(new KeyValuePair("ProductIDs", String.join(",", ids)));
 		params.add(new KeyValuePair("includeNULLs", true));
 
-		try {
-			HttpResponse response = this
-					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/ProductenProfielWaarden", params);
+		HttpResponse response = this
+				.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/ProductenProfielWaarden", params);
 
-			// do something with the entity to get the token
-			JsonNode resp_node = this.responseToJson(response);
+		// do something with the entity to get the token
+		JsonNode resp_node = this.responseToJson(response);
 
-			HashMap<Integer, NmdProfileSet> profileSets = new HashMap<Integer, NmdProfileSet>();
+		HashMap<Integer, NmdProfileSet> profileSets = new HashMap<Integer, NmdProfileSet>();
 
-			JsonNode profielSetNodes = resp_node.get("results").get(0).get("ProfielSet");
-			profielSetNodes.forEach(profielSetNode -> {
+		JsonNode profielSetNodes = resp_node.get("results").get(0).get("ProfielSet");
+		profielSetNodes.forEach(profielSetNode -> {
 
-				NmdProfileSetImpl set = new NmdProfileSetImpl();
-				Integer profielSetId = TryParseJsonNode(profielSetNode.get("ProfielSetID"), -1);
+			NmdProfileSetImpl set = new NmdProfileSetImpl();
+			Integer profielSetId = TryParseJsonNode(profielSetNode.get("ProfielSetID"), -1);
 
-				// laad set specifieke data
-				this.getProfielSetDataFromJson(profielSetNode, set);
+			// laad set specifieke data
+			this.getProfielSetDataFromJson(profielSetNode, set);
 
-				// laad faseprofiel specifieke data
-				JsonNode profielen = profielSetNode.get("Profiel");
-				profielen.forEach(p -> {
-					Integer category = TryParseJsonNode(p.get("CategorieID"), -1);
-					Integer fase = TryParseJsonNode(p.get("FaseID"), -1);
-					String faseName = this.getResources().getFaseMapping().get(fase);
+			// laad faseprofiel specifieke data
+			JsonNode profielen = profielSetNode.get("Profiel");
+			profielen.forEach(p -> {
+				Integer category = TryParseJsonNode(p.get("CategorieID"), -1);
+				Integer fase = TryParseJsonNode(p.get("FaseID"), -1);
+				String faseName = this.getResources().getFaseMapping().get(fase);
 
-					NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(faseName, this.getResources());
+				NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(faseName, this.getResources());
 
-					p.get("ProfielMilieuEffecten").forEach(val -> {
-						Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
-						Double catVal = TryParseJsonNode(val.get("MilieuWaarde"), Double.NaN);
+				p.get("ProfielMilieuEffecten").forEach(val -> {
+					Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
+					Double catVal = TryParseJsonNode(val.get("MilieuWaarde"), Double.NaN);
 
-						profiel.setProfielCoefficient(
-								this.getResources().getMilieuCategorieMapping().get(catId).getDescription(), catVal);
-					});
-
-					set.addFaseProfiel(faseName, profiel);
-
+					profiel.setProfielCoefficient(
+							this.getResources().getMilieuCategorieMapping().get(catId).getDescription(), catVal);
 				});
-				profileSets.put(profielSetId, set);
-			});
 
-			return profileSets;
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+				set.addFaseProfiel(faseName, profiel);
+
+			});
+			profileSets.put(profielSetId, set);
+		});
+
+		return profileSets;
 	}
 
 	/*
@@ -397,9 +393,8 @@ public class NmdDataBaseSession implements NmdDataService {
 		newCard.setRAWCode(cardInfo.get("ElementID").asText());
 		newCard.setNLsfbCode(cardInfo.get("ElementCode").asText());
 		newCard.setElementName(cardInfo.get("ElementNaam").asText());
-		
+
 		newCard.setIsTotaalProduct(TryParseJsonNode(cardInfo.get("OuderID"), -1) == 0);
-		
 
 		if (cardInfo.has("FunctioneleBeschrijving")) {
 			newCard.setDescription(cardInfo.get("FunctioneleBeschrijving").asText());
@@ -422,58 +417,35 @@ public class NmdDataBaseSession implements NmdDataService {
 		set.setName(TryParseJsonNode(profielSetNode.get("ProductNaam"), ""));
 		set.setCategory(TryParseJsonNode(profielSetNode.get("CategorieID"), 3));
 
-	}
+		// two types of profile set nodes.
+		if (profielSetNode.get("IsSchaalbaar") != null) {
+			set.setIsScalable(TryParseJsonNode(profielSetNode.get("IsSchaalbaar"), false));
+		} else {
+			int scalerType = TryParseJsonNode(profielSetNode.get("SchalingsFormuleID"), -1);
+			if (scalerType > 0) {
+				set.setIsScalable(true);
+				double scalerDim1 = TryParseJsonNode(profielSetNode.get("SchalingsMaatX1"), Double.NaN);
+				double scalerDim2 = TryParseJsonNode(profielSetNode.get("SchalingsMaatX2"), Double.NaN);
+				int scalerUnit = TryParseJsonNode(profielSetNode.get("EenheidID_SchalingsMaat"), -1);
+				double scalerCoeffA = TryParseJsonNode(profielSetNode.get("SchalingA"), Double.NaN);
+				double scalerCoeffB = TryParseJsonNode(profielSetNode.get("SchalingB"), Double.NaN);
+				double scalerCoeffC = TryParseJsonNode(profielSetNode.get("SchalingC"), Double.NaN);
+				double scalerMinDim1 = TryParseJsonNode(profielSetNode.get("MinX1"), Double.NaN);
+				double scalerMinDim2 = TryParseJsonNode(profielSetNode.get("MinX2"), Double.NaN);
+				double scalerMaxDim1 = TryParseJsonNode(profielSetNode.get("MaxX1"), Double.NaN);
+				double scalerMaxDim2 = TryParseJsonNode(profielSetNode.get("MaxX2"), Double.NaN);
+				double scalerTestVal1 = TryParseJsonNode(profielSetNode.get("TestWaarde1"), Double.NaN);
+				double scalerTestVal2 = TryParseJsonNode(profielSetNode.get("TestWaarde2"), Double.NaN);
 
-	private HttpResponse performGetRequestWithParams(String url, List<KeyValuePair> params) throws URISyntaxException {
-		URIBuilder builder = new URIBuilder();
-		builder.setScheme("https").setHost("www.Milieudatabase-datainvoer.nl").setPath(url);
+				String scalerTypeName = this.getReferenceResources().getScalingFormula().get(scalerType);
+				String scalerUnitName = this.getReferenceResources().getUnitMapping().get(scalerUnit);
+				NmdScaler scaler = scalerFactor.create(scalerTypeName, scalerUnitName,
+						new Double[] { scalerCoeffA, scalerCoeffB, scalerCoeffC },
+						new Double[] { scalerMinDim1, scalerMinDim2, scalerMaxDim1, scalerMaxDim2 });
 
-		params.forEach(p -> builder.addParameter(p.getFieldName(), p.getValue().toString()));
+				set.setScaler(scaler);
 
-		URI uri = builder.build();
-
-		HttpGet request = new HttpGet(uri);
-		request.addHeader("Access_Token", this.token);
-
-		// Execute and get the response.
-		HttpResponse response = null;
-		try {
-			response = this.httpclient.execute(request);
-		} catch (Exception e) {
-			e.printStackTrace();
+			}
 		}
-		return response;
-	}
-
-	private JsonNode responseToJson(HttpResponse response) {
-		HttpEntity entity = response.getEntity();
-
-		// do something with the entity to get the token
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode responseNode = null;
-		try {
-			responseNode = mapper.readTree(EntityUtils.toString(entity));
-		} catch (ParseException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			return null;
-		}
-		return responseNode;
-	}
-
-	private Integer TryParseJsonNode(JsonNode node, Integer defaultValue) {
-		return (node == null) ? defaultValue : node.asInt(defaultValue);
-	}
-
-	private Double TryParseJsonNode(JsonNode node, Double defaultValue) {
-		return (node == null) ? defaultValue : node.asDouble(defaultValue);
-	}
-
-	private String TryParseJsonNode(JsonNode node, String defaultValue) {
-		return (node == null) ? defaultValue : node.asText(defaultValue);
-	}
-
-	private Boolean TryParseJsonNode(JsonNode node, Boolean defaultValue) {
-		return (node == null) ? defaultValue : node.asBoolean(defaultValue);
 	}
 }
