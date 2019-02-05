@@ -62,6 +62,7 @@ import org.bimserver.models.ifc2x3tc1.impl.IfcSpaceImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcVirtualElementImpl;
 import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.IfcUtils;
+import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.EList;
 
@@ -80,11 +81,13 @@ public class MpgIfcObjectCollector {
 	// reporting units and imported units to help convert measurements
 	private AreaUnit areaUnit = AreaUnit.SQUARED_METER;
 	private VolumeUnit volumeUnit = VolumeUnit.CUBIC_METER;
+	private LengthUnit lengthUnit = LengthUnit.METER;
 	private AreaUnit modelAreaUnit;
 	private VolumeUnit modelVolumeUnit;
 
 	public MpgIfcObjectCollector() {
 		objectStore = new MpgObjectStoreImpl();
+		objectStore.setUnits(volumeUnit, areaUnit, lengthUnit);
 
 		ignoredProducts = Arrays.asList(
 				IfcSite.class, IfcSiteImpl.class, 

@@ -3,9 +3,11 @@ package org.opensourcebim.mpgcalculation;
 import java.util.Set;
 
 import org.opensourcebim.ifccollection.MpgElement;
+import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProfileSet;
+import org.opensourcebim.nmd.scaling.NmdScaler;
 
 /**
  * Do the MPG calculations based on a read in object model. with material data
@@ -26,7 +28,7 @@ public class MpgCalculator {
 	public void reset() {
 		setResults(new MpgCalculationResults());
 	}
-	
+
 	public MpgCalculationResults calculate(double designLife) {
 
 		if (objectStore == null) {
@@ -44,33 +46,58 @@ public class MpgCalculator {
 
 			// for each building material found:
 			for (MpgElement element : objectStore.getElements()) {
-				if (element.getNmdProductCard() == null) {continue;}
-				
+				if (element.getNmdProductCard() == null) {
+					continue;
+				}
+
 				NmdProductCard product = element.getNmdProductCard();
 
 				// Determine replacements required.
 				// this is usually 1 for regular materials and > 1 for cyclic maintenance
-				// For a product card with composed profielsets (not a single totaalproduct) the replacement of the 
+				// For a product card with composed profielsets (not a single totaalproduct) the
+				// replacement of the
 				// first encountered Construction (Cuas code 1) profielset will be used.
 				double replacements = this.calculateReplacements(designLife, product);
-				
+
 				for (NmdProfileSet profielSet : product.getProfileSets()) {
-					
-					// get number of product units based on geometry of ifcproduct and unit of productcard
+
+					// get number of product units based on geometry of ifcproduct and unit of
+					// productcard
 					// TODO: currently there is a very basic method implemented. should be improved
 					double unitsRequired = profielSet.getRequiredNumberOfUnits(element.getMpgObject());
-					
+
 					// category 3 data requires a 30% penalty
 					double categoryMultiplier = profielSet.getCategory() == 3 ? 1.3 : 1.0;
 
+					double scaleFactor = 1.0;
+					// determine scale factor based on scaler. if no scaler is present the
+					// unitsRequired is sufficient
+					if (element.requiresScaling() 
+							&& profielSet.getIsScalable() 
+							&& profielSet.getScaler() != null) {
+						
+						MpgObject mpgObject = element.getMpgObject();
+						NmdScaler scaler = profielSet.getScaler();
+						
+						// TODO: which dimension do we need to scale?
+						Double[] scaleDims = element.getScaleDimenions();
+						
+						// TODO: check to convert with which units?
+						String unit = scaler.getUnit();
+						
+						scaleFactor = profielSet.getScaler().scale(mpgObject.getArea());
+					}
+
 					// calculate total mass taking into account construction losses and replacements
 					// ToDo: how does the current approach tackle issues with plate materials etc.?
-					// ToDo: We do not have desnities of materials in the DB. How to get the masses of products?
-					double lifeTimeUnitsPerSpec = replacements * unitsRequired * categoryMultiplier;
+					// ToDo: We do not have desnities of materials in the DB. How to get the masses
+					// of products?
+					double lifeTimeUnitsPerSpec = replacements * unitsRequired * categoryMultiplier * scaleFactor;
 
 					// example for production
 					profielSet.getDefinedProfiles().forEach(profileName -> {
-						Set<MpgCostFactor> factors = profielSet.getFaseProfiel(profileName).calculateFactors( lifeTimeUnitsPerSpec);
+						Set<MpgCostFactor> factors = profielSet.getFaseProfiel(profileName)
+								.calculateFactors(lifeTimeUnitsPerSpec);
 						results.incrementCostFactors(factors, product.getName(), profielSet.getName());
 					});
 				}
@@ -105,13 +132,10 @@ public class MpgCalculator {
 	private double calculateReplacements(double designLife, NmdProductCard product) {
 		double productLife = -1.0;
 		if (product.getIsTotaalProduct()) {
-			productLife = (double)product.getProfileSets().stream()
-					.findFirst().get().getProductLifeTime();
-		} else
-		{
-			productLife = (double)product.getProfileSets().stream()
-					.filter(p -> p.getCuasCode() == 1)
-					.findFirst().get().getProductLifeTime();
+			productLife = (double) product.getProfileSets().stream().findFirst().get().getProductLifeTime();
+		} else {
+			productLife = (double) product.getProfileSets().stream().filter(p -> p.getCuasCode() == 1).findFirst().get()
+					.getProductLifeTime();
 		}
 
 		return Math.max(1.0, designLife / Math.max(1.0, productLife));

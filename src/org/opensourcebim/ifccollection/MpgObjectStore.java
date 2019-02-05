@@ -6,6 +6,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.bimserver.utils.AreaUnit;
+import org.bimserver.utils.LengthUnit;
+import org.bimserver.utils.VolumeUnit;
 import org.opensourcebim.ifcanalysis.GuidCollection;
 import org.opensourcebim.nmd.NmdProductCard;
 
@@ -31,6 +34,10 @@ public interface MpgObjectStore {
 	Optional<MpgObject> getObjectByGuid(String guid);
 	
 	Stream<MpgObject> getChildren(String parentGuid);
+	
+	LengthUnit getLengthUnit();
+	AreaUnit getAreaUnit();
+	VolumeUnit getVolumeUnit();
 	
 	void addElement(String string);
 

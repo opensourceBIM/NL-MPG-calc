@@ -1,5 +1,6 @@
 package org.opensourcebim.ifccollection;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.opensourcebim.nmd.NmdProductCard;
 
 /**
@@ -82,5 +83,23 @@ public class MpgElement {
 	
 	public void removeProductCard() {
 		// unmap any child elements.
+		throw new NotImplementedException("still needs to be done");
+	}
+
+	/**
+	 * returns a flag inidcating if the element needs to be scaled
+	 * @return see above
+	 */
+	public boolean requiresScaling() {
+		return false;
+	}
+
+	/**
+	 * based on the product sets and the mpg object the element will return the x and y scaling dimensions 
+	 * @return a Double array with the x and y dimensions to be scaled.
+	 */
+	public Double[] getScaleDimenions() {
+		// TODO Auto-generated method stub
+		throw new NotImplementedException("still needs to be done");
 	}
 }

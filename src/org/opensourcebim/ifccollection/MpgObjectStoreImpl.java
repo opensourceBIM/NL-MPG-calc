@@ -11,6 +11,9 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.bimserver.utils.AreaUnit;
+import org.bimserver.utils.LengthUnit;
+import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.BasicEList;
 import org.opensourcebim.ifcanalysis.GuidCollection;
 import org.opensourcebim.nmd.NmdProductCard;
@@ -28,7 +31,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	private HashSet<MpgElement> mpgElements;
 
-	
 	@JsonIgnore
 	private List<MpgObject> mpgObjects;
 
@@ -73,6 +75,10 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@JsonIgnore
 	private List<ImmutablePair<String, MpgObject>> decomposedRelations;
 
+	private VolumeUnit volumeUnit;
+	private AreaUnit areaUnit;
+	private LengthUnit lengthUnit;
+
 	public MpgObjectStoreImpl() {
 		setElements(new HashSet<>());
 		setObjects(new BasicEList<MpgObject>());
@@ -101,6 +107,34 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
+	public VolumeUnit getVolumeUnit() {
+		return this.volumeUnit;
+	}
+	
+	@Override
+	public AreaUnit getAreaUnit( ) {
+		return this.areaUnit;
+	}
+
+	@Override
+	public LengthUnit getLengthUnit() {
+		return this.lengthUnit;
+	}
+	
+	/**
+	 * Set the units used when storing the mpgObjects
+	 * 
+	 * @param volumeUnit volume unit fo ifcProduct
+	 * @param areaUnit   area unit of ifcProducts
+	 * @param lengthUnit length unit of ifcProducts
+	 */
+	public void setUnits(VolumeUnit volumeUnit, AreaUnit areaUnit, LengthUnit lengthUnit) {
+		this.volumeUnit = volumeUnit;
+		this.areaUnit = areaUnit;
+		this.lengthUnit = lengthUnit;
+	}
+	
+	@Override
 	public void addElement(String name) {
 		if (name != null && !name.isEmpty()) {
 			mpgElements.add(new MpgElement(name));
@@ -119,15 +153,15 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	public void setProductCardForElement(String name, NmdProductCard specs) {
 		MpgElement el = getElementByName(name);
-		if( el != null) {
+		if (el != null) {
 			el.setProductCard(specs);
 		}
 	}
-	
+
 	@Override
 	public void setObjectForElement(String name, MpgObject mpgObject) {
 		MpgElement el = getElementByName(name);
-		if( el != null) {
+		if (el != null) {
 			el.setMpgObject(mpgObject);
 		}
 	}
@@ -188,7 +222,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public MpgElement getElementByName(String name) {
-		Optional<MpgElement> element = getElements().stream().filter(e-> e.getIfcName().equalsIgnoreCase(name)).findFirst();
+		Optional<MpgElement> element = getElements().stream().filter(e -> e.getIfcName().equalsIgnoreCase(name))
+				.findFirst();
 		return element.isPresent() ? element.get() : null;
 	}
 
@@ -258,9 +293,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	public boolean isElementDataComplete() {
 
-		return getElements().stream().allMatch(element -> 
-			element.getNmdProductCard() == null ? false : element.getNmdProductCard().isFullyCovered()
-		);
+		return getElements().stream().allMatch(
+				element -> element.getNmdProductCard() == null ? false : element.getNmdProductCard().isFullyCovered());
 	}
 
 	@Override
@@ -356,10 +390,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public boolean isIfcDataComplete() {
-		return getGuidsWithoutMaterial().getSize() == 0 
-				&& getGuidsWithoutVolume().getSize() == 0
-				&& getGuidsWithRedundantMaterials().getSize() == 0 
-				&& getGuidsWithUndefinedLayerMats().getSize() == 0;
+		return getGuidsWithoutMaterial().getSize() == 0 && getGuidsWithoutVolume().getSize() == 0
+				&& getGuidsWithRedundantMaterials().getSize() == 0 && getGuidsWithUndefinedLayerMats().getSize() == 0;
 	}
 
 	@Override
@@ -403,11 +435,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public Stream<String> getAllMaterialNames() {
-		return this.getElements().stream()
-				.flatMap(e -> e.getMpgObject().getListedMaterials().stream())
+		return this.getElements().stream().flatMap(e -> e.getMpgObject().getListedMaterials().stream())
 				.map(s -> s.getName()).filter(n -> {
 					return (n != null && !n.isEmpty());
-				})
-				.distinct();
+				}).distinct();
 	}
 }

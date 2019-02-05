@@ -103,4 +103,8 @@ public abstract class NmdBaseScaler implements NmdScaler {
 	 * @return y value from implemented method.
 	 */
 	protected abstract Double calculate(Double x);
+	
+	public String getUnit() {
+		return this.unit;
+	}
 }
