@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.opensourcebim.ifccollection.MpgObject;
+import org.opensourcebim.nmd.scaling.NmdScaler;
 
 public class NmdProfileSetImpl implements NmdProfileSet {
 	private String name;
@@ -21,6 +22,8 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	private Boolean isFullProfile;
 	private Integer parentProfileId;
 	private int cuasCode;
+	private Boolean isScalable;
+	private NmdScaler scaler;
 
 	public NmdProfileSetImpl() {		
 		this.profiles = new HashMap<String, NmdFaseProfiel>();
@@ -136,5 +139,18 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 		
 		return Double.NaN;
 		
+	}
+
+	@Override
+	public Boolean getIsScalable() {
+		return this.isScalable;
+	}
+	
+	public void setIsScalable(Boolean scaleFlag) {
+		this.isScalable = scaleFlag;
+	}
+
+	public void setScaler(NmdScaler scaler) {
+		this.scaler = scaler;
 	}
 }

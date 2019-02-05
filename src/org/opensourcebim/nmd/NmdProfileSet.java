@@ -40,4 +40,6 @@ public interface NmdProfileSet {
 	
 	Double getRequiredNumberOfUnits(MpgObject mpgObject);
 
+	Boolean getIsScalable();
+
 }

@@ -1,8 +1,6 @@
 package org.opensourcebim.nmd;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -12,23 +10,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.ParseException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.bimserver.shared.reflector.KeyValuePair;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
+import org.opensourcebim.nmd.scaling.NmdScaler;
+import org.opensourcebim.nmd.scaling.NmdScalerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Implementation of the NmdDataService to retrieve data from the NMD see :
@@ -439,11 +432,18 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 
 				String scalerTypeName = this.getReferenceResources().getScalingFormula().get(scalerType);
 				String scalerUnitName = this.getReferenceResources().getUnitMapping().get(scalerUnit);
-				NmdScaler scaler = scalerFactor.create(scalerTypeName, scalerUnitName,
-						new Double[] { scalerCoeffA, scalerCoeffB, scalerCoeffC },
-						new Double[] { scalerMinDim1, scalerMinDim2, scalerMaxDim1, scalerMaxDim2 });
+				NmdScaler scaler;
+				try {
+					scaler = scalerFactor.create(scalerTypeName, scalerUnitName,
+							new Double[] { scalerCoeffA, scalerCoeffB, scalerCoeffC },
+							new Double[] { scalerMinDim1, scalerMaxDim1, scalerMinDim2 , scalerMaxDim2 },
+							new Double[] { scalerTestVal1, scalerTestVal2});
+					set.setScaler(scaler);
+				} catch (InvalidInputException e) {
+					System.out.println("encountered invalid input combinations in scaler creation");
+				}
 
-				set.setScaler(scaler);
+
 
 			}
 		}
