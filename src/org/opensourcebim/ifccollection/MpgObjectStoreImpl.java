@@ -156,7 +156,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public Set<String> getDistinctProductTypes() {
+	public Set<String> getDistinctIfcProductTypes() {
 		return mpgObjects.stream().map(group -> group.getObjectType()).distinct().collect(Collectors.toSet());
 	}
 
@@ -369,7 +369,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		System.out.println("object details per product type:");
 
 		List<MpgObject> products;
-		for (String productType : getDistinctProductTypes()) {
+		for (String productType : getDistinctIfcProductTypes()) {
 			products = getObjectsByProductType(productType);
 			System.out.println("#product type : " + productType);
 			System.out.println(" - number found : " + products.size());
