@@ -1,6 +1,7 @@
 package org.opensourcebim.ifccollection;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
 
 /**
@@ -15,6 +16,8 @@ public class MpgElement {
 	private String ifcName;
 	private NmdProductCard nmdProductCard;
 	private MpgObject mpgObject;
+
+	private NmdMapping mappingMethod;
 	
 	public MpgElement(String name)
 	{
@@ -59,6 +62,14 @@ public class MpgElement {
 	 */
 	public void setBimBotIdentifier(String bimBotIdentifier) {
 		BimBotIdentifier = bimBotIdentifier;
+	}
+	
+	public void setMappingMethod(NmdMapping mapping) {
+		this.mappingMethod = mapping;
+	}
+	
+	public NmdMapping getMappingMethod() {
+		return mappingMethod;
 	}
 	
 	public String print() {

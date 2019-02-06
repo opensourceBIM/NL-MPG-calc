@@ -43,14 +43,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			
 			// get data per material - run through services in order
 			for (MpgElement element : ifcResults.getElements()) {
-				NmdProductCard nmdMaterial = tryGetMaterialProperties(element);
-				
-				if (nmdMaterial == null)
-				{
-					
-				} else {
-					element.setProductCard(nmdMaterial);
-				}
+				tryGetMaterialProperties(element);
 			}
 
 		} catch (ArrayIndexOutOfBoundsException ex) {
@@ -66,14 +59,14 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		return nmdResults;
 	}
 
-	private NmdProductCard tryGetMaterialProperties(MpgElement material) {
+	private void tryGetMaterialProperties(MpgElement mpgElement) {
 		NmdProductCard retrievedMaterial = null;
 		HashMap<String, String[]> map = getProductToNmdMap();
 		String[] emptyMap = null;
 		for (NmdDataService nmdDataService : services) {
 			
 			// resolve which product card to retrieve based on the input MpgElement
-			String ifcProductType = material.getMpgObject().getObjectType();
+			String ifcProductType = mpgElement.getMpgObject().getObjectType();
 			String[] foundMap = map.getOrDefault(ifcProductType, emptyMap);
 			if (foundMap == null) { break; }
 			
@@ -87,11 +80,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			retrievedMaterial = dbProduct.get();
 			nmdDataService.getTotaalProfielSetForProductCard(retrievedMaterial);
 			if (retrievedMaterial.getProfileSets().size() > 0) {
+				mpgElement.setProductCard(retrievedMaterial);
+				mpgElement.setMappingMethod(NmdMapping.Direct);
 				break;
 			}
 		}
-
-		return retrievedMaterial;
 	}
 
 	@Override
