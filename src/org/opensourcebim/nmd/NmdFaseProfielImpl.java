@@ -13,7 +13,6 @@ public class NmdFaseProfielImpl implements NmdFaseProfiel {
 	private String description;
 	private HashMap<String, Double> profielCoefficienten;
 	private String fase;
-	private NmdUnit unit;
 	private NmdReferenceResources refData;
 	private Integer category;
 
@@ -49,11 +48,6 @@ public class NmdFaseProfielImpl implements NmdFaseProfiel {
 	@Override
 	public String getFase() {
 		return this.fase;
-	}
-
-	@Override
-	public NmdUnit getUnit() {
-		return this.unit;
 	}
 
 	@Override

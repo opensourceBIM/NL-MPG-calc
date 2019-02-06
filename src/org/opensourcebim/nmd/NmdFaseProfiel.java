@@ -18,8 +18,6 @@ public interface NmdFaseProfiel {
 	String getDescription();
 	
 	String getFase();
-
-	NmdUnit getUnit();
 	
 	Set<MpgCostFactor> calculateFactors(double cost);
 

@@ -32,6 +32,6 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 
 	@Override
 	public String getOutputSchema() {
-		return "MPG_OBJECT_JSON_0_0_2";
+		return "MPG_OBJECT_JSON_0_0_3";
 	}
 }

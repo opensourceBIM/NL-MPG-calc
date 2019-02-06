@@ -13,21 +13,32 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public interface MpgObjectStore {
 
+	void reset();
+	
 	HashSet<MpgElement> getElements();
+	boolean isElementDataComplete();
 	
 	@JsonIgnore
 	List<MpgObject> getObjects();
 	List<MpgSpace> getSpaces();
 	
-	void reset();
+	void setProductCardForElement(String string, NmdProductCard specs);
+	void setObjectForElement(String name, MpgObject mpgObject);
 	
-	Set<String> getDistinctProductTypes();
+	Stream<String> getAllMaterialNames();
+	
+	Set<String> getDistinctIfcProductTypes();
 
 	void addObject(MpgObject mpgObject);
+	
 	List<MpgObject> getObjectsByProductType(String productType);
+	
 	List<MpgObject> getObjectsByProductName(String productName);
+	
 	List<MpgSpace> getObjectsByMaterialName(String materialName);
+	
 	List<MpgObject> getObjectsByGuids(HashSet<String> guids);
+	
 	Optional<MpgObject> getObjectByGuid(String guid);
 	
 	Stream<MpgObject> getChildren(String parentGuid);
@@ -47,20 +58,17 @@ public interface MpgObjectStore {
 	void validateIfcDataCollection();
 	boolean isIfcDataComplete();
 	
-	@JsonIgnore
 	GuidCollection getGuidsWithoutMaterial();
 	GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials();
+	
 	@JsonIgnore
 	GuidCollection getGuidsWithoutVolume();
+	@JsonIgnore
 	GuidCollection getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes();
+	@JsonIgnore
 	GuidCollection getGuidsWithRedundantMaterials();
+	@JsonIgnore
 	GuidCollection getGuidsWithUndefinedLayerMats();
 	
-	void setProductCardForElement(String string, NmdProductCard specs);
-	void setObjectForElement(String name, MpgObject mpgObject);
-	
-	boolean isElementDataComplete();
-	Stream<String> getAllMaterialNames();
-
 	void SummaryReport();
 }
