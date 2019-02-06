@@ -272,6 +272,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 
 	@Override
 	public Boolean getTotaalProfielSetForProductCard(NmdProductCard product) {
+		product.getProfileSets().clear();
 		List<NmdProfileSet> cadidateSets = getAllProfielSetsForProductCard(product);
 		if (cadidateSets == null) {return false;}
 

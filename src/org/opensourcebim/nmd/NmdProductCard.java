@@ -12,7 +12,8 @@ import java.util.Set;
  * @author vijj
  *
  */
-public interface NmdProductCard {
+public interface NmdProductCard{
+		
 	String getName();
 
 	String getDescription();

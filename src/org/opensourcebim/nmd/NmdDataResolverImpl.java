@@ -82,7 +82,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				.findFirst();
 			if (!dbProduct.isPresent()) { break; }
 			
-			retrievedMaterial = dbProduct.get();
+			// create a copy
+			retrievedMaterial = new NmdProductCardImpl(dbProduct.get());
 			nmdDataService.getTotaalProfielSetForProductCard(retrievedMaterial);
 			if (retrievedMaterial.getProfileSets().size() > 0) {
 				mpgElement.setProductCard(retrievedMaterial);

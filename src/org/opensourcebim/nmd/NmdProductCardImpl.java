@@ -23,6 +23,26 @@ public class NmdProductCardImpl implements NmdProductCard {
 		this.isTotaalProduct = false;
 	}
 	
+	/**
+	 * Copy constructor
+	 * @param input constructor
+	 */
+	public NmdProductCardImpl(NmdProductCard p) {
+		
+		if (p == null) {p = new NmdProductCardImpl();}
+		
+		this.specifications = new HashSet<NmdProfileSet>();
+		this.specifications.addAll(p.getProfileSets());
+		this.setRAWCode(p.getRAWCode());
+		this.setNLsfbCode(p.getNLsfbCode());
+		this.setElementName(p.getElementName());
+		this.setDataCategory(p.getDataCategory());
+		this.setDescription(p.getDescription());
+		this.setIsTotaalProduct(p.getIsTotaalProduct());
+		this.setLifeTime(p.getLifeTime());
+		this.setName(p.getName());
+	}
+	
 	@Override
 	public String getName() {
 		return this.name;
