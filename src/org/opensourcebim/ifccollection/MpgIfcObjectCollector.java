@@ -1,5 +1,6 @@
 package org.opensourcebim.ifccollection;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -66,6 +67,9 @@ import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.EList;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Class to retrieve the material properties from the IfcModel
  * 
@@ -84,7 +88,10 @@ public class MpgIfcObjectCollector {
 	private LengthUnit lengthUnit = LengthUnit.METER;
 	private AreaUnit modelAreaUnit;
 	private VolumeUnit modelVolumeUnit;
-
+	private LengthUnit modelLengthUnit;
+	private ObjectMapper mapper = new ObjectMapper();
+	
+	
 	public MpgIfcObjectCollector() {
 		objectStore = new MpgObjectStoreImpl();
 		objectStore.setUnits(volumeUnit, areaUnit, lengthUnit);
@@ -116,6 +123,7 @@ public class MpgIfcObjectCollector {
 		// get project wide parameters
 		modelVolumeUnit = IfcUtils.getVolumeUnit(ifcModel);
 		modelAreaUnit = IfcUtils.getAreaUnit(ifcModel);
+		modelLengthUnit = IfcUtils.getLengthUnit(ifcModel);
 
 		// loop through IfcSpaces
 		for (IfcSpace space : ifcModel.getAllWithSubTypes(IfcSpace.class)) {
@@ -249,10 +257,48 @@ public class MpgIfcObjectCollector {
 		GeometryInfo geometry = prod.getGeometry();
 		double area = 0.0;
 		double volume = 0.0;
-
+		
 		if (geometry != null) {			
 			area = this.getAreaUnit().convert(geometry.getArea(), modelAreaUnit);
 			volume = this.getVolumeUnit().convert(geometry.getVolume(), modelVolumeUnit);
+			
+			try {
+				JsonNode geomData = mapper.readTree(geometry.getAdditionalData());
+				if (geomData != null) {
+					// determine orientation of the reference frame by checking areas with the floor area.
+					double along_x_area = geomData.get("SURFACE_AREA_ALONG_X").asDouble();
+					double along_y_area = geomData.get("SURFACE_AREA_ALONG_Y").asDouble();
+					double along_z_area = geomData.get("SURFACE_AREA_ALONG_Z").asDouble();
+					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
+					double frontal_area;
+					double floor_area;
+					
+					double max_dim_x = Math.sqrt(along_z_area * along_y_area / along_x_area);
+					double max_dim_y = Math.sqrt(along_x_area * along_z_area / along_y_area);
+					double max_dim_z = Math.sqrt(along_y_area * along_x_area / along_z_area);
+					
+					double angle_of_face_area = 0.0;
+					// check the oreintation of the 
+					if(largest_face_area == along_z_area) {
+						// this should be floors, slabs etc.
+						frontal_area = along_z_area;
+						floor_area = along_z_area;
+					} else if (largest_face_area == along_y_area) {
+						// this case should be vertical walls, windows, doors etc.
+						
+					} else if (largest_face_area == along_x_area) {
+						// these cases have not been covered yet
+					} else {
+						// these are slanted areas such as roofs etc.
+						angle_of_face_area = Math.atan(max_dim_z / max_dim_y);
+					}
+					
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		} 
 		return new ImmutablePair<Double, Double>(area, volume);
 	}
