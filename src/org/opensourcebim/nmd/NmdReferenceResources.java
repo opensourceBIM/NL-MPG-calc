@@ -12,6 +12,7 @@ public class NmdReferenceResources {
 	private HashMap<Integer, String> faseMapping;
 	private HashMap<Integer, String> unitMapping;
 	private HashMap<Integer, NmdMileuCategorie> milieuCategorieMapping;
+	private HashMap<Integer, String> cuasCategorieMapping;
 	
 	public NmdReferenceResources() {
 		setFaseMapping(new HashMap<Integer, String>());
@@ -42,5 +43,12 @@ public class NmdReferenceResources {
 	public void setMilieuCategorieMapping(HashMap<Integer, NmdMileuCategorie> milieuWaardeMapping) {
 		this.milieuCategorieMapping = milieuWaardeMapping;
 	}
-	
+
+	public HashMap<Integer, String> getCuasCategorieMapping() {
+		return cuasCategorieMapping;
+	}
+
+	public void setCuasCategorieMapping(HashMap<Integer, String> cuasCategorieMapping) {
+		this.cuasCategorieMapping = cuasCategorieMapping;
+	}	
 }

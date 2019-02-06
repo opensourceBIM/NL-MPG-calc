@@ -3,7 +3,6 @@ package org.opensourcebim.nmd;
 import java.util.HashMap;
 import java.util.Set;
 
-import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.opensourcebim.ifccollection.MpgObject;
 
 public class NmdProfileSetImpl implements NmdProfileSet {
@@ -13,8 +12,6 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 
 	private int productLifeTime;
 	private int category;
-
-	private Boolean isMaintenanceSpec;
 	
 	/**
 	 * NmdBasisProfiles available for this material specification.
@@ -23,11 +20,10 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	private HashMap<String, NmdFaseProfiel> profiles;
 	private Boolean isFullProfile;
 	private Integer parentProfileId;
+	private int cuasCode;
 
 	public NmdProfileSetImpl() {		
 		this.profiles = new HashMap<String, NmdFaseProfiel>();
-	
-		this.setIsMaintenanceSpec(false);
 	}
 	
 	@Override
@@ -74,29 +70,28 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	public void setProductLifeTime(Integer lifetime) {
 		this.productLifeTime = lifetime;
 	}
+	
+	@Override
+	public Integer getCuasCode() {
+		return this.cuasCode;
+	}
+	
+	public void setCuasCode(int cuasCode) {
+		this.cuasCode = cuasCode;
+	}
 
 	@Override
 	public NmdFaseProfiel getFaseProfiel(String fase) {
 		return this.profiles.getOrDefault(fase, null);
 	}
 	
-	public void addBasisProfiel(String fase, NmdFaseProfiel profile) {
+	public void addFaseProfiel(String fase, NmdFaseProfiel profile) {
 		this.profiles.put(fase, profile);
 	}
 
 	@Override
 	public Set<String> getDefinedProfiles() {
 		return profiles.keySet();
-	}
-
-	@Override
-	public Boolean getIsMaintenanceSpec() {
-		return isMaintenanceSpec;
-	}
-
-	@Override
-	public void setIsMaintenanceSpec(boolean flag) {
-		this.isMaintenanceSpec = flag;
 	}
 
 	@Override
@@ -131,6 +126,9 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 		}
 		if (productUnit.equals("m3")) {
 			return object.getVolume();
+		}
+		if (productUnit.equals("p")) {
+			return 1.0; // product per piece. always return 1 per profielset.
 		}
 		if (productUnit.equals("kg")) {
 			return Double.NaN;

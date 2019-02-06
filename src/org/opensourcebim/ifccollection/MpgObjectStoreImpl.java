@@ -257,7 +257,10 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 */
 	@Override
 	public boolean isElementDataComplete() {
-		return getElements().stream().allMatch(mat -> mat.getNmdProductCard() != null);
+
+		return getElements().stream().allMatch(element -> 
+			element.getNmdProductCard() == null ? false : element.getNmdProductCard().isFullyCovered()
+		);
 	}
 
 	@Override

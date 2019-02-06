@@ -47,7 +47,7 @@ public class NmdDataBaseSession implements NmdDataService {
 	private boolean isConnected = false;
 	private String token;
 	private NmdReferenceResources resources;
-	
+
 	private List<NmdProductCard> data;
 
 	public NmdDataBaseSession(NmdDatabaseConfig config) {
@@ -76,7 +76,7 @@ public class NmdDataBaseSession implements NmdDataService {
 		// TODO Auto-generated method stub
 		return this.isConnected;
 	}
-	
+
 	@Override
 	public List<NmdProductCard> getData() {
 		return data;
@@ -113,10 +113,10 @@ public class NmdDataBaseSession implements NmdDataService {
 
 		loadResources();
 	}
-	
+
 	@Override
 	public void preLoadData() {
-		this.data =this.getAllProductSets();
+		this.data = this.getAllProductSets();
 	}
 
 	@Override
@@ -183,8 +183,21 @@ public class NmdDataBaseSession implements NmdDataService {
 
 			});
 			resources.setUnitMapping(eenheden);
+			
+			// cuasCodes
+			HttpResponse cuasResponse = this
+					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/CUAScategorien", params);
+			JsonNode cuas_node = this.responseToJson(cuasResponse).get("results");
+			HashMap<Integer, String> cuasCategorien = new HashMap<Integer, String>();
+			cuas_node.forEach(cuas_code -> {
 
-			// rekenregels
+				cuasCategorien.putIfAbsent(TryParseJsonNode(cuas_code.get("ID"), -1),
+						TryParseJsonNode(cuas_code.get("CUAS_code"), ""));
+
+			});
+			resources.setCuasCategorieMapping(cuasCategorien);
+
+			// rekenregels - use : NMD_30_API_v0.2/api/NMD30_Web_API/SchalingsFormules
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -206,7 +219,7 @@ public class NmdDataBaseSession implements NmdDataService {
 
 			// convert reponseNode to NmdProductCard info.
 			List<NmdProductCard> results = new ArrayList<NmdProductCard>();
-			resp_node.get("results").forEach(f -> results.add(this.getIdsFromJson(f)));
+			resp_node.get("results").forEach(f -> results.add(this.getProductCardIdsFromJson(f)));
 
 			return results;
 
@@ -232,7 +245,7 @@ public class NmdDataBaseSession implements NmdDataService {
 			if (resp_node != null) {
 				List<NmdProductCard> childCards = new ArrayList<NmdProductCard>();
 				resp_node.get("results").forEach(res -> {
-					childCards.add(getIdsFromJson(res));
+					childCards.add(getProductCardIdsFromJson(res));
 				});
 
 				return childCards;
@@ -244,7 +257,7 @@ public class NmdDataBaseSession implements NmdDataService {
 
 		return null;
 	}
-	
+
 	@Override
 	public Boolean getProfielSetsByProductCard(NmdProductCard product) {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
@@ -257,26 +270,29 @@ public class NmdDataBaseSession implements NmdDataService {
 
 			// do something with the entity to get the token
 			JsonNode resp_node = this.responseToJson(response);
-			if (resp_node == null) {return false;}
+			if (resp_node == null) {
+				return false;
+			}
 
 			JsonNode profielsets = resp_node.get("results");
-			
+
 			// determine candidate sets that could be matched to this product
 			List<NmdProfileSet> candidateSets = new ArrayList<NmdProfileSet>();
 			profielsets.forEach(set -> {
 				// only get items that are relevant for us.
-				if(TryParseJsonNode(set.get("ProfielSetGekoppeld"), false)) {
+				if (TryParseJsonNode(set.get("ProfielSetGekoppeld"), false)) {
 					NmdProfileSetImpl profielSet = new NmdProfileSetImpl();
 					this.getProfielSetDataFromJson(set, profielSet);
 					candidateSets.add(profielSet);
 				}
 			});
-			
-			// ToDo: recursively determine full set of profiles. For now just take the first one that has a profile and is 'dekkend'.
+
+			// ToDo: recursively determine full set of profiles. For now just take the first
+			// one that has a profile and is 'dekkend'.
 			// See issue BOUW-42
 			Optional<NmdProfileSet> chosenSet = candidateSets.stream().findFirst();
 			if (chosenSet.isPresent()) {
-				NmdProfileSet fullSet = this.getAdditionalProfileDataForSet((NmdProfileSetImpl)chosenSet.get());
+				NmdProfileSet fullSet = this.getAdditionalProfileDataForSet((NmdProfileSetImpl) chosenSet.get());
 				product.addProfileSet(fullSet);
 				return true;
 			}
@@ -284,7 +300,7 @@ public class NmdDataBaseSession implements NmdDataService {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return false;
 	}
 
@@ -292,12 +308,13 @@ public class NmdDataBaseSession implements NmdDataService {
 	 * Add missing data to the NmdProfileSet
 	 */
 	private NmdProfileSet getAdditionalProfileDataForSet(NmdProfileSetImpl chosenSet) {
-		
-		HashMap<Integer, NmdProfileSet> setData = getProfileSetsByIds(Arrays.asList(chosenSet.getProfielId().toString()));
-		
+
+		HashMap<Integer, NmdProfileSet> setData = getProfileSetsByIds(
+				Arrays.asList(chosenSet.getProfielId().toString()));
+
 		NmdProfileSet data = setData.entrySet().stream().findFirst().get().getValue();
 		data.getDefinedProfiles().forEach(fase -> {
-			chosenSet.addBasisProfiel(fase, data.getFaseProfiel(fase));
+			chosenSet.addFaseProfiel(fase, data.getFaseProfiel(fase));
 		});
 
 		return chosenSet;
@@ -324,22 +341,18 @@ public class NmdDataBaseSession implements NmdDataService {
 
 				NmdProfileSetImpl set = new NmdProfileSetImpl();
 				Integer profielSetId = TryParseJsonNode(profielSetNode.get("ProfielSetID"), -1);
-				
+
 				// laad set specifieke data
 				this.getProfielSetDataFromJson(profielSetNode, set);
-					
+
 				// laad faseprofiel specifieke data
 				JsonNode profielen = profielSetNode.get("Profiel");
 				profielen.forEach(p -> {
 					Integer category = TryParseJsonNode(p.get("CategorieID"), -1);
 					Integer fase = TryParseJsonNode(p.get("FaseID"), -1);
 					String faseName = this.getResources().getFaseMapping().get(fase);
-					
-					NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(
-							faseName,
-							this.getResources());
 
-					profiel.setCategory(category);
+					NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(faseName, this.getResources());
 
 					p.get("ProfielMilieuEffecten").forEach(val -> {
 						Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
@@ -349,7 +362,7 @@ public class NmdDataBaseSession implements NmdDataService {
 								this.getResources().getMilieuCategorieMapping().get(catId).getDescription(), catVal);
 					});
 
-					set.addBasisProfiel(faseName, profiel);
+					set.addFaseProfiel(faseName, profiel);
 
 				});
 				profileSets.put(profielSetId, set);
@@ -364,12 +377,33 @@ public class NmdDataBaseSession implements NmdDataService {
 	}
 
 	/*
-	 * Try to get a set of profiel set data from the json node to populate the NmdProfielSetobject
+	 * Get the essential product card info from an element JsonNode. With this info
+	 * profielSet info can be retrieved
+	 */
+	private NmdProductCard getProductCardIdsFromJson(JsonNode cardInfo) {
+		NmdProductCardImpl newCard = new NmdProductCardImpl();
+		newCard.setRAWCode(cardInfo.get("ElementID").asText());
+		newCard.setNLsfbCode(cardInfo.get("ElementCode").asText());
+		newCard.setElementName(cardInfo.get("ElementNaam").asText());
+		
+		newCard.setIsTotaalProduct(TryParseJsonNode(cardInfo.get("OuderID"), -1) == 0);
+		
+
+		if (cardInfo.has("FunctioneleBeschrijving")) {
+			newCard.setDescription(cardInfo.get("FunctioneleBeschrijving").asText());
+		}
+
+		return newCard;
+	}
+
+	/*
+	 * Try to get a set of profiel set data from the json node to populate the
+	 * NmdProfielSetobject
 	 */
 	private void getProfielSetDataFromJson(JsonNode profielSetNode, NmdProfileSetImpl set) {
 		set.setProductLifeTime(TryParseJsonNode(profielSetNode.get("Levensduur"), -1));
 		set.setUnit(this.getReferenceResources().getUnitMapping()
-				.get(TryParseJsonNode(profielSetNode.get("FunctioneleEenheidID"), -1)));		
+				.get(TryParseJsonNode(profielSetNode.get("FunctioneleEenheidID"), -1)));
 		set.setProfielId(TryParseJsonNode(profielSetNode.get("ProductID"), -1));
 		set.setParentProfielId(TryParseJsonNode(profielSetNode.get("OuderProductID"), -1));
 		set.setIsFullProfile(TryParseJsonNode(profielSetNode.get("IsElementDekkend"), false));
@@ -415,22 +449,6 @@ public class NmdDataBaseSession implements NmdDataService {
 		return responseNode;
 	}
 
-	private NmdProductCard getIdsFromJson(JsonNode cardInfo) {
-		NmdProductCardImpl newCard = new NmdProductCardImpl();
-		newCard.setRAWCode(cardInfo.get("ElementID").asText());
-		newCard.setNLsfbCode(cardInfo.get("ElementCode").asText());
-		newCard.setElementName(cardInfo.get("ElementNaam").asText());
-
-		if (cardInfo.has("FunctioneleBeschrijving")) {
-			newCard.setDescription(cardInfo.get("FunctioneleBeschrijving").asText());
-		}
-
-		if (cardInfo.has("FunctioneleEenheidID")) {
-			int unitid = cardInfo.get("FunctioneleEenheidID").asInt();
-		}
-		return newCard;
-	}
-
 	private Integer TryParseJsonNode(JsonNode node, Integer defaultValue) {
 		return (node == null) ? defaultValue : node.asInt(defaultValue);
 	}
@@ -442,7 +460,7 @@ public class NmdDataBaseSession implements NmdDataService {
 	private String TryParseJsonNode(JsonNode node, String defaultValue) {
 		return (node == null) ? defaultValue : node.asText(defaultValue);
 	}
-	
+
 	private Boolean TryParseJsonNode(JsonNode node, Boolean defaultValue) {
 		return (node == null) ? defaultValue : node.asBoolean(defaultValue);
 	}
