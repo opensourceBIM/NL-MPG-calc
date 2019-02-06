@@ -4,6 +4,8 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Storage container to map mpgOject to the Nmdproducts
  * @author Jasper Vijverberg
@@ -109,6 +111,7 @@ public class MpgElement {
 	 * based on the product sets and the mpg object the element will return the x and y scaling dimensions 
 	 * @return a Double array with the x and y dimensions to be scaled.
 	 */
+	@JsonIgnore
 	public Double[] getScaleDimenions() {
 		// TODO Auto-generated method stub
 		throw new NotImplementedException("still needs to be done");

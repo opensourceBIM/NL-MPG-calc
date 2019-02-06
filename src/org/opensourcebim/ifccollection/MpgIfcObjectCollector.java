@@ -152,11 +152,6 @@ public class MpgIfcObjectCollector {
 
 			// ignore any elements that are irrelevant for the mpg calculations
 			if (!this.ignoredProducts.contains(element.getClass())) {
-
-				// create the mpg element
-				String newMpgElementId = element.getName() + "-" + element.getGlobalId();
-				this.objectStore.addElement(newMpgElementId);
-				MpgElement newMpgElement = this.objectStore.getElementByName(newMpgElementId);
 				
 				if (StringUtils.isBlank(element.getGlobalId())) {
 					continue;
@@ -226,6 +221,11 @@ public class MpgIfcObjectCollector {
 				this.getMaterialsFromIfcProduct(element, mpgObject);
 
 				// all properties are set. add it to the store.
+				// create the mpg element
+				String newMpgElementId = element.getName() + "-" + element.getGlobalId();
+				this.objectStore.addElement(newMpgElementId);
+				MpgElement newMpgElement = this.objectStore.getElementByName(newMpgElementId);
+				
 				objectStore.getObjects().add(mpgObject);
 				newMpgElement.setMpgObject(mpgObject);
 			}

@@ -66,6 +66,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		for (NmdDataService nmdDataService : services) {
 			
 			// resolve which product card to retrieve based on the input MpgElement
+			if (mpgElement.getMpgObject() == null)
+			{
+				return;
+			}
+			
 			String ifcProductType = mpgElement.getMpgObject().getObjectType();
 			String[] foundMap = map.getOrDefault(ifcProductType, emptyMap);
 			if (foundMap == null) { break; }
