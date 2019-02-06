@@ -86,7 +86,7 @@ public class NmdInterfaceTests {
 	}
 	
 	@Test
-	public void testGetChildProductsWillReturnNullOnNonExistenProductCode() {
+	public void testGetChildProductsWillReturnNullOnNonExistentProductCode() {
 		connect();
 		
 		NmdProductCardImpl card = new NmdProductCardImpl();
@@ -141,5 +141,13 @@ public class NmdInterfaceTests {
 		connect();
 		NmdReferenceResources mappings = db.getReferenceResources();
 		assertTrue(0 < mappings.getUnitMapping().size()); 
+	}
+	
+	@Test
+	public void getReferenceResourcesReturnsCuasMapping() {
+		connect();
+		NmdReferenceResources mappings = db.getReferenceResources();
+		// only 5 categories should be in there CUAST (T = Totaal)
+		assertTrue(5 == mappings.getCuasCategorieMapping().size()); 
 	}
 }

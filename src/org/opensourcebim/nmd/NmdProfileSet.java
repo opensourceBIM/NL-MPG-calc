@@ -30,16 +30,14 @@ public interface NmdProfileSet {
 	
 	Integer getProductLifeTime();
 	
+	Integer getCuasCode();
+	
 	NmdFaseProfiel getFaseProfiel(String fase);
 
 	Set<String> getDefinedProfiles();
 
-	Boolean getIsMaintenanceSpec();
-
-	void setIsMaintenanceSpec(boolean b);
-
 	Integer getCategory();
 	
 	Double getRequiredNumberOfUnits(MpgObject mpgObject);
-	
+
 }
