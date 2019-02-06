@@ -1,5 +1,6 @@
 package org.opensourcebim.nmd;
 
+import java.io.FileNotFoundException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -38,28 +39,6 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 
 	@Override
 	public Boolean getIsConnected() {
-		return true;
-	}
-
-	@Override
-	public List<NmdProductCard> getAllProductSets() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	@Override
-	public List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	@Override
-	public Boolean getProfielSetsByProductCard(NmdProductCard product) {
-		return false;
-	}
-	
-	@Override
-	public HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -71,9 +50,32 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	}
 
 	@Override
-	public List<NmdProductCard> getData() {
+	public List<NmdProductCard> getAllProductSets() {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
+	@Override
+	public List<NmdProductCard> getChildProductsForProductCard(NmdProductCard product) throws FileNotFoundException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
+	@Override
+	public Boolean getTotaalProfielSetForProductCard(NmdProductCard product) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<NmdProductCard> getData() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

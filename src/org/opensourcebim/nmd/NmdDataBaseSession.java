@@ -106,6 +106,11 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	@Override
 	public void preLoadData() {
 		this.data = this.getAllProductSets();
+		
+		List<NmdProductCard> children = new ArrayList<NmdProductCard>();
+		this.data.forEach(pc -> children.addAll(this.getChildProductsForProductCard(pc)));
+		
+		this.data.addAll(children);
 	}
 
 	@Override
@@ -245,7 +250,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	}
 
 	@Override
-	public List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) {
+	public List<NmdProductCard> getChildProductsForProductCard(NmdProductCard product) {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 		params.add(new KeyValuePair("ElementID", product.getRAWCode()));
@@ -266,49 +271,51 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	}
 
 	@Override
-	public Boolean getProfielSetsByProductCard(NmdProductCard product) {
-		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
-		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
-		params.add(new KeyValuePair("ElementID", product.getRAWCode()));
+	public Boolean getTotaalProfielSetForProductCard(NmdProductCard product) {
+		List<NmdProfileSet> cadidateSets = getAllProfielSetsForProductCard(product);
+		if (cadidateSets == null) {return false;}
 
-		try {
-			HttpResponse response = this
-					.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/ProductenBijElement", params);
-
-			// do something with the entity to get the token
-			JsonNode resp_node = this.responseToJson(response);
-			if (resp_node == null) {
-				return false;
-			}
-
-			JsonNode profielsets = resp_node.get("results");
-
-			// determine candidate sets that could be matched to this product
-			List<NmdProfileSet> candidateSets = new ArrayList<NmdProfileSet>();
-			profielsets.forEach(set -> {
-				// only get items that are relevant for us.
-				if (TryParseJsonNode(set.get("ProfielSetGekoppeld"), false)) {
-					NmdProfileSetImpl profielSet = new NmdProfileSetImpl();
-					this.getProfielSetDataFromJson(set, profielSet);
-					candidateSets.add(profielSet);
-				}
-			});
-
-			// ToDo: recursively determine full set of profiles. For now just take the first
-			// one that has a profile and is 'dekkend'.
-			// See issue BOUW-42
-			Optional<NmdProfileSet> chosenSet = candidateSets.stream().findFirst();
-			if (chosenSet.isPresent()) {
-				NmdProfileSet fullSet = this.getAdditionalProfileDataForSet((NmdProfileSetImpl) chosenSet.get());
-				product.addProfileSet(fullSet);
-				return true;
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		// ToDo: recursively determine full set of profiles. For now just take the first
+		// one that has a profile
+		// See issue BOUW-42
+		
+		Optional<NmdProfileSet> chosenSet = cadidateSets.stream().findFirst();
+		if (chosenSet.isPresent()) {
+			NmdProfileSet fullSet = this.getAdditionalProfileDataForSet((NmdProfileSetImpl) chosenSet.get());
+			product.addProfileSet(fullSet);
+			return true;
 		}
 
 		return false;
+	}
+
+	private List<NmdProfileSet> getAllProfielSetsForProductCard(NmdProductCard product) {
+		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
+		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
+		params.add(new KeyValuePair("ElementID", product.getRAWCode()));
+		
+		HttpResponse response = this
+				.performGetRequestWithParams("/NMD_30_API_v0.2/api/NMD30_Web_API/ProductenBijElement", params);
+
+		// do something with the entity to get the token
+		JsonNode resp_node = this.responseToJson(response);
+		if (resp_node == null) {
+			return null;
+		}
+
+		JsonNode profielsets = resp_node.get("results");
+
+		// determine candidate sets that could be matched to this product
+		List<NmdProfileSet> allSets = new ArrayList<NmdProfileSet>();
+		profielsets.forEach(set -> {
+			// only get items that are relevant for us.
+			if (TryParseJsonNode(set.get("ProfielSetGekoppeld"), false)) {
+				NmdProfileSetImpl profielSet = new NmdProfileSetImpl();
+				this.getProfielSetDataFromJson(set, profielSet);
+				allSets.add(profielSet);
+			}
+		});
+		return allSets;
 	}
 
 	/*
@@ -440,9 +447,6 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 				} catch (InvalidInputException e) {
 					System.out.println("encountered invalid input combinations in scaler creation");
 				}
-
-
-
 			}
 		}
 	}

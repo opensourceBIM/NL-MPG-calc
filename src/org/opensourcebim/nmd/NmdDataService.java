@@ -27,11 +27,11 @@ public interface NmdDataService {
 
 	List<NmdProductCard> getAllProductSets();
 	
-	List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) throws FileNotFoundException;
+	List<NmdProductCard> getChildProductsForProductCard(NmdProductCard product) throws FileNotFoundException;
 	
-	Boolean getProfielSetsByProductCard(NmdProductCard product);
-	
-	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids);
+	Boolean getTotaalProfielSetForProductCard(NmdProductCard product);
 
 	List<NmdProductCard> getData();
+
+	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids);
 }

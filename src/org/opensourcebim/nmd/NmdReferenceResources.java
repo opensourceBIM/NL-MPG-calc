@@ -1,7 +1,6 @@
 package org.opensourcebim.nmd;
 
 import java.util.HashMap;
-import java.util.List;
 
 import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
 

@@ -85,7 +85,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			if (!dbProduct.isPresent()) { break; }
 			
 			retrievedMaterial = dbProduct.get();
-			nmdDataService.getProfielSetsByProductCard(retrievedMaterial);
+			nmdDataService.getTotaalProfielSetForProductCard(retrievedMaterial);
 			if (retrievedMaterial.getProfileSets().size() > 0) {
 				break;
 			}

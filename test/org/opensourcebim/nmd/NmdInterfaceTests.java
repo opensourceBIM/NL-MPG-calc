@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -94,7 +95,7 @@ public class NmdInterfaceTests {
 		
 		NmdProductCardImpl card = new NmdProductCardImpl();
 		card.setRAWCode("-42");
-		assertTrue(0 == db.getChildProductSetsForProductSet(card).size());
+		assertTrue(0 == db.getChildProductsForProductCard(card).size());
 	}
 	
 	@Test
@@ -103,7 +104,7 @@ public class NmdInterfaceTests {
 		
 		NmdProductCardImpl card = new NmdProductCardImpl();
 		card.setRAWCode("155");
-		assertTrue(0 < db.getChildProductSetsForProductSet(card).size());
+		assertTrue(0 < db.getChildProductsForProductCard(card).size());
 	}
 	
 	@Test
@@ -112,6 +113,22 @@ public class NmdInterfaceTests {
 		List<String> ids = Arrays.asList("19");
 		HashMap<Integer, NmdProfileSet> profileSets = db.getProfileSetsByIds(ids);
 		assertTrue(0 < profileSets.size());
+	}
+	
+	@Test
+	public void testGetAllPRofielSetsForProductCard() {
+		connect();
+		db.preLoadData();
+		fail();
+	}
+	
+	@Test
+	public void testpreLoadDataWillReturnAllTotaalAndDeelProducten() {
+		connect();
+		db.preLoadData();
+		
+		List<NmdProfileSet> sets = new ArrayList<NmdProfileSet>();
+		assertTrue(db.getData().stream().map(pc -> !pc.getIsTotaalProduct()).count() > 0);;
 	}
 	
 	@Test
@@ -125,7 +142,7 @@ public class NmdInterfaceTests {
 		NmdScaler scaler = set.getValue().getScaler();
 		Double factor = scaler.scale(400);
 		
-		assertTrue(0> factor);
+		assertTrue(0.0 > factor);
 	}
 		
 	@Test
@@ -135,7 +152,7 @@ public class NmdInterfaceTests {
 		product.setRAWCode("204");
 		
 		connect();
-		assertTrue(db.getProfielSetsByProductCard(product));
+		assertTrue(db.getTotaalProfielSetForProductCard(product));
 		assertTrue(0 < product.getProfileSets().size());
 	}
 	
