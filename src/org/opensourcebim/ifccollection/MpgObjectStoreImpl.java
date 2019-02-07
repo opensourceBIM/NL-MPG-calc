@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.bimserver.utils.AreaUnit;
+import org.bimserver.utils.IfcUtils;
 import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.BasicEList;
@@ -93,6 +94,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		setGuidsWithUndefinedLayerMats(new GuidCollection(this, "# of objects that have undefined layers"));
 		setGuidsWithRedundantMaterialSpecs(
 				new GuidCollection(this, "# of objects that cannot be linked to materials 1-on-1"));
+		this.setUnits(VolumeUnit.CUBIC_METER, AreaUnit.SQUARED_METER, LengthUnit.METER);
 	}
 
 	public void reset() {
@@ -244,7 +246,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public double getTotalVolumeOfProductType(String productType) {
-		return getObjectsByProductType(productType).stream().collect(Collectors.summingDouble(o -> o.getVolume()));
+		return getObjectsByProductType(productType).stream().collect(Collectors.summingDouble(o -> o.getGeometry().getVolume()));
 	}
 
 	@Override

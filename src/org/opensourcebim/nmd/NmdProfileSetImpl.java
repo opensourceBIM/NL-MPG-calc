@@ -3,6 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
@@ -119,16 +120,18 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 		if (object == null || this.profiles.size() == 0) {
 			return Double.NaN;
 		}
+		MpgGeometry geom = object.getGeometry();
+		
 		
 		String productUnit = this.getUnit();
 		if (productUnit.equals("m1")) {
-			return object.getVolume() / object.getArea();
+			return geom.getPrincipalDimension();
 		}
 		if (productUnit.equals("m2")) {
-			return object.getArea();
+			return geom.getLargestFaceArea();
 		}
 		if (productUnit.equals("m3")) {
-			return object.getVolume();
+			return geom.getVolume();
 		}
 		if (productUnit.equals("p")) {
 			return 1.0; // product per piece. always return 1 per profielset.

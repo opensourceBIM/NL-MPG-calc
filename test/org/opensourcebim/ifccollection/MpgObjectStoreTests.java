@@ -170,7 +170,7 @@ public class MpgObjectStoreTests {
 		MpgLayerImpl layer = new MpgLayerImpl(10, 1.0, "test material", Integer.toString("test material".hashCode()));
 		obj.addLayer(layer);
 		// mock volume as this will not be added in this way
-		obj.setVolume(layer.getVolume());
+		obj.getGeometry().setVolume(layer.getVolume());
 		objectStore.addObject(obj);
 		
 		objectStore.validateIfcDataCollection();

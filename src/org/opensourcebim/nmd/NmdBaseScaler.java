@@ -36,10 +36,21 @@ public abstract class NmdBaseScaler implements NmdScaler {
 			return Double.NaN;
 		}
 	}
-
+	
 	@Override
 	public Double scale(double dim1Val) {
 		return getScaleFactor(dim1Val, currentValues[0]);
+	}
+	
+	@Override
+	public Double scaleWithConversion(Double[] dims, double conversionFactor) {
+		if (dims.length == 1) {
+			return this.scale(dims[0] * conversionFactor);
+		} else if (dims.length == 2) {
+			return this.scale(dims[0] * conversionFactor, dims[1] * conversionFactor);
+		} else {
+			return Double.NaN;
+		}
 	}
 
 	/**
@@ -77,6 +88,7 @@ public abstract class NmdBaseScaler implements NmdScaler {
 	 * 
 	 * @return Number of dimensions of the scaler
 	 */
+	@Override
 	public Integer getNumberOfDimensions() {
 		return (bounds.length == 4 && !bounds[3].isNaN() &&
 				currentValues.length == 2 && !currentValues[1].isNaN()) 

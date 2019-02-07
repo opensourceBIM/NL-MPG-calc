@@ -104,16 +104,9 @@ public class MpgElement {
 	 * @return see above
 	 */
 	public boolean requiresScaling() {
-		return false;
-	}
-
-	/**
-	 * based on the product sets and the mpg object the element will return the x and y scaling dimensions 
-	 * @return a Double array with the x and y dimensions to be scaled.
-	 */
-	@JsonIgnore
-	public Double[] getScaleDimenions() {
-		// TODO Auto-generated method stub
-		throw new NotImplementedException("still needs to be done");
+		return this.getNmdProductCard()
+				.getProfileSets()
+				.stream()
+				.anyMatch(ps -> ps.getIsScalable() && ps.getScaler() != null);
 	}
 }

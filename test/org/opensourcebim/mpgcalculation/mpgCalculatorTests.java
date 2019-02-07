@@ -5,17 +5,15 @@ import static org.junit.Assert.assertFalse;
 
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgLayer;
 import org.opensourcebim.ifccollection.MpgLayerImpl;
-import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
+import org.opensourcebim.ifccollection.MpgScalingType;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdFaseProfielImpl;
@@ -24,6 +22,7 @@ import org.opensourcebim.nmd.NmdProductCardImpl;
 import org.opensourcebim.nmd.NmdProfileSet;
 import org.opensourcebim.nmd.NmdProfileSetImpl;
 import org.opensourcebim.nmd.NmdReferenceResources;
+import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
 public class mpgCalculatorTests {
 
@@ -259,8 +258,7 @@ public class mpgCalculatorTests {
 	private void addUnitIfcObjectForElement(String ifcMatName, double volume, double area) {
 		MpgObjectImpl mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), ifcMatName + " element", "Slab",
 				"", store);
-		mpgObject.setArea(1.0);
-		mpgObject.setVolume(1.0);
+		mpgObject.setGeometry(createDummyGeometry());
 
 		MpgLayer testObject = new MpgLayerImpl(volume, area, ifcMatName, Integer.toString(ifcMatName.hashCode()));
 		mpgObject.addLayer(testObject);
@@ -268,6 +266,30 @@ public class mpgCalculatorTests {
 		store.addObject(mpgObject);
 
 		store.setObjectForElement(ifcMatName, mpgObject);
+	}
+
+	private MpgGeometry createDummyGeometry() {
+		MpgGeometry g = new MpgGeometry();
+		g.setVolume(1.0);
+		g.setFloorArea(1.0);
+		g.setLargestFaceArea(1.0);
+		g.setMaxXDimension(1.0);
+		g.setMaxYDimension(1.0);
+		g.setMaxZDimension(1.0);
+		
+		MpgScalingType rodScaler = new MpgScalingType();
+		rodScaler.setUnitAxes(new int[]{3});
+		rodScaler.setScaleAxes(new int[]{1, 2});
+		
+		g.addScalingType(rodScaler);
+		
+		MpgScalingType areaScaler = new MpgScalingType();
+		areaScaler.setUnitAxes(new int[]{1, 2});
+		areaScaler.setScaleAxes(new int[]{3});
+		
+		g.addScalingType(areaScaler);
+		
+		return g;
 	}
 
 	/**
@@ -308,6 +330,12 @@ public class mpgCalculatorTests {
 
 		spec.setUnit(unit);
 		spec.setProfielId(1);
+		spec.setIsScalable(true);
+		// as a dummy add a scaler that will do no adjustment
+		spec.setScaler(new NmdLinearScaler("m", 
+				new Double[] {1.0, 0.0, 0.0}, 
+				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
+				new Double[] {1.0, 1.0}));
 		spec.setName(name);
 		spec.setIsFullProfile(isTotaalProfiel);
 		spec.setCuasCode(cuasCode);

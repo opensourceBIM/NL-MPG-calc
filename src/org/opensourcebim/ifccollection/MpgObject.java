@@ -13,8 +13,7 @@ public interface MpgObject {
 	String getParentId();
 	void setParentId(String value);
 	
-	Double getVolume();
-	Double getArea();
+	MpgGeometry getGeometry();
 	
 	void addMaterialSource(String name, String guid, String source);
 	List<MaterialSource> getListedMaterials();

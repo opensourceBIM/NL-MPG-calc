@@ -2,8 +2,9 @@ package org.opensourcebim.mpgcalculation;
 
 import java.util.Set;
 
+import org.bimserver.utils.AreaUnit;
+import org.bimserver.utils.LengthUnit;
 import org.opensourcebim.ifccollection.MpgElement;
-import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProfileSet;
@@ -72,20 +73,16 @@ public class MpgCalculator {
 					double scaleFactor = 1.0;
 					// determine scale factor based on scaler. if no scaler is present the
 					// unitsRequired is sufficient
-					if (element.requiresScaling() 
-							&& profielSet.getIsScalable() 
-							&& profielSet.getScaler() != null) {
-						
-						MpgObject mpgObject = element.getMpgObject();
+					if (element.requiresScaling() && profielSet.getIsScalable() && profielSet.getScaler() != null) {
+
 						NmdScaler scaler = profielSet.getScaler();
-						
-						// TODO: which dimension do we need to scale?
-						Double[] scaleDims = element.getScaleDimenions();
-						
-						// TODO: check to convert with which units?
+						// how to convert?
 						String unit = scaler.getUnit();
-						
-						scaleFactor = profielSet.getScaler().scale(mpgObject.getArea());
+						Double[] dims = element.getMpgObject().getGeometry()
+								.getScaleDims(scaler.getNumberOfDimensions());
+						Double unitConversionFactor = getUnitConversionFactor(unit, dims.length);
+
+						scaleFactor = profielSet.getScaler().scaleWithConversion(dims, unitConversionFactor);
 					}
 
 					// calculate total mass taking into account construction losses and replacements
@@ -110,6 +107,40 @@ public class MpgCalculator {
 			results.SetResultsStatus(ResultStatus.ValueError);
 		}
 		return results;
+	}
+
+	private Double getUnitConversionFactor(String unit, int dims) {
+		// again slightly counter intuititve, but when scaling over a single dimension
+		// we need a 2D conversionfactor while when we are scaling over 2 dimensions
+		// the scaling is done per axis and therefore the conversion is 1 D
+		// first figure out the quantity of the input unit and get the right store unit
+		Double factor = 1.0;
+		if (dims == 2) {
+			switch (unit.toLowerCase()) {
+			case "mm":
+			case "millimiter":
+				factor = this.objectStore.getLengthUnit().convert(1.0, LengthUnit.MILLI_METER);
+				break;
+			case "m":
+			case "meter":
+				factor = this.objectStore.getLengthUnit().convert(1.0, LengthUnit.METER);
+			default:
+				break;
+			}
+		} else if (dims == 1) {
+			switch (unit.toLowerCase()) {
+			case "mm":
+			case "millimiter":
+				factor = this.objectStore.getAreaUnit().convert(1.0, AreaUnit.SQUARED_MILLI_METER);
+				break;
+			case "m":
+			case "meter":
+				factor = this.objectStore.getAreaUnit().convert(1.0, AreaUnit.SQUARED_METER);
+			default:
+				break;
+			}
+		}
+		return factor;
 	}
 
 	public MpgObjectStore getObjectStore() {
