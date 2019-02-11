@@ -38,8 +38,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				nmdDataService.login();
 				nmdDataService.preLoadData();
 			}
-
-			
 			
 			// get data per material - run through services in order
 			for (MpgElement element : ifcResults.getElements()) {
@@ -85,7 +83,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			retrievedMaterial = new NmdProductCardImpl(dbProduct.get());
 
 			if (nmdDataService.getAdditionalProfileDataForCard(retrievedMaterial)) {
-				mpgElement.setProductCard(retrievedMaterial);
+				mpgElement.addProductCard(retrievedMaterial);
 				mpgElement.setMappingMethod(NmdMapping.Direct);
 				break;
 			}

@@ -25,7 +25,7 @@ public interface MpgObjectStore {
 	List<MpgObject> getObjects();
 	List<MpgSpace> getSpaces();
 	
-	void setProductCardForElement(String string, NmdProductCard specs);
+	void addProductCardToElement(String string, NmdProductCard specs);
 	void setObjectForElement(String name, MpgObject mpgObject);
 	
 	Stream<String> getAllMaterialNames();

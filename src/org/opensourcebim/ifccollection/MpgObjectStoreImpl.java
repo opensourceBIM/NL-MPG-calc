@@ -152,10 +152,10 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void setProductCardForElement(String name, NmdProductCard specs) {
+	public void addProductCardToElement(String name, NmdProductCard specs) {
 		MpgElement el = getElementByName(name);
 		if (el != null) {
-			el.setProductCard(specs);
+			el.addProductCard(specs);
 		}
 	}
 

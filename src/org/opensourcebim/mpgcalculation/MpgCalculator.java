@@ -47,56 +47,53 @@ public class MpgCalculator {
 
 			// for each building material found:
 			for (MpgElement element : objectStore.getElements()) {
-				if (element.getNmdProductCard() == null) {
-					continue;
-				}
 
-				NmdProductCard product = element.getNmdProductCard();
+				for (NmdProductCard product : element.getNmdProductCards()) {
 
-				// Determine replacements required.
-				// this is usually 1 for regular materials and > 1 for cyclic maintenance
-				// For a product card with composed profielsets (not a single totaalproduct) the
-				// replacement of the
-				// first encountered Construction (Cuas code 1) profielset will be used.
-				double replacements = this.calculateReplacements(designLife, product);
-				
-				// category 3 data requires a 30% penalty
-				double categoryMultiplier = product.getCategory() == 3 ? 1.3 : 1.0;
+					// Determine replacements required.
+					// this is usually 1 for regular materials and > 1 for cyclic maintenance
+					// For a product card with composed profielsets (not a single totaalproduct) the
+					// replacement of the
+					// first encountered Construction (Cuas code 1) profielset will be used.
+					double replacements = this.calculateReplacements(designLife, product);
 
-				for (NmdProfileSet profielSet : product.getProfileSets()) {
+					// category 3 data requires a 30% penalty
+					double categoryMultiplier = product.getCategory() == 3 ? 1.3 : 1.0;
 
-					// get number of product units based on geometry of ifcproduct and unit of
-					// productcard
-					// TODO: currently there is a very basic method implemented. should be improved.
-					// This should include density conversions and/or energy water use conversion
-					double unitsRequired = profielSet.getRequiredNumberOfUnits(element.getMpgObject());
+					for (NmdProfileSet profielSet : product.getProfileSets()) {
 
+						// get number of product units based on geometry of ifcproduct and unit of
+						// productcard
+						// TODO: currently there is a very basic method implemented. should be improved.
+						// This should include density conversions and/or energy water use conversion
+						double unitsRequired = profielSet.getRequiredNumberOfUnits(element.getMpgObject());
 
-					double scaleFactor = 1.0;
-					// determine scale factor based on scaler. if no scaler is present the
-					// unitsRequired is sufficient (and no scaling is applied)
-					if (element.requiresScaling() && profielSet.getIsScalable() && profielSet.getScaler() != null) {
+						double scaleFactor = 1.0;
+						// determine scale factor based on scaler. if no scaler is present the
+						// unitsRequired is sufficient (and no scaling is applied)
+						if (element.requiresScaling() && profielSet.getIsScalable() && profielSet.getScaler() != null) {
 
-						NmdScaler scaler = profielSet.getScaler();
-						String unit = scaler.getUnit();
-						Double[] dims = element.getMpgObject().getGeometry()
-								.getScaleDims(profielSet.getUnitDimension());
-						Double unitConversionFactor = getScalingUnitConversionFactor(unit, dims.length);
+							NmdScaler scaler = profielSet.getScaler();
+							String unit = scaler.getUnit();
+							Double[] dims = element.getMpgObject().getGeometry()
+									.getScaleDims(profielSet.getUnitDimension());
+							Double unitConversionFactor = getScalingUnitConversionFactor(unit, dims.length);
 
-						scaleFactor = profielSet.getScaler().scaleWithConversion(dims, unitConversionFactor);
+							scaleFactor = profielSet.getScaler().scaleWithConversion(dims, unitConversionFactor);
+						}
+
+						// calculate total units required taking into account category modifiers.
+						// replacements and scaling
+						// ToDo: We do not have desnities of materials in the DB. How to get the masses
+						// of products?
+						double lifeTimeUnitsPerSpec = replacements * unitsRequired * categoryMultiplier * scaleFactor;
+
+						// example for production
+						profielSet.getAllFaseProfielen().values().forEach(fp -> {
+							Set<MpgCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerSpec);
+							results.incrementCostFactors(factors, product.getDescription(), profielSet.getName());
+						});
 					}
-
-					// calculate total units required taking into account category modifiers.
-					// replacements and scaling
-					// ToDo: We do not have desnities of materials in the DB. How to get the masses
-					// of products?
-					double lifeTimeUnitsPerSpec = replacements * unitsRequired * categoryMultiplier * scaleFactor;
-
-					// example for production
-					profielSet.getAllFaseProfielen().values().forEach(fp -> {
-						Set<MpgCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerSpec);
-						results.incrementCostFactors(factors, product.getDescription(), profielSet.getName());
-					});
 				}
 			}
 			if (results.getStatus() != ResultStatus.IncompleteData) {

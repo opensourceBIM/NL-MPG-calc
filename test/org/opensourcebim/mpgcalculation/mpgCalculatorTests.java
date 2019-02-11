@@ -99,7 +99,7 @@ public class mpgCalculatorTests {
 		card.addProfileSet(createProfileSet(name, unit, 1, category));
 		card.addProfileSet(createProfileSet(name, unit, 1, category));
 		card.setIsTotaalProduct(false);
-		store.setProductCardForElement(ifcName, card);
+		store.addProductCardToElement(ifcName, card);
 		addUnitIfcObjectForElement(ifcName, 1.0, 1.0);
 
 		startCalculations(1.0);
@@ -206,7 +206,7 @@ public class mpgCalculatorTests {
 		productCard.setUnit("m2");
 		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1));
 		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1));
-		store.setProductCardForElement("Brick Wall", productCard);
+		store.addProductCardToElement("Brick Wall", productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
 		
 		startCalculations(10);
@@ -221,7 +221,7 @@ public class mpgCalculatorTests {
 		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1));
 		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1));
 
-		store.setProductCardForElement("Brick Wall", productCard);
+		store.addProductCardToElement("Brick Wall", productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
 		
 		startCalculations(10);
@@ -247,7 +247,7 @@ public class mpgCalculatorTests {
 
 	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int cuasCode) {
 		store.addElement(ifcMatName);
-		store.setProductCardForElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category));
+		store.addProductCardToElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category));
 		addUnitIfcObjectForElement(ifcMatName, 1.0, 1.0);
 	}
 	
