@@ -1,6 +1,6 @@
 package org.opensourcebim.nmd;
 
-import java.util.Set;
+import java.util.HashMap;
 
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.scaling.NmdScaler;
@@ -16,33 +16,22 @@ public interface NmdProfileSet {
 	String getName();
 
 	Integer getProfielId();
-
-	/*
-	 * Flag to indicate whether this profile covers for all of its children profiles
-	 */
-	Boolean getIsFullProfile();
-	
-	/*
-	 * reference to ProfielId of parent profiel
-	 */
-	Integer getParentProfielId();
 	
 	String getUnit();
 	
-	Integer getProductLifeTime();
-	
-	Integer getCuasCode();
+	Integer getProfileLifeTime();
 	
 	NmdFaseProfiel getFaseProfiel(String fase);
-
-	Set<String> getDefinedProfiles();
-
-	Integer getCategory();
 	
+	HashMap<String, NmdFaseProfiel> getAllFaseProfielen();
+
+	void addFaseProfiel(String fase, NmdFaseProfiel faseProfiel);
+		
 	Double getRequiredNumberOfUnits(MpgObject mpgObject);
 
 	Boolean getIsScalable();
 
 	NmdScaler getScaler();
 
+	int getUnitDimension();
 }

@@ -8,11 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.antlr.runtime.misc.IntArray;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.MutableTriple;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.geometry.GeometryInfo;
@@ -271,7 +268,7 @@ public class MpgIfcObjectCollector {
 
 			try {
 				JsonNode geomData = mapper.readTree(geometry.getAdditionalData());
-				if (geomData != null) {
+				if (geomData != null && geomData.size() > 0) {
 					// determine orientation of the reference frame by checking areas with the floor
 					// area.
 					double along_x_area = geomData.get("SURFACE_AREA_ALONG_X").asDouble();

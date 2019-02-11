@@ -76,16 +76,15 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			if (foundMap == null) { break; }
 			
 			Optional<NmdProductCard> dbProduct = nmdDataService.getData().stream()
-				.filter(product -> Arrays.stream(foundMap).anyMatch(code -> {
-					return product.getNLsfbCode().contains(code);
-				}))
+				.filter(el -> Arrays.stream(foundMap).anyMatch(code -> code == el.getNLsfbCode()))
+				.flatMap(el -> el.getProducts().stream())
 				.findFirst();
 			if (!dbProduct.isPresent()) { break; }
 			
 			// create a copy
 			retrievedMaterial = new NmdProductCardImpl(dbProduct.get());
-			nmdDataService.getTotaalProfielSetForProductCard(retrievedMaterial);
-			if (retrievedMaterial.getProfileSets().size() > 0) {
+
+			if (nmdDataService.getAdditionalProfileDataForCard(retrievedMaterial)) {
 				mpgElement.setProductCard(retrievedMaterial);
 				mpgElement.setMappingMethod(NmdMapping.Direct);
 				break;

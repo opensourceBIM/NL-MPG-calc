@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 
 import java.util.HashMap;
 import java.util.UUID;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,6 +18,7 @@ import org.opensourcebim.ifccollection.MpgScalingType;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdFaseProfielImpl;
+import org.opensourcebim.nmd.NmdMileuCategorie;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProductCardImpl;
 import org.opensourcebim.nmd.NmdProfileSet;
@@ -90,14 +92,12 @@ public class mpgCalculatorTests {
 		String unit = "m3";
 		int category = 1;
 		NmdProductCardImpl card = new NmdProductCardImpl();
-		card.setName(name);
-		card.setDataCategory(category);
-
+		card.setUnit(unit);
 		// since we're not adding a totaalproduct we need to cover every CUAS stage individually
-		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 1));
-		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 2));
-		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 3));
-		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 4));
+		card.addProfileSet(createProfileSet(name, unit, 1, category));
+		card.addProfileSet(createProfileSet(name, unit, 1, category));
+		card.addProfileSet(createProfileSet(name, unit, 1, category));
+		card.addProfileSet(createProfileSet(name, unit, 1, category));
 		card.setIsTotaalProduct(false);
 		store.setProductCardForElement(ifcName, card);
 		addUnitIfcObjectForElement(ifcName, 1.0, 1.0);
@@ -203,11 +203,9 @@ public class mpgCalculatorTests {
 		
 		store.addElement("Brick Wall");
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
-		productCard.setName("Brick and mortar");
-		productCard.setDataCategory(1);
-
-		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1, false, 1));
-		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1, false, 1));
+		productCard.setUnit("m2");
+		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1));
+		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1));
 		store.setProductCardForElement("Brick Wall", productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
 		
@@ -219,11 +217,9 @@ public class mpgCalculatorTests {
 		// repeat the calculation with mortar added first - different replacement time
 		store.addElement("Brick Wall");
 		productCard = new NmdProductCardImpl();
-		productCard.setName("Brick and mortar");
-		productCard.setDataCategory(1);
-
-		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1, false, 1));
-		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1, false, 1));
+		productCard.setUnit("m2");
+		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1));
+		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1));
 
 		store.setProductCardForElement("Brick Wall", productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
@@ -251,7 +247,7 @@ public class mpgCalculatorTests {
 
 	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int cuasCode) {
 		store.addElement(ifcMatName);
-		store.setProductCardForElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category, cuasCode));
+		store.setProductCardForElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category));
 		addUnitIfcObjectForElement(ifcMatName, 1.0, 1.0);
 	}
 	
@@ -302,31 +298,28 @@ public class mpgCalculatorTests {
 		store.addSpace(new MpgSpaceImpl(UUID.randomUUID().toString(), floorArea * 3, floorArea));
 	}
 
-	private NmdProductCard createUnitProductCard(String name, String unit, int category, int cuasCode) {
+	private NmdProductCard createUnitProductCard(String name, String unit, int category) {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
-		specs.setName(name);
-		specs.setDataCategory(category);
-
-		specs.addProfileSet(createProfileSet(name, unit, 1, category, false, cuasCode));
-		specs.setIsTotaalProduct(cuasCode == 5);
+		specs.setCategory(category);
+		specs.setUnit(unit);
+		specs.addProfileSet(createProfileSet(name, unit, 1, category));
 
 		return specs;
 	}
 
-	private NmdProfileSet createProfileSet(String name, String unit, int lifetime, int category, Boolean isTotaalProfiel, int cuasCode) {
+	private NmdProfileSet createProfileSet(String name, String unit, int lifetime, int category) {
 		NmdProfileSetImpl spec = new NmdProfileSetImpl();
 		
-		spec.setCategory(category);
-		spec.setProductLifeTime(lifetime);
-		spec.addFaseProfiel("TransportToSite", createUnitProfile("TransportToSite"));
-		spec.addFaseProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements"));
-		spec.addFaseProfiel("Disposal", createUnitProfile("Disposal"));
-		spec.addFaseProfiel("Incineration", createUnitProfile("Incineration"));
-		spec.addFaseProfiel("Recycling", createUnitProfile("Recycling"));
-		spec.addFaseProfiel("Reuse", createUnitProfile("Reuse"));
-		spec.addFaseProfiel("OwnDisposalProfile", createUnitProfile("OwnDisposalProfile"));
-		spec.addFaseProfiel("TransportForRemoval", createUnitProfile("TransportForRemoval"));
-		spec.addFaseProfiel("Operation", createUnitProfile("Operation"));
+		spec.setProfileLifetime(lifetime);
+		spec.addFaseProfiel("TransportToSite", createUnitProfile("TransportToSite", category));
+		spec.addFaseProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements", category));
+		spec.addFaseProfiel("Disposal", createUnitProfile("Disposal", category));
+		spec.addFaseProfiel("Incineration", createUnitProfile("Incineration", category));
+		spec.addFaseProfiel("Recycling", createUnitProfile("Recycling", category));
+		spec.addFaseProfiel("Reuse", createUnitProfile("Reuse", category));
+		spec.addFaseProfiel("OwnDisposalProfile", createUnitProfile("OwnDisposalProfile", category));
+		spec.addFaseProfiel("TransportForRemoval", createUnitProfile("TransportForRemoval", category));
+		spec.addFaseProfiel("Operation", createUnitProfile("Operation", category));
 
 		spec.setUnit(unit);
 		spec.setProfielId(1);
@@ -337,14 +330,12 @@ public class mpgCalculatorTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
 				new Double[] {1.0, 1.0}));
 		spec.setName(name);
-		spec.setIsFullProfile(isTotaalProfiel);
-		spec.setCuasCode(cuasCode);
-		
+
 		return spec;
 	}
 
-	private NmdFaseProfiel createUnitProfile(String fase) {
-		NmdFaseProfielImpl profile = new NmdFaseProfielImpl(fase, this.getDummyReferences());
+	private NmdFaseProfiel createUnitProfile(String fase, int category) {
+		NmdFaseProfielImpl profile = new NmdFaseProfielImpl(fase, category, this.getDummyReferences());
 		profile.setAll(1.0);
 		return profile;
 	}

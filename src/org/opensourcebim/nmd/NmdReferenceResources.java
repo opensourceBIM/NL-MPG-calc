@@ -2,8 +2,6 @@ package org.opensourcebim.nmd;
 
 import java.util.HashMap;
 
-import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
-
 /*
  * Datastore for mappings from the NMD that only have to be retrieved once per session. 
  */

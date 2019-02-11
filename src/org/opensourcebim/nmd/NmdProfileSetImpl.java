@@ -1,28 +1,25 @@
 package org.opensourcebim.nmd;
 
 import java.util.HashMap;
-import java.util.Set;
 
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.scaling.NmdScaler;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class NmdProfileSetImpl implements NmdProfileSet {
 	private String name;
 	private Integer profielId;
 	private String unit;
 
-	private int productLifeTime;
-	private int category;
+	private int profileLifeTime;
 	
 	/**
 	 * NmdBasisProfiles available for this material specification.
 	 * Can be different for specs within the same productcard
 	 */
 	private HashMap<String, NmdFaseProfiel> profiles;
-	private Boolean isFullProfile;
-	private Integer parentProfileId;
-	private int cuasCode;
 	private Boolean isScalable;
 	private NmdScaler scaler;
 
@@ -58,32 +55,14 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	}
 
 	@Override
-	public Integer getCategory() {
-		return this.category;
+	public Integer getProfileLifeTime() {
+		return this.profileLifeTime;
 	}
 
-	public void setCategory(Integer category) {
-		this.category = category;
-	}
-
-	@Override
-	public Integer getProductLifeTime() {
-		return this.productLifeTime;
-	}
-
-	public void setProductLifeTime(Integer lifetime) {
-		this.productLifeTime = lifetime;
+	public void setProfileLifetime(Integer lifetime) {
+		this.profileLifeTime = lifetime;
 	}
 	
-	@Override
-	public Integer getCuasCode() {
-		return this.cuasCode;
-	}
-	
-	public void setCuasCode(int cuasCode) {
-		this.cuasCode = cuasCode;
-	}
-
 	@Override
 	public NmdFaseProfiel getFaseProfiel(String fase) {
 		return this.profiles.getOrDefault(fase, null);
@@ -94,26 +73,8 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	}
 
 	@Override
-	public Set<String> getDefinedProfiles() {
-		return profiles.keySet();
-	}
-
-	@Override
-	public Boolean getIsFullProfile() {
-		return this.isFullProfile;
-	}
-	
-	public void setIsFullProfile(Boolean flag) {
-		this.isFullProfile = flag;
-	}
-
-	@Override
-	public Integer getParentProfielId() {
-		return this.parentProfileId;
-	}
-	
-	public void setParentProfielId(Integer id) {
-		this.parentProfileId = id;
+	public HashMap<String, NmdFaseProfiel> getAllFaseProfielen() {
+		return this.profiles;
 	}
 	
 	public Double getRequiredNumberOfUnits(MpgObject object) {
@@ -160,5 +121,40 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	@Override
 	public NmdScaler getScaler() {
 		return this.scaler;
+	}
+
+	@Override
+	@JsonIgnore
+	public int getUnitDimension() {
+		String productUnit = this.getUnit();
+		
+		switch (productUnit.toLowerCase()) {
+		case "mm":
+		case "cm":
+		case "m1":
+		case "m":
+		case "meter":
+			return 1;
+		case "mm2":
+		case "mm^2":
+		case "square_millimeter":
+		case "cm2":
+		case "cm^2":
+		case "m2":
+		case "m^2":
+		case "square_meter":
+			return 2;
+		case "mm3":
+		case "mm^3":
+		case "cubic_millimeter":
+		case "cm3":
+		case "cm^3":
+		case "m3":
+		case "m^3":
+		case "cubic_meter":
+			return 3;
+		default:
+			return -1;
+		}
 	}
 }

@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.bimserver.utils.AreaUnit;
-import org.bimserver.utils.IfcUtils;
 import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.BasicEList;
@@ -294,9 +293,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 */
 	@Override
 	public boolean isElementDataComplete() {
-
-		return getElements().stream().allMatch(
-				element -> element.getNmdProductCard() == null ? false : element.getNmdProductCard().isFullyCovered());
+		// TODO: how to check if all cuas levels are covered?
+		return true;
 	}
 
 	@Override

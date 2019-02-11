@@ -95,6 +95,11 @@ public class MpgGeometry {
 		this.scaleParams.add(scaleData);
 	}
 
+	/**
+	 * Return the dimensions of the geometry that require scaling.
+	 * @param dim the dimensionality of the profileSet that is linked to this geometry
+	 * @return The dimensions of the geometry that require scaling
+	 */
 	public Double[] getScaleDims(int dim) {
 		// this is a bit counter-intuitive, but we need the scaler that belongs to an
 		// area object to scale over 1 dimension (thickness only) while we need the

@@ -4,8 +4,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * Storage container to map mpgOject to the Nmdproducts
  * @author Jasper Vijverberg
@@ -47,7 +45,7 @@ public class MpgElement {
 	 * @return a string with the nmd identifier
 	 */
 	public String getNmdIdentifier() {
-		return nmdProductCard == null ? "" : nmdProductCard.getNLsfbCode();
+		return nmdProductCard == null ? "" : nmdProductCard.getDescription();
 	}
 
 	/**

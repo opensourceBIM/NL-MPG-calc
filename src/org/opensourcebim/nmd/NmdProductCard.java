@@ -1,4 +1,5 @@
 package org.opensourcebim.nmd;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -14,28 +15,24 @@ import java.util.Set;
  */
 public interface NmdProductCard{
 		
-	String getName();
-
 	String getDescription();
-
-	int getDataCategory();
-
-	String getNLsfbCode();
-
-	String getRAWCode();
-
-	String getElementName();
-	
-	double getLifeTime();
 
 	Boolean getIsTotaalProduct();
 	
 	Set<NmdProfileSet> getProfileSets();
 
 	void addProfileSet(NmdProfileSet spec);
+	void addProfileSets(Collection<NmdProfileSet> specs);
 
-	String print();
+	String getUnit();
 
-	boolean isFullyCovered();
+	Integer getCategory();
 
+	Boolean getIsScalable();
+
+	Integer getLifetime();
+
+	Integer getParentProductId();
+
+	Integer getProductId();
 }

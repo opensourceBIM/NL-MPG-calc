@@ -1,6 +1,5 @@
 package org.opensourcebim.nmd;
 
-import java.io.FileNotFoundException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -13,8 +12,6 @@ import java.util.List;
  */
 public class BimMaterialDatabaseSession implements EditableDataService {
 
-	private Calendar requestDate;
-	
 	@Override
 	public void login() {
 		// TODO Auto-generated method stub
@@ -25,16 +22,6 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	public void logout() {
 		// TODO Auto-generated method stub
 		
-	}
-	
-	@Override
-	public void setRequestDate(Calendar newDate) {
-		this.requestDate = newDate;
-	}
-	
-	@Override
-	public Calendar getRequestDate() {
-		return this.requestDate;
 	}
 
 	@Override
@@ -50,25 +37,19 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	}
 
 	@Override
-	public List<NmdProductCard> getAllProductSets() {
+	public Calendar getRequestDate() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<NmdProductCard> getChildProductsForProductCard(NmdProductCard product) throws FileNotFoundException {
+	public void setRequestDate(Calendar newDate) {
 		// TODO Auto-generated method stub
-		return null;
+		
 	}
 
 	@Override
-	public Boolean getTotaalProfielSetForProductCard(NmdProductCard product) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<NmdProductCard> getData() {
+	public List<NmdElement> getData() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -78,4 +59,23 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public List<NmdProductCard> getProductsForElement(NmdElement element) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<NmdElement> getAllElements() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Boolean getAdditionalProfileDataForCard(NmdProductCard c) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
