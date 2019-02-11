@@ -275,15 +275,79 @@ public class MpgIfcObjectCollector {
 					double along_y_area = geomData.get("SURFACE_AREA_ALONG_Y").asDouble();
 					double along_z_area = geomData.get("SURFACE_AREA_ALONG_Z").asDouble();
 					
+					// check similarity to block of volume. Further away from 1 is a larger deviation.
+					double block_similarity = 2 * (along_x_area + along_y_area + along_z_area) / geomData.get("TOTAL_SURFACE_AREA").asDouble();
+					
+					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
+					
 					geom.setFloorArea(this.convertArea(along_z_area));
 
-					// get the max dimensions over the principal axes. assume square areas..
+					// get the max dimensions over the principal axes. **ASSUME** square areas..
 					double max_dim_x = Math.sqrt(along_z_area * along_y_area / along_x_area);
 					double max_dim_y = Math.sqrt(along_x_area * along_z_area / along_y_area);
 					double max_dim_z = Math.sqrt(along_y_area * along_x_area / along_z_area);
+					
+					int[] unitAxesArea = new int[2];
+					int[] scaleAxesArea = new int[1];
+
+					// create the 2 dim scaler type
+					double length_face_area = 0.0;
+					double width_face_area = 0.0;
+					double thickness_of_face = 0.0;
+					if ((largest_face_area - along_z_area) < 1e-8) {
+						// this should be floors, slabs etc.
+						scaleAxesArea[0] = 3; // scale on thickess of floor (in z-dir)
+						unitAxesArea[0] = 1;
+						unitAxesArea[1] = 2;
+					} else if ((largest_face_area - along_y_area) < 1e-8) {
+						// this case should be vertical walls, windows, doors etc.					
+						scaleAxesArea[0] = 2; // scale on thickess of wall (in y-dir)
+						unitAxesArea[0] = 3;
+						unitAxesArea[1] = 1;
+					} else if ((largest_face_area - along_x_area) < 1e-8){
+						// x area is largest these cases have not been covered yet.
+						// could they be very narrow walls sections or very small floor sections?
+						// ToDo: need to evaluate these occurences 
+						// - result: all of the above, walls, roofs, doors (?), pipes, railings etc.
+						// next question: will these be scaled over the thickness?
+						scaleAxesArea[0] = 1;
+						unitAxesArea[0] = 2;
+						unitAxesArea[1] = 3;
+						//System.out.println(prod.getClass());
+					} 
+					else {
+						// similar to z case, but then refered in the local roof ref frame.
+						scaleAxesArea[0] = 3; // scale on thickess of floor (in z-dir)
+						unitAxesArea[0] = 1;
+						unitAxesArea[1] = 2;
+						
+						// these are slanted areas such as roofs etc. 
+						// **ASSUME** extrusion in x direction.
+						//angle_of_face_area = Math.atan(max_dim_z / max_dim_y);
+						length_face_area = Math.sqrt(Math.pow(max_dim_y, 2) + Math.pow(max_dim_z, 2));
+						width_face_area = largest_face_area / length_face_area;
+						thickness_of_face = geom.getVolume() / largest_face_area;
+						
+						// replace the max dims with the slanted area dimensions in a local ref frame
+						// (z axis perpendicular to face area)
+						// TODO: these axes do not seem to match up with the axis in Solibri. 
+						// one of the two changes the x and y directions
+						max_dim_z = thickness_of_face;
+						max_dim_y = length_face_area;
+						max_dim_x = width_face_area;
+					}
+					
+					MpgScalingType areaScale = new MpgScalingType();
+					areaScale.setScaleAxes(scaleAxesArea);
+					areaScale.setUnitAxes(unitAxesArea);
+
+					// dimensions have been checked wrt angle of object. set rest of max dims
+					geom.setFaceArea(this.convertArea(largest_face_area));
 					geom.setMaxXDimension(this.convertLength(max_dim_x));
 					geom.setMaxYDimension(this.convertLength(max_dim_y));
 					geom.setMaxZDimension(this.convertLength(max_dim_z));
+
+					// create the scaler for slender objects
 					int[] unitAxesLength = new int[1];
 					int[] scaleAxesLength = new int[2];
 
@@ -308,49 +372,9 @@ public class MpgIfcObjectCollector {
 					MpgScalingType lengthScale = new MpgScalingType();
 					lengthScale.setScaleAxes(scaleAxesLength);
 					lengthScale.setUnitAxes(unitAxesLength);
-					geom.addScalingType(lengthScale);
-
-					int[] unitAxesArea = new int[2];
-					int[] scaleAxesArea = new int[1];
-
-					// create the 2 dim scaler type
-					double angle_of_face_area = 0.0;
-					// get largest face area
-					boolean z_larger_than_y = along_z_area >= along_y_area;
-					boolean y_larger_than_x = along_y_area >= along_x_area;
-
-					double largestFaceArea = 0.0;
-					// TODO: fix for slanted areas
-					if (z_larger_than_y && y_larger_than_x) {
-						// this should be floors, slabs etc.
-						largestFaceArea = along_z_area;
-						scaleAxesArea[0] = 3; // scale on thickess
-						unitAxesArea[0] = 1;
-						unitAxesArea[1] = 2;
-					} else if (!z_larger_than_y && y_larger_than_x) {
-						// this case should be vertical walls, windows, doors etc.
-						largestFaceArea = along_y_area;						
-						scaleAxesArea[0] = 2; // scale on thickess
-						unitAxesArea[0] = 3;
-						unitAxesArea[1] = 1;
-					} else {
-						// these cases have not been covered yet
-						largestFaceArea = along_x_area;
-						scaleAxesArea[0] = 1; // scale on thickess
-						unitAxesArea[0] = 2;
-						unitAxesArea[1] = 3;
-					} 
-//					else {
-//						// these are slanted areas such as roofs etc. assume extrusion in x direction.
-//						angle_of_face_area = Math.atan(max_dim_z / max_dim_y);
-//						double length_face_area = Math.sqrt(Math.pow(max_dim_y, 2) + Math.pow(max_dim_z, 2));
-//					}
-
-					geom.setLargestFaceArea(this.convertArea(largestFaceArea));
 					
-					MpgScalingType areaScale = new MpgScalingType();
-					areaScale.setScaleAxes(scaleAxesArea);
-					areaScale.setUnitAxes(unitAxesArea);
+					// add both scalers to the geometry
+					geom.addScalingType(lengthScale);
 					geom.addScalingType(areaScale);
 
 				}

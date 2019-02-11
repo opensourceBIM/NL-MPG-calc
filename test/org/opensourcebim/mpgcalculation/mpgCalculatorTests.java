@@ -268,7 +268,7 @@ public class mpgCalculatorTests {
 		MpgGeometry g = new MpgGeometry();
 		g.setVolume(1.0);
 		g.setFloorArea(1.0);
-		g.setLargestFaceArea(1.0);
+		g.setFaceArea(1.0);
 		g.setMaxXDimension(1.0);
 		g.setMaxYDimension(1.0);
 		g.setMaxZDimension(1.0);

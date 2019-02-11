@@ -8,19 +8,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class MpgGeometry {
 	private double volume;
 	private double floorArea;
-	private double largestFaceArea;
+	private double faceArea;
 
 	private Double[] maxDimensions;
-	private double angleOfLargestFaceAreaWrtHorizon;
+	private double angleOfFaceAreaWrtHorizon;
 
 	private List<MpgScalingType> scaleParams;
 
 	public MpgGeometry() {
 		volume = Double.NaN;
 		floorArea = Double.NaN;
-		largestFaceArea = Double.NaN;
+		faceArea = Double.NaN;
 
-		angleOfLargestFaceAreaWrtHorizon = Double.NaN;
+		angleOfFaceAreaWrtHorizon = Double.NaN;
 		maxDimensions = new Double[3];
 		setMaxXDimension(Double.NaN);
 		setMaxYDimension(Double.NaN);
@@ -44,21 +44,21 @@ public class MpgGeometry {
 		this.floorArea = floorArea;
 	}
 
-	public Double getLargestFaceArea() {
-		return largestFaceArea;
+	public Double getFaceArea() {
+		return faceArea;
 	}
 
-	public void setLargestFaceArea(Double largestFaceArea) {
-		this.largestFaceArea = largestFaceArea;
+	public void setFaceArea(Double largestFaceArea) {
+		this.faceArea = largestFaceArea;
 	}
 
-	public Double getAngleOfLargestFaceAreaWrtHorizon() {
-		return angleOfLargestFaceAreaWrtHorizon;
+	public Double getAngleOfFaceAreaWrtHorizon() {
+		return angleOfFaceAreaWrtHorizon;
 	}
 
 	// angle in radians
-	public void setAngleOfLargestFaceAreaWrtHorizon(Double angleOfLargestFaceAreaWrtHorizon) {
-		this.angleOfLargestFaceAreaWrtHorizon = angleOfLargestFaceAreaWrtHorizon;
+	public void setAngleOfFaceAreaWrtHorizon(Double angle) {
+		this.angleOfFaceAreaWrtHorizon = angle;
 	}
 
 	public Double getMaxXDimension() {

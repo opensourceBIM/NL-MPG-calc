@@ -89,7 +89,7 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 			return geom.getPrincipalDimension();
 		}
 		if (productUnit.equals("m2")) {
-			return geom.getLargestFaceArea();
+			return geom.getFaceArea();
 		}
 		if (productUnit.equals("m3")) {
 			return geom.getVolume();
