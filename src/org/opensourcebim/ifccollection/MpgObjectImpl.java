@@ -27,6 +27,7 @@ public class MpgObjectImpl implements MpgObject {
 	private List<MaterialSource> listedMaterials;
 
 	private MpgGeometry geometry;
+	private String nlsfb;
 
 	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId,
 			MpgObjectStore objectStore) {
@@ -104,6 +105,16 @@ public class MpgObjectImpl implements MpgObject {
 	
 	public void setGeometry(MpgGeometry geom) {
 		this.geometry = geom;
+	}
+	
+
+	@Override
+	public String getNLsfbCode() {
+		return this.nlsfb;
+	}
+	
+	public void setNLsfbCode(String code) {
+		this.nlsfb = code;
 	}
 
 	@Override

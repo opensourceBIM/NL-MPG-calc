@@ -13,6 +13,8 @@ public interface MpgObject {
 	String getParentId();
 	void setParentId(String value);
 	
+	String getNLsfbCode();
+	
 	MpgGeometry getGeometry();
 	
 	void addMaterialSource(String name, String guid, String source);

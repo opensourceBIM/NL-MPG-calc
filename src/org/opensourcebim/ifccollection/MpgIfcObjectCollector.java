@@ -17,6 +17,9 @@ import org.bimserver.models.ifc2x3tc1.IfcAnnotation;
 import org.bimserver.models.ifc2x3tc1.IfcBoolean;
 import org.bimserver.models.ifc2x3tc1.IfcBuilding;
 import org.bimserver.models.ifc2x3tc1.IfcBuildingStorey;
+import org.bimserver.models.ifc2x3tc1.IfcClassificationNotation;
+import org.bimserver.models.ifc2x3tc1.IfcClassificationNotationSelect;
+import org.bimserver.models.ifc2x3tc1.IfcClassificationReference;
 import org.bimserver.models.ifc2x3tc1.IfcElementQuantity;
 import org.bimserver.models.ifc2x3tc1.IfcFurnishingElement;
 import org.bimserver.models.ifc2x3tc1.IfcIdentifier;
@@ -40,6 +43,7 @@ import org.bimserver.models.ifc2x3tc1.IfcQuantityArea;
 import org.bimserver.models.ifc2x3tc1.IfcQuantityLength;
 import org.bimserver.models.ifc2x3tc1.IfcQuantityVolume;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
+import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesClassification;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesMaterial;
 import org.bimserver.models.ifc2x3tc1.IfcRelDecomposes;
 import org.bimserver.models.ifc2x3tc1.IfcRelDefines;
@@ -263,7 +267,7 @@ public class MpgIfcObjectCollector {
 		MpgGeometry geom = new MpgGeometry();
 
 		if (geometry != null) {
-			
+
 			geom.setVolume(this.convertVolume(geometry.getVolume()));
 
 			try {
@@ -274,19 +278,21 @@ public class MpgIfcObjectCollector {
 					double along_x_area = geomData.get("SURFACE_AREA_ALONG_X").asDouble();
 					double along_y_area = geomData.get("SURFACE_AREA_ALONG_Y").asDouble();
 					double along_z_area = geomData.get("SURFACE_AREA_ALONG_Z").asDouble();
-					
-					// check similarity to block of volume. Further away from 1 is a larger deviation.
-					double block_similarity = 2 * (along_x_area + along_y_area + along_z_area) / geomData.get("TOTAL_SURFACE_AREA").asDouble();
-					
+
+					// check similarity to block of volume. Further away from 1 is a larger
+					// deviation.
+					double block_similarity = 2 * (along_x_area + along_y_area + along_z_area)
+							/ geomData.get("TOTAL_SURFACE_AREA").asDouble();
+
 					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
-					
+
 					geom.setFloorArea(this.convertArea(along_z_area));
 
 					// get the max dimensions over the principal axes. **ASSUME** square areas..
 					double max_dim_x = Math.sqrt(along_z_area * along_y_area / along_x_area);
 					double max_dim_y = Math.sqrt(along_x_area * along_z_area / along_y_area);
 					double max_dim_z = Math.sqrt(along_y_area * along_x_area / along_z_area);
-					
+
 					int[] unitAxesArea = new int[2];
 					int[] scaleAxesArea = new int[1];
 
@@ -300,43 +306,42 @@ public class MpgIfcObjectCollector {
 						unitAxesArea[0] = 1;
 						unitAxesArea[1] = 2;
 					} else if ((largest_face_area - along_y_area) < 1e-8) {
-						// this case should be vertical walls, windows, doors etc.					
+						// this case should be vertical walls, windows, doors etc.
 						scaleAxesArea[0] = 2; // scale on thickess of wall (in y-dir)
 						unitAxesArea[0] = 3;
 						unitAxesArea[1] = 1;
-					} else if ((largest_face_area - along_x_area) < 1e-8){
+					} else if ((largest_face_area - along_x_area) < 1e-8) {
 						// x area is largest these cases have not been covered yet.
 						// could they be very narrow walls sections or very small floor sections?
-						// ToDo: need to evaluate these occurences 
+						// ToDo: need to evaluate these occurences
 						// - result: all of the above, walls, roofs, doors (?), pipes, railings etc.
 						// next question: will these be scaled over the thickness?
 						scaleAxesArea[0] = 1;
 						unitAxesArea[0] = 2;
 						unitAxesArea[1] = 3;
-						//System.out.println(prod.getClass());
-					} 
-					else {
+						// System.out.println(prod.getClass());
+					} else {
 						// similar to z case, but then refered in the local roof ref frame.
 						scaleAxesArea[0] = 3; // scale on thickess of floor (in z-dir)
 						unitAxesArea[0] = 1;
 						unitAxesArea[1] = 2;
-						
-						// these are slanted areas such as roofs etc. 
+
+						// these are slanted areas such as roofs etc.
 						// **ASSUME** extrusion in x direction.
-						//angle_of_face_area = Math.atan(max_dim_z / max_dim_y);
+						// angle_of_face_area = Math.atan(max_dim_z / max_dim_y);
 						length_face_area = Math.sqrt(Math.pow(max_dim_y, 2) + Math.pow(max_dim_z, 2));
 						width_face_area = largest_face_area / length_face_area;
 						thickness_of_face = geom.getVolume() / largest_face_area;
-						
+
 						// replace the max dims with the slanted area dimensions in a local ref frame
 						// (z axis perpendicular to face area)
-						// TODO: these axes do not seem to match up with the axis in Solibri. 
+						// TODO: these axes do not seem to match up with the axis in Solibri.
 						// one of the two changes the x and y directions
 						max_dim_z = thickness_of_face;
 						max_dim_y = length_face_area;
 						max_dim_x = width_face_area;
 					}
-					
+
 					MpgScalingType areaScale = new MpgScalingType();
 					areaScale.setScaleAxes(scaleAxesArea);
 					areaScale.setUnitAxes(unitAxesArea);
@@ -361,7 +366,7 @@ public class MpgIfcObjectCollector {
 						scaleAxesLength[0] = 3;
 						scaleAxesLength[1] = 1;
 						unitAxesLength[0] = 2;
-						
+
 					} else {
 						// x is largest
 						scaleAxesLength[0] = 2;
@@ -372,7 +377,7 @@ public class MpgIfcObjectCollector {
 					MpgScalingType lengthScale = new MpgScalingType();
 					lengthScale.setScaleAxes(scaleAxesLength);
 					lengthScale.setUnitAxes(unitAxesLength);
-					
+
 					// add both scalers to the geometry
 					geom.addScalingType(lengthScale);
 					geom.addScalingType(areaScale);
@@ -550,6 +555,18 @@ public class MpgIfcObjectCollector {
 					} else if (relatingMaterial instanceof IfcMaterialLayer) {
 						productLayers.addAll(getMaterialLayer((IfcMaterialLayer) relatingMaterial));
 					}
+				}
+				if (ifcRelAssociates instanceof IfcRelAssociatesClassification) {
+					IfcRelAssociatesClassification classes = (IfcRelAssociatesClassification) ifcRelAssociates;
+					IfcClassificationNotationSelect relClass = classes.getRelatingClassification();
+					
+					if (relClass instanceof IfcClassificationReference) {
+						IfcClassificationReference relRef = (IfcClassificationReference)relClass;
+						if (relRef.getReferencedSource().getName().toLowerCase().contains("sfb")) {
+							targetObject.setNLsfbCode(relRef.getItemReference());
+						}
+					}
+					
 				}
 			}
 
