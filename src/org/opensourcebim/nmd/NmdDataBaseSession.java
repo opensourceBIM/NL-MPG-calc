@@ -232,25 +232,24 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		HttpResponse response = this.performGetRequestWithParams(this.apiPath + "NLsfB_RAW_Elementen", params);
 		// do something with the entity to get the token
 		JsonNode respNode = this.responseToJson(response);
-		
+
 		// convert reponseNode to NmdProductCard info.
 		List<NmdElement> results = new ArrayList<NmdElement>();
 		respNode.get("results").forEach(f -> results.add(this.getElementDataFromJson(f)));
 
-		
 		// STEP 2 - get Element onderdelen
 		int initSize = results.size();
-		for (int i = 0; i < initSize ; i++ ) {
+		for (int i = 0; i < initSize; i++) {
 			NmdElement el = results.get(i);
 			List<KeyValuePair> params_el = new ArrayList<KeyValuePair>();
 			params_el.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 			params_el.add(new KeyValuePair("ElementID", el.getRAWCode()));
-			
+
 			HttpResponse responseEl = this.performGetRequestWithParams(this.apiPath + "ElementOnderdelen", params_el);
 			JsonNode respNodeEl = this.responseToJson(responseEl);
 			respNodeEl.get("results").forEach(f -> results.add(this.getElementDataFromJson(f)));
 		}
-		
+
 		return results;
 	}
 
@@ -259,23 +258,27 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 		params.add(new KeyValuePair("ElementID", element.getRAWCode()));
-		
+
 		HttpResponse response = this.performGetRequestWithParams(this.apiPath + "ProductenBijElement", params);
-		
+
 		JsonNode resp_node = this.responseToJson(response);
 		if (resp_node == null) {
 			return new ArrayList<NmdProductCard>();
 		}
 
 		JsonNode producten = resp_node.get("results");
+		List<NmdProductCard> products = new ArrayList<NmdProductCard>();
 
-		List<NmdProductCard> products =  new ArrayList<NmdProductCard>();
-		producten.forEach(p -> {
-			// only get items that are relevant for us.
-			if (TryParseJsonNode(p.get("ProfielSetGekoppeld"), false)) {
-				products.add(this.getProductCardDataFromJson(p));
-			}
-		});
+		if (producten != null) {
+			producten.forEach(p -> {
+				// only get items that are relevant for us.
+				if (TryParseJsonNode(p.get("ProfielSetGekoppeld"), false)) {
+					products.add(this.getProductCardDataFromJson(p));
+				}
+			});
+		} else {
+			System.out.println("found some exception");
+		}
 		return products;
 	}
 
@@ -384,12 +387,12 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		} else {
 			set.setIsScalable(false);
 		}
-		
+
 		this.loadFaseProfielDataForSet(profielSetNode, set);
-		
+
 		return set;
 	}
-	
+
 	/*
 	 * Try to get a set of profiel set data from the json node to populate the
 	 * NmdProfielSetobject
@@ -398,11 +401,11 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		NmdProductCardImpl prod = new NmdProductCardImpl();
 
 		prod.setLifetime(TryParseJsonNode(prodNode.get("Levensduur"), -1));
-		prod.setUnit(this.getResources().getUnitMapping()
-				.get(TryParseJsonNode(prodNode.get("FunctioneleEenheidID"), -1)));
+		prod.setUnit(
+				this.getResources().getUnitMapping().get(TryParseJsonNode(prodNode.get("FunctioneleEenheidID"), -1)));
 		prod.setProductId(TryParseJsonNode(prodNode.get("ProductID"), -1));
 		prod.setParentProductId(TryParseJsonNode(prodNode.get("OuderProductID"), -1));
-		
+
 		prod.setIsTotaalProduct(TryParseJsonNode(prodNode.get("IsElementDekkend"), false));
 
 		prod.setDescription(TryParseJsonNode(prodNode.get("ProductNaam"), ""));
@@ -410,7 +413,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		prod.setIsScalable(TryParseJsonNode(prodNode.get("IsSchaalbaar"), false));
 
 		// TODO add product attributes
-		
+
 		return prod;
 	}
 
@@ -423,7 +426,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		newElement.setRawCode(elementInfo.get("ElementID").asText());
 		newElement.setNlsfbCode(elementInfo.get("ElementCode").asText());
 		newElement.setElementName(elementInfo.get("ElementNaam").asText());
-		
+
 		newElement.setCUASId(TryParseJsonNode(elementInfo.get("CUAS_ID"), 5));
 
 		return newElement;

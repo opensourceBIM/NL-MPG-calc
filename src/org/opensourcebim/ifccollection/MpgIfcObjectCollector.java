@@ -282,10 +282,10 @@ public class MpgIfcObjectCollector {
 
 					geom.setFloorArea(this.convertArea(along_z_area));
 
-					// get the max dimensions over the principal axes. **ASSUME** square areas..
-					double max_dim_x = Math.sqrt(along_z_area * along_y_area / along_x_area);
-					double max_dim_y = Math.sqrt(along_x_area * along_z_area / along_y_area);
-					double max_dim_z = Math.sqrt(along_y_area * along_x_area / along_z_area);
+					// get the max dimensions over the principal axes.
+					double max_dim_x = geomData.get("BOUNDING_BOX_SIZE_ALONG_X").asDouble();
+					double max_dim_y = geomData.get("BOUNDING_BOX_SIZE_ALONG_Y").asDouble();
+					double max_dim_z = geomData.get("BOUNDING_BOX_SIZE_ALONG_Z").asDouble();
 
 					int[] unitAxesArea = new int[2];
 					int[] scaleAxesArea = new int[1];
@@ -310,6 +310,9 @@ public class MpgIfcObjectCollector {
 						// ToDo: need to evaluate these occurences
 						// - result: all of the above, walls, roofs, doors (?), pipes, railings etc.
 						// next question: will these be scaled over the thickness?
+
+						// TODO: leave these as unknonw and then
+						// at the end of the processing add scalers from similar objects
 						scaleAxesArea[0] = 1;
 						unitAxesArea[0] = 2;
 						unitAxesArea[1] = 3;
@@ -342,9 +345,10 @@ public class MpgIfcObjectCollector {
 
 					// dimensions have been checked wrt angle of object. set rest of max dims
 					geom.setFaceArea(this.convertArea(largest_face_area));
-					geom.setMaxXDimension(this.convertLength(max_dim_x));
-					geom.setMaxYDimension(this.convertLength(max_dim_y));
-					geom.setMaxZDimension(this.convertLength(max_dim_z));
+					// for now omit convert length as bbox does not seem to match with the ifcModel length unit
+					geom.setMaxXDimension(max_dim_x);
+					geom.setMaxYDimension(max_dim_y);
+					geom.setMaxZDimension(max_dim_z);
 
 					// create the scaler for slender objects
 					int[] unitAxesLength = new int[1];
@@ -553,14 +557,14 @@ public class MpgIfcObjectCollector {
 				if (ifcRelAssociates instanceof IfcRelAssociatesClassification) {
 					IfcRelAssociatesClassification classes = (IfcRelAssociatesClassification) ifcRelAssociates;
 					IfcClassificationNotationSelect relClass = classes.getRelatingClassification();
-					
+
 					if (relClass instanceof IfcClassificationReference) {
-						IfcClassificationReference relRef = (IfcClassificationReference)relClass;
+						IfcClassificationReference relRef = (IfcClassificationReference) relClass;
 						if (relRef.getReferencedSource().getName().toLowerCase().contains("sfb")) {
 							targetObject.setNLsfbCode(relRef.getItemReference());
 						}
 					}
-					
+
 				}
 			}
 
