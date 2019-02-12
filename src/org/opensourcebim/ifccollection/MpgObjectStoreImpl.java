@@ -1,6 +1,7 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.bimserver.utils.AreaUnit;
@@ -111,9 +113,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public VolumeUnit getVolumeUnit() {
 		return this.volumeUnit;
 	}
-	
+
 	@Override
-	public AreaUnit getAreaUnit( ) {
+	public AreaUnit getAreaUnit() {
 		return this.areaUnit;
 	}
 
@@ -121,7 +123,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public LengthUnit getLengthUnit() {
 		return this.lengthUnit;
 	}
-	
+
 	/**
 	 * Set the units used when storing the mpgObjects
 	 * 
@@ -134,7 +136,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		this.areaUnit = areaUnit;
 		this.lengthUnit = lengthUnit;
 	}
-	
+
 	@Override
 	public void addElement(String name) {
 		if (name != null && !name.isEmpty()) {
@@ -245,7 +247,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public double getTotalVolumeOfProductType(String productType) {
-		return getObjectsByProductType(productType).stream().collect(Collectors.summingDouble(o -> o.getGeometry().getVolume()));
+		return getObjectsByProductType(productType).stream()
+				.collect(Collectors.summingDouble(o -> o.getGeometry().getVolume()));
 	}
 
 	@Override
@@ -294,7 +297,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	public boolean isElementDataComplete() {
 		return this.mpgElements.stream().allMatch(e -> {
-			return e.getNmdProductCards().size() > 0 && e.getMpgObject() != null && e.getIsFullyCovered(); 
+			return e.getNmdProductCards().size() > 0 && e.getMpgObject() != null && e.getIsFullyCovered();
 		});
 	}
 
@@ -441,4 +444,56 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 					return (n != null && !n.isEmpty());
 				}).distinct();
 	}
+
+	/**
+	 * go through all objects without an NLSFB code and try to find matching or
+	 * 'parent' objects that do have a type.
+	 */
+	public void resolveNlsfbCodes() {
+
+		this.getObjects().stream().filter(o -> o.getNLsfbCode() == "" || o.getNLsfbCode() == null).forEach(o -> {
+			if (!o.getParentId().isEmpty()) {
+				MpgObject p = this.getObjectByGuid(o.getParentId()).get();
+				String parentCode = p.getNLsfbCode();
+				if (!parentCode.isEmpty()) {
+					o.setNLsfbCode(parentCode);
+				}
+			}
+		});
+	}
+
+	/**
+	 * run through mpgObjects where no geometry could be found and match these with
+	 * first: similar nlsfb code objects and second (Not implemented yet)
+	 */
+	public void resolveUnknownGeometries() {
+		// maintain a map with already found scalers to boost performance.
+		HashMap<String, List<MpgScalingType>> foundScalers = new HashMap<String, List<MpgScalingType>>();
+		
+		this.getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
+			List<MpgScalingType> scalers = null;
+			if (foundScalers.containsKey(o.getNLsfbCode())) {
+				scalers = foundScalers.get(o.getNLsfbCode());
+			} else {
+				scalers = findScalersForNlsfbCode(o.getNLsfbCode());
+				foundScalers.put(o.getNLsfbCode(), scalers);
+			}
+			scalers.forEach(s -> o.getGeometry().addScalingType(s));
+		});
+	}
+
+	private List<MpgScalingType> findScalersForNlsfbCode(String nLsfbCode) {
+		@SuppressWarnings("unchecked")
+		List<List<MpgScalingType>> candidates = (List<List<MpgScalingType>>)(
+				this.getObjects().stream()
+				.filter(o -> o.getNLsfbCode() != null)
+				.filter(o -> o.getNLsfbCode().equalsIgnoreCase(nLsfbCode))
+				.map(o -> o.getGeometry().getScalerTypes())
+				.map(st -> (List<MpgScalingType>)st)
+				.distinct()
+				.collect(Collectors.toList()));
+
+		return candidates.get(0);
+	}
+
 }

@@ -11,8 +11,8 @@ public class MpgGeometry {
 	private double faceArea;
 
 	private Double[] maxDimensions;
-	private double angleOfFaceAreaWrtHorizon;
-
+	private Boolean isComplete;
+	
 	private List<MpgScalingType> scaleParams;
 
 	public MpgGeometry() {
@@ -20,7 +20,8 @@ public class MpgGeometry {
 		floorArea = Double.NaN;
 		faceArea = Double.NaN;
 
-		angleOfFaceAreaWrtHorizon = Double.NaN;
+		setIsComplete(false);
+		
 		maxDimensions = new Double[3];
 		setMaxXDimension(Double.NaN);
 		setMaxYDimension(Double.NaN);
@@ -50,15 +51,6 @@ public class MpgGeometry {
 
 	public void setFaceArea(Double largestFaceArea) {
 		this.faceArea = largestFaceArea;
-	}
-
-	public Double getAngleOfFaceAreaWrtHorizon() {
-		return angleOfFaceAreaWrtHorizon;
-	}
-
-	// angle in radians
-	public void setAngleOfFaceAreaWrtHorizon(Double angle) {
-		this.angleOfFaceAreaWrtHorizon = angle;
 	}
 
 	public Double getMaxXDimension() {
@@ -112,5 +104,17 @@ public class MpgGeometry {
 			dims[i] = maxDimensions[scaleAxes[i]];
 		}
 		return dims;
+	}
+
+	public Boolean getIsComplete() {
+		return isComplete;
+	}
+
+	public void setIsComplete(Boolean isComplete) {
+		this.isComplete = isComplete;
+	}
+
+	public Object getScalerTypes() {
+		return this.scaleParams;
 	}
 }

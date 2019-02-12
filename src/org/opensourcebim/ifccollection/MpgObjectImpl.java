@@ -113,6 +113,7 @@ public class MpgObjectImpl implements MpgObject {
 		return this.nlsfb;
 	}
 	
+	@Override
 	public void setNLsfbCode(String code) {
 		this.nlsfb = code;
 	}

@@ -209,6 +209,13 @@ public class MpgIfcObjectCollector {
 
 		// set all parent child relations for elements
 		objectStore.recreateParentChildMap(childToParentMap);
+		
+		// try to find the right NLsfb codes for decomposed objects without nlsfb codes
+		objectStore.resolveNlsfbCodes();
+		
+		// try to find the correct scaling types for objects that could not have their geometry resolved
+		objectStore.resolveUnknownGeometries();
+		
 		objectStore.validateIfcDataCollection();
 
 		return objectStore;
@@ -272,6 +279,7 @@ public class MpgIfcObjectCollector {
 			try {
 				JsonNode geomData = mapper.readTree(geometry.getAdditionalData());
 				if (geomData != null && geomData.size() > 0) {
+					geom.setIsComplete(true);
 					// determine orientation of the reference frame by checking areas with the floor
 					// area.
 					double along_x_area = geomData.get("SURFACE_AREA_ALONG_X").asDouble();
@@ -293,7 +301,7 @@ public class MpgIfcObjectCollector {
 					// create the 2 dim scaler type
 					double length_face_area = 0.0;
 					double width_face_area = 0.0;
-					double thickness_of_face = 0.0;
+					double avg_thickness_of_face = 0.0;
 					if ((largest_face_area - along_z_area) < 1e-8) {
 						// this should be floors, slabs etc.
 						scaleAxesArea[0] = 3; // scale on thickess of floor (in z-dir)
@@ -306,17 +314,9 @@ public class MpgIfcObjectCollector {
 						unitAxesArea[1] = 1;
 					} else if ((largest_face_area - along_x_area) < 1e-8) {
 						// x area is largest these cases have not been covered yet.
-						// could they be very narrow walls sections or very small floor sections?
-						// ToDo: need to evaluate these occurences
-						// - result: all of the above, walls, roofs, doors (?), pipes, railings etc.
+						// - the products triggered here are walls, roofs, doors (?), pipes, railings etc.
 						// next question: will these be scaled over the thickness?
-
-						// TODO: leave these as unknonw and then
-						// at the end of the processing add scalers from similar objects
-						scaleAxesArea[0] = 1;
-						unitAxesArea[0] = 2;
-						unitAxesArea[1] = 3;
-						// System.out.println(prod.getClass());
+						geom.setIsComplete(false);
 					} else {
 						// similar to z case, but then refered in the local roof ref frame.
 						scaleAxesArea[0] = 3; // scale on thickess of floor (in z-dir)
@@ -328,13 +328,11 @@ public class MpgIfcObjectCollector {
 						// angle_of_face_area = Math.atan(max_dim_z / max_dim_y);
 						length_face_area = Math.sqrt(Math.pow(max_dim_y, 2) + Math.pow(max_dim_z, 2));
 						width_face_area = largest_face_area / length_face_area;
-						thickness_of_face = geom.getVolume() / largest_face_area;
+						avg_thickness_of_face = geom.getVolume() / largest_face_area;
 
 						// replace the max dims with the slanted area dimensions in a local ref frame
 						// (z axis perpendicular to face area)
-						// TODO: these axes do not seem to match up with the axis in Solibri.
-						// one of the two changes the x and y directions
-						max_dim_z = thickness_of_face;
+						max_dim_z = avg_thickness_of_face;
 						max_dim_y = length_face_area;
 						max_dim_x = width_face_area;
 					}
@@ -376,9 +374,11 @@ public class MpgIfcObjectCollector {
 					lengthScale.setScaleAxes(scaleAxesLength);
 					lengthScale.setUnitAxes(unitAxesLength);
 
-					// add both scalers to the geometry
-					geom.addScalingType(lengthScale);
-					geom.addScalingType(areaScale);
+					if (!geom.getIsComplete()) {
+						// add both scalers to the geometry only if there is a clear geometry found
+						geom.addScalingType(lengthScale);
+						geom.addScalingType(areaScale);
+					}
 
 				}
 			} catch (IOException e) {
