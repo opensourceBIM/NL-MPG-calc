@@ -329,7 +329,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(4.0, collector.results().getSpaces().get(0).getVolume(), 1e-8);
-		assertEquals(1.0, collector.results().getSpaces().get(0).getArea(), 1e-8);
+		assertEquals(Math.pow(4.0, (2.0/3.0)), collector.results().getSpaces().get(0).getArea(), 1e-8);
 	}
 	
 	@Test

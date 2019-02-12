@@ -138,7 +138,7 @@ public class NmdProductCardImpl implements NmdProductCard {
 		MpgGeometry geom = object.getGeometry();
 		
 		
-		String productUnit = this.getUnit();
+		String productUnit = this.getUnit().toLowerCase();
 		if (productUnit.equals("m1")) {
 			return geom.getPrincipalDimension();
 		}

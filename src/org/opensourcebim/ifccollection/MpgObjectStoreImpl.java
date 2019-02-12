@@ -152,10 +152,10 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void addProductCardToElement(String name, NmdProductCard specs) {
+	public void addProductCardToElement(String name, Integer cuasCode, NmdProductCard card) {
 		MpgElement el = getElementByName(name);
 		if (el != null) {
-			el.addProductCard(specs);
+			el.addProductCard(cuasCode, card);
 		}
 	}
 
@@ -293,8 +293,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 */
 	@Override
 	public boolean isElementDataComplete() {
-		// TODO: how to check if all cuas levels are covered?
-		return true;
+		return this.mpgElements.stream().allMatch(e -> {
+			return e.getNmdProductCards().size() > 0 && e.getMpgObject() != null && e.getIsFullyCovered(); 
+		});
 	}
 
 	@Override

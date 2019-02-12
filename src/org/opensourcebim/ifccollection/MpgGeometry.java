@@ -104,7 +104,7 @@ public class MpgGeometry {
 		// this is a bit counter-intuitive, but we need the scaler that belongs to an
 		// area object to scale over 1 dimension (thickness only) while we need the
 		// scaler that belongs to a slender object (pipes etc. to scale over a cross
-		// sectional area
+		// sectional area		
 		int scalerIndex = dim % 2;
 		int[] scaleAxes = scaleParams.get(scalerIndex).getScaleAxes();
 		Double[] dims = new Double[scaleAxes.length];

@@ -214,7 +214,8 @@ public class IfcMockFactory {
 				+ ",\"TOTAL_SHAPE_VOLUME\":" + volume
 				+ ",\"SURFACE_AREA_ALONG_X\":" + faceArea 
 				+ ",\"SURFACE_AREA_ALONG_Y\":" + faceArea 
-				+ ",\"SURFACE_AREA_ALONG_Z\":" + faceArea+ "}");
+				+ ",\"SURFACE_AREA_ALONG_Z\":" + faceArea 
+				+ ",\"LARGEST_FACE_AREA\":" + faceArea + "}");
 		return geom;
 	}
 

@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 
@@ -73,17 +75,19 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			String[] foundMap = map.getOrDefault(ifcProductType, emptyMap);
 			if (foundMap == null) { break; }
 			
-			Optional<NmdProductCard> dbProduct = nmdDataService.getData().stream()
+			Optional<ImmutablePair<Integer, NmdProductCard>> dbProduct = nmdDataService.getData().stream()
 				.filter(el -> Arrays.stream(foundMap).anyMatch(code -> code == el.getNLsfbCode()))
-				.flatMap(el -> el.getProducts().stream())
+				.flatMap(el -> el.getProducts().stream()
+							.map(pc -> new ImmutablePair<Integer, NmdProductCard>(el.getCUASId(), pc))
+						)
 				.findFirst();
 			if (!dbProduct.isPresent()) { break; }
 			
 			// create a copy
-			retrievedMaterial = new NmdProductCardImpl(dbProduct.get());
+			retrievedMaterial = new NmdProductCardImpl(dbProduct.get().getValue());
 
 			if (nmdDataService.getAdditionalProfileDataForCard(retrievedMaterial)) {
-				mpgElement.addProductCard(retrievedMaterial);
+				mpgElement.addProductCard(dbProduct.get().getKey(), retrievedMaterial);
 				mpgElement.setMappingMethod(NmdMapping.Direct);
 				break;
 			}

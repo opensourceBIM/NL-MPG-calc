@@ -1,6 +1,8 @@
 package org.opensourcebim.mpgcalculation;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.LengthUnit;
@@ -48,14 +50,16 @@ public class MpgCalculator {
 			// for each building material found:
 			for (MpgElement element : objectStore.getElements()) {
 
-				for (NmdProductCard product : element.getNmdProductCards()) {
-
-					// Determine replacements required.
-					// this is usually 1 for regular materials and > 1 for cyclic maintenance
-					// For a product card with composed profielsets (not a single totaalproduct) the
-					// replacement of the
-					// first encountered Construction (Cuas code 1) profielset will be used.
-					double replacements = this.calculateReplacements(designLife, product);
+				// Determine replacements required.
+				// this is usually 1 for regular materials and > 1 for cyclic maintenance
+				// For a product card with composed profielsets (not a single totaalproduct) the
+				// replacement of the
+				// first encountered Construction (Cuas code 1) profielset will be used.
+				double replacements = this.calculateReplacements(designLife, element);
+				
+				List<NmdProductCard> products = element.getNmdProductCards().stream()
+						.map(p -> p.getValue()).collect(Collectors.toList());
+				for (NmdProductCard product : products) {
 
 					// category 3 data requires a 30% penalty
 					double categoryMultiplier = product.getCategory() == 3 ? 1.3 : 1.0;
@@ -74,11 +78,14 @@ public class MpgCalculator {
 
 							NmdScaler scaler = profielSet.getScaler();
 							String unit = scaler.getUnit();
-							Double[] dims = element.getMpgObject().getGeometry()
-									.getScaleDims(getUnitDimension(product.getUnit()));
-							Double unitConversionFactor = getScalingUnitConversionFactor(unit, dims.length);
-
-							scaleFactor = profielSet.getScaler().scaleWithConversion(dims, unitConversionFactor);
+							int numDims = getUnitDimension(product.getUnit());
+							if (numDims < 3) {
+								
+								Double[] dims = element.getMpgObject().getGeometry().getScaleDims(numDims);
+								Double unitConversionFactor = getScalingUnitConversionFactor(unit, dims.length);
+								
+								scaleFactor = profielSet.getScaler().scaleWithConversion(dims, unitConversionFactor);
+							}
 						}
 
 						// calculate total units required taking into account category modifiers.
@@ -159,18 +166,16 @@ public class MpgCalculator {
 	 * life. Omit the initial application for Maintenance materials. source:
 	 * https://www.milieudatabase.nl/imgcms/20141125_SBK_BepMeth_vs_2_0_inclusief_Wijzigingsblad_1_juni_2017_&_1_augustus_2017.pdf
 	 * 
-	 * @param designLife  total duration that building should be usable in years
-	 * @param productLife design life of the material in years
+	 * @param designLife total duration that building should be usable in years
+	 * @param element element with products linked to it
 	 * @return number of replacements. number is alsways larger or equal to 1
 	 */
-	private double calculateReplacements(double designLife, NmdProductCard product) {
-		// TODO: make this method accept an element and run through all linked products
+	private Double calculateReplacements(double designLife, MpgElement element) {
 		double productLife = -1.0;
-		if (product.getIsTotaalProduct()) {
-			productLife = (double) product.getProfileSets().stream().findFirst().get().getProfileLifeTime();
-		} else {
-			productLife = product.getLifetime();
-		}
+		if (element.getNmdProductCards().size() == 0) {return Double.NaN;}
+		
+		// TODO: select first construction element rather than just the first element
+		productLife = element.getNmdProductCards().get(0).getValue().getLifetime();
 
 		return Math.max(1.0, designLife / Math.max(1.0, productLife));
 	}
