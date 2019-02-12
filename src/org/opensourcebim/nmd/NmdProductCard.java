@@ -2,6 +2,8 @@ package org.opensourcebim.nmd;
 import java.util.Collection;
 import java.util.Set;
 
+import org.opensourcebim.ifccollection.MpgObject;
+
 /**
  * Storage container to contain the lifecycle coefficients to do the MPG
  * calculations. A single instance of this interface can return 1 to n materials
@@ -35,4 +37,6 @@ public interface NmdProductCard{
 	Integer getParentProductId();
 
 	Integer getProductId();
+
+	double getRequiredNumberOfUnits(MpgObject mpgObject);
 }

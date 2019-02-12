@@ -1,16 +1,11 @@
 package org.opensourcebim.nmd;
 
 import java.util.HashMap;
-
-import org.opensourcebim.ifccollection.MpgGeometry;
-import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.scaling.NmdScaler;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class NmdProfileSetImpl implements NmdProfileSet {
 	private String name;
-	private Integer profielId;
+	private int profielId;
 	private String unit;
 
 	private int profileLifeTime;
@@ -20,11 +15,13 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	 * Can be different for specs within the same productcard
 	 */
 	private HashMap<String, NmdFaseProfiel> profiles;
-	private Boolean isScalable;
+	private boolean isScalable;
 	private NmdScaler scaler;
+	private double quantity;
 
 	public NmdProfileSetImpl() {		
 		this.profiles = new HashMap<String, NmdFaseProfiel>();
+		this.quantity = 1.0;
 	}
 	
 	@Override
@@ -53,6 +50,16 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	public void setUnit(String unit) {
 		this.unit = unit;
 	}
+	
+
+	@Override
+	public Double getQuantity() {
+		return this.quantity;
+	}
+	
+	public void setQuantity(double q) {
+		this.quantity = q;
+	}
 
 	@Override
 	public Integer getProfileLifeTime() {
@@ -77,34 +84,6 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 		return this.profiles;
 	}
 	
-	public Double getRequiredNumberOfUnits(MpgObject object) {
-		if (object == null || this.profiles.size() == 0) {
-			return Double.NaN;
-		}
-		MpgGeometry geom = object.getGeometry();
-		
-		
-		String productUnit = this.getUnit();
-		if (productUnit.equals("m1")) {
-			return geom.getPrincipalDimension();
-		}
-		if (productUnit.equals("m2")) {
-			return geom.getFaceArea();
-		}
-		if (productUnit.equals("m3")) {
-			return geom.getVolume();
-		}
-		if (productUnit.equals("p")) {
-			return 1.0; // product per piece. always return 1 per profielset.
-		}
-		if (productUnit.equals("kg")) {
-			return Double.NaN; // we do not have densities of products, we will need to figure out how to fix this.
-		}
-		
-		return Double.NaN;
-		
-	}
-
 	@Override
 	public Boolean getIsScalable() {
 		return this.isScalable;
@@ -121,40 +100,5 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	@Override
 	public NmdScaler getScaler() {
 		return this.scaler;
-	}
-
-	@Override
-	@JsonIgnore
-	public int getUnitDimension() {
-		String productUnit = this.getUnit();
-		
-		switch (productUnit.toLowerCase()) {
-		case "mm":
-		case "cm":
-		case "m1":
-		case "m":
-		case "meter":
-			return 1;
-		case "mm2":
-		case "mm^2":
-		case "square_millimeter":
-		case "cm2":
-		case "cm^2":
-		case "m2":
-		case "m^2":
-		case "square_meter":
-			return 2;
-		case "mm3":
-		case "mm^3":
-		case "cubic_millimeter":
-		case "cm3":
-		case "cm^3":
-		case "m3":
-		case "m^3":
-		case "cubic_meter":
-			return 3;
-		default:
-			return -1;
-		}
 	}
 }

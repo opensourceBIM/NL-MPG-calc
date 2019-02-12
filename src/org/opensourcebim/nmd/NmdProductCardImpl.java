@@ -4,7 +4,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.opensourcebim.ifccollection.MpgGeometry;
+import org.opensourcebim.ifccollection.MpgObject;
+
 public class NmdProductCardImpl implements NmdProductCard {
+	
 	private String description;
 	private Set<NmdProfileSet> specifications;
 	private Boolean isTotaalProduct;
@@ -124,5 +128,34 @@ public class NmdProductCardImpl implements NmdProductCard {
 	
 	public void setProductId(Integer id) {
 		this.id = id;
+	}
+	
+	@Override
+	public double getRequiredNumberOfUnits(MpgObject object) {
+		if (object == null || this.getProfileSets().size() == 0) {
+			return Double.NaN;
+		}
+		MpgGeometry geom = object.getGeometry();
+		
+		
+		String productUnit = this.getUnit();
+		if (productUnit.equals("m1")) {
+			return geom.getPrincipalDimension();
+		}
+		if (productUnit.equals("m2")) {
+			return geom.getFaceArea();
+		}
+		if (productUnit.equals("m3")) {
+			return geom.getVolume();
+		}
+		if (productUnit.equals("p")) {
+			return 1.0; // product per piece. always return 1 per profielset.
+		}
+		if (productUnit.equals("kg")) {
+			return Double.NaN; // we do not have densities of products, we will need to figure out how to fix this.
+		}
+		
+		return Double.NaN;
+		
 	}
 }

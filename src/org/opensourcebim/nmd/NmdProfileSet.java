@@ -1,8 +1,6 @@
 package org.opensourcebim.nmd;
 
 import java.util.HashMap;
-
-import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
 /**
@@ -19,6 +17,8 @@ public interface NmdProfileSet {
 	
 	String getUnit();
 	
+	Double getQuantity();
+	
 	Integer getProfileLifeTime();
 	
 	NmdFaseProfiel getFaseProfiel(String fase);
@@ -27,11 +27,7 @@ public interface NmdProfileSet {
 
 	void addFaseProfiel(String fase, NmdFaseProfiel faseProfiel);
 		
-	Double getRequiredNumberOfUnits(MpgObject mpgObject);
-
 	Boolean getIsScalable();
 
 	NmdScaler getScaler();
-
-	int getUnitDimension();
 }

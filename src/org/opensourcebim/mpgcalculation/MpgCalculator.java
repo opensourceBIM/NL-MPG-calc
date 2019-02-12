@@ -60,14 +60,13 @@ public class MpgCalculator {
 					// category 3 data requires a 30% penalty
 					double categoryMultiplier = product.getCategory() == 3 ? 1.3 : 1.0;
 
+					// get number of product units based on geometry of ifcproduct and unit of
+					// productcard
+					// TODO: currently there is a very basic method implemented. should be improved.
+					// This should include density conversions and/or energy water use conversion
+					double unitsRequired = product.getRequiredNumberOfUnits(element.getMpgObject());
+					
 					for (NmdProfileSet profielSet : product.getProfileSets()) {
-
-						// get number of product units based on geometry of ifcproduct and unit of
-						// productcard
-						// TODO: currently there is a very basic method implemented. should be improved.
-						// This should include density conversions and/or energy water use conversion
-						double unitsRequired = profielSet.getRequiredNumberOfUnits(element.getMpgObject());
-
 						double scaleFactor = 1.0;
 						// determine scale factor based on scaler. if no scaler is present the
 						// unitsRequired is sufficient (and no scaling is applied)
@@ -76,21 +75,20 @@ public class MpgCalculator {
 							NmdScaler scaler = profielSet.getScaler();
 							String unit = scaler.getUnit();
 							Double[] dims = element.getMpgObject().getGeometry()
-									.getScaleDims(profielSet.getUnitDimension());
+									.getScaleDims(getUnitDimension(product.getUnit()));
 							Double unitConversionFactor = getScalingUnitConversionFactor(unit, dims.length);
 
 							scaleFactor = profielSet.getScaler().scaleWithConversion(dims, unitConversionFactor);
 						}
 
 						// calculate total units required taking into account category modifiers.
-						// replacements and scaling
-						// ToDo: We do not have desnities of materials in the DB. How to get the masses
-						// of products?
-						double lifeTimeUnitsPerSpec = replacements * unitsRequired * categoryMultiplier * scaleFactor;
+						// replacements, # of profielSet items per productCard and scaling
+						double lifeTimeUnitsPerProfiel = replacements * profielSet.getQuantity()
+								* unitsRequired * categoryMultiplier * scaleFactor;
 
 						// example for production
 						profielSet.getAllFaseProfielen().values().forEach(fp -> {
-							Set<MpgCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerSpec);
+							Set<MpgCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfiel);
 							results.incrementCostFactors(factors, product.getDescription(), profielSet.getName());
 						});
 					}
@@ -183,6 +181,37 @@ public class MpgCalculator {
 
 	public void setResults(MpgCalculationResults results) {
 		this.results = results;
+	}
+	
+	private int getUnitDimension(String unit) {	
+		switch (unit.toLowerCase()) {
+		case "mm":
+		case "cm":
+		case "m1":
+		case "m":
+		case "meter":
+			return 1;
+		case "mm2":
+		case "mm^2":
+		case "square_millimeter":
+		case "cm2":
+		case "cm^2":
+		case "m2":
+		case "m^2":
+		case "square_meter":
+			return 2;
+		case "mm3":
+		case "mm^3":
+		case "cubic_millimeter":
+		case "cm3":
+		case "cm^3":
+		case "m3":
+		case "m^3":
+		case "cubic_meter":
+			return 3;
+		default:
+			return -1;
+		}
 	}
 
 }
