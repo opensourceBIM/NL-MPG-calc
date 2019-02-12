@@ -93,11 +93,12 @@ public class mpgCalculatorTests {
 		int category = 1;
 		NmdProductCardImpl card = new NmdProductCardImpl();
 		card.setUnit(unit);
+		card.setCategory(category);
 		// since we're not adding a totaalproduct we need to cover every CUAS stage individually
-		card.addProfileSet(createProfileSet(name, unit, 1, category));
-		card.addProfileSet(createProfileSet(name, unit, 1, category));
-		card.addProfileSet(createProfileSet(name, unit, 1, category));
-		card.addProfileSet(createProfileSet(name, unit, 1, category));
+		card.addProfileSet(createProfileSet(name, unit, 1));
+		card.addProfileSet(createProfileSet(name, unit, 1));
+		card.addProfileSet(createProfileSet(name, unit, 1));
+		card.addProfileSet(createProfileSet(name, unit, 1));
 		card.setIsTotaalProduct(false);
 		store.addProductCardToElement(ifcName, card);
 		addUnitIfcObjectForElement(ifcName, 1.0, 1.0);
@@ -204,8 +205,8 @@ public class mpgCalculatorTests {
 		store.addElement("Brick Wall");
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
 		productCard.setUnit("m2");
-		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1));
-		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1));
+		productCard.addProfileSet(createProfileSet("bricks", "m2", 10));
+		productCard.addProfileSet(createProfileSet("mortar", "m2", 1));
 		store.addProductCardToElement("Brick Wall", productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
 		
@@ -218,8 +219,8 @@ public class mpgCalculatorTests {
 		store.addElement("Brick Wall");
 		productCard = new NmdProductCardImpl();
 		productCard.setUnit("m2");
-		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1));
-		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1));
+		productCard.addProfileSet(createProfileSet("mortar", "m2", 1));
+		productCard.addProfileSet(createProfileSet("bricks", "m2", 10));
 
 		store.addProductCardToElement("Brick Wall", productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
@@ -302,24 +303,24 @@ public class mpgCalculatorTests {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
 		specs.setCategory(category);
 		specs.setUnit(unit);
-		specs.addProfileSet(createProfileSet(name, unit, 1, category));
+		specs.addProfileSet(createProfileSet(name, unit, 1));
 
 		return specs;
 	}
 
-	private NmdProfileSet createProfileSet(String name, String unit, int lifetime, int category) {
+	private NmdProfileSet createProfileSet(String name, String unit, int lifetime) {
 		NmdProfileSetImpl spec = new NmdProfileSetImpl();
 		
 		spec.setProfileLifetime(lifetime);
-		spec.addFaseProfiel("TransportToSite", createUnitProfile("TransportToSite", category));
-		spec.addFaseProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements", category));
-		spec.addFaseProfiel("Disposal", createUnitProfile("Disposal", category));
-		spec.addFaseProfiel("Incineration", createUnitProfile("Incineration", category));
-		spec.addFaseProfiel("Recycling", createUnitProfile("Recycling", category));
-		spec.addFaseProfiel("Reuse", createUnitProfile("Reuse", category));
-		spec.addFaseProfiel("OwnDisposalProfile", createUnitProfile("OwnDisposalProfile", category));
-		spec.addFaseProfiel("TransportForRemoval", createUnitProfile("TransportForRemoval", category));
-		spec.addFaseProfiel("Operation", createUnitProfile("Operation", category));
+		spec.addFaseProfiel("TransportToSite", createUnitProfile("TransportToSite"));
+		spec.addFaseProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements"));
+		spec.addFaseProfiel("Disposal", createUnitProfile("Disposal"));
+		spec.addFaseProfiel("Incineration", createUnitProfile("Incineration"));
+		spec.addFaseProfiel("Recycling", createUnitProfile("Recycling"));
+		spec.addFaseProfiel("Reuse", createUnitProfile("Reuse"));
+		spec.addFaseProfiel("OwnDisposalProfile", createUnitProfile("OwnDisposalProfile"));
+		spec.addFaseProfiel("TransportForRemoval", createUnitProfile("TransportForRemoval"));
+		spec.addFaseProfiel("Operation", createUnitProfile("Operation"));
 
 		spec.setUnit(unit);
 		spec.setProfielId(1);
@@ -334,8 +335,8 @@ public class mpgCalculatorTests {
 		return spec;
 	}
 
-	private NmdFaseProfiel createUnitProfile(String fase, int category) {
-		NmdFaseProfielImpl profile = new NmdFaseProfielImpl(fase, category, this.getDummyReferences());
+	private NmdFaseProfiel createUnitProfile(String fase) {
+		NmdFaseProfielImpl profile = new NmdFaseProfielImpl(fase, this.getDummyReferences());
 		profile.setAll(1.0);
 		return profile;
 	}

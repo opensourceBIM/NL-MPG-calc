@@ -12,11 +12,9 @@ public class NmdFaseProfielImpl implements NmdFaseProfiel {
 	private HashMap<String, Double> profielCoefficienten;
 	private String fase;
 	private NmdReferenceResources refData;
-	private Integer category;
 
-	public NmdFaseProfielImpl(String fase, Integer category, NmdReferenceResources referenceData) {
+	public NmdFaseProfielImpl(String fase, NmdReferenceResources referenceData) {
 		profielCoefficienten = new HashMap<String, Double>();
-		this.setCategory(category);
 		this.refData = referenceData;
 		this.setAll(0);
 		this.fase = fase;
@@ -64,14 +62,5 @@ public class NmdFaseProfielImpl implements NmdFaseProfiel {
 				.filter(v -> !v.isNaN())
 				.mapToDouble(v -> v.doubleValue())
 				.sum();
-	}
-
-	@Override
-	public Integer getCategory() {
-		return category;
-	}
-
-	public void setCategory(Integer cat) {
-		this.category = cat;
 	}
 }

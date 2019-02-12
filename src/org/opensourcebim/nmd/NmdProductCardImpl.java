@@ -2,9 +2,7 @@ package org.opensourcebim.nmd;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class NmdProductCardImpl implements NmdProductCard {
 	private String description;
@@ -16,7 +14,6 @@ public class NmdProductCardImpl implements NmdProductCard {
 	private Integer productLifetime;
 	private Integer parentId;
 	private Integer id;
-	private Integer cuasId;
 
 	public NmdProductCardImpl() {
 		this.specifications = new HashSet<NmdProfileSet>();

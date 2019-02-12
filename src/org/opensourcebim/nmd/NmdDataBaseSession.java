@@ -70,6 +70,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		return data;
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public void login() {
 		// Try add a Post request to the base class.
@@ -328,11 +329,10 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		// laad faseprofiel specifieke data
 		JsonNode profielen = profielSetNode.get("Profiel");
 		profielen.forEach(p -> {
-			Integer category = TryParseJsonNode(p.get("CategorieID"), -1);
 			Integer fase = TryParseJsonNode(p.get("FaseID"), -1);
 			String faseName = this.getResources().getFaseMapping().get(fase);
 
-			NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(faseName, category, this.getResources());
+			NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(faseName, this.getResources());
 
 			p.get("ProfielMilieuEffecten").forEach(val -> {
 				Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
@@ -409,6 +409,8 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		prod.setCategory(TryParseJsonNode(prodNode.get("CategorieID"), 3));
 		prod.setIsScalable(TryParseJsonNode(prodNode.get("IsSchaalbaar"), false));
 
+		// TODO add product attributes
+		
 		return prod;
 	}
 

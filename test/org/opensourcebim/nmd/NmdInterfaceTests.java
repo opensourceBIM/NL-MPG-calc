@@ -2,13 +2,10 @@ package org.opensourcebim.nmd;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -17,8 +14,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+//import com.fasterxml.jackson.databind.JsonNode;
+//import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class NmdInterfaceTests {
 
@@ -197,9 +194,9 @@ public class NmdInterfaceTests {
 			db.getAdditionalProfileDataForCard(pc);
 		}));
 	
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode node = mapper.valueToTree(db.getData());
-		System.out.println("test");
+//		ObjectMapper mapper = new ObjectMapper();
+//		JsonNode node = mapper.valueToTree(db.getData());
+//		System.out.println("test");
 		assertTrue(db.getData().stream()
 				.flatMap(e -> e.getProducts().stream()
 						.flatMap(pc -> pc.getProfileSets().stream())).count() > 0);

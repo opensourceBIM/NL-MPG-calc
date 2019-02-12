@@ -24,6 +24,4 @@ public interface NmdFaseProfiel {
 	void setProfielCoefficient(String milieuCategorie, double value);
 	
 	Double getCoefficientSum();
-
-	Integer getCategory();
 }

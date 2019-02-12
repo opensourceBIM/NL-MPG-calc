@@ -17,7 +17,6 @@ import org.bimserver.models.ifc2x3tc1.IfcAnnotation;
 import org.bimserver.models.ifc2x3tc1.IfcBoolean;
 import org.bimserver.models.ifc2x3tc1.IfcBuilding;
 import org.bimserver.models.ifc2x3tc1.IfcBuildingStorey;
-import org.bimserver.models.ifc2x3tc1.IfcClassificationNotation;
 import org.bimserver.models.ifc2x3tc1.IfcClassificationNotationSelect;
 import org.bimserver.models.ifc2x3tc1.IfcClassificationReference;
 import org.bimserver.models.ifc2x3tc1.IfcElementQuantity;
@@ -278,11 +277,6 @@ public class MpgIfcObjectCollector {
 					double along_x_area = geomData.get("SURFACE_AREA_ALONG_X").asDouble();
 					double along_y_area = geomData.get("SURFACE_AREA_ALONG_Y").asDouble();
 					double along_z_area = geomData.get("SURFACE_AREA_ALONG_Z").asDouble();
-
-					// check similarity to block of volume. Further away from 1 is a larger
-					// deviation.
-					double block_similarity = 2 * (along_x_area + along_y_area + along_z_area)
-							/ geomData.get("TOTAL_SURFACE_AREA").asDouble();
 
 					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
 

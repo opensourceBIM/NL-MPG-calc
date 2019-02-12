@@ -206,6 +206,7 @@ public class NmdScalerTests {
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void testLogarithmicScalerCannotByCreatedWithUnitCurrentValues() throws InvalidInputException {
 		
