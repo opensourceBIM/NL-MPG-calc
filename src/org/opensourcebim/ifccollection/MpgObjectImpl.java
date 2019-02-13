@@ -107,7 +107,6 @@ public class MpgObjectImpl implements MpgObject {
 		this.geometry = geom;
 	}
 	
-
 	@Override
 	public String getNLsfbCode() {
 		return this.nlsfb;

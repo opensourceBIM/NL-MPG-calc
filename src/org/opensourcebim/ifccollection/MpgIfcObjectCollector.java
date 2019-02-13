@@ -374,7 +374,7 @@ public class MpgIfcObjectCollector {
 					lengthScale.setScaleAxes(scaleAxesLength);
 					lengthScale.setUnitAxes(unitAxesLength);
 
-					if (!geom.getIsComplete()) {
+					if (geom.getIsComplete()) {
 						// add both scalers to the geometry only if there is a clear geometry found
 						geom.addScalingType(lengthScale);
 						geom.addScalingType(areaScale);

@@ -114,7 +114,7 @@ public class MpgGeometry {
 		this.isComplete = isComplete;
 	}
 
-	public Object getScalerTypes() {
+	public List<MpgScalingType> getScalerTypes() {
 		return this.scaleParams;
 	}
 }

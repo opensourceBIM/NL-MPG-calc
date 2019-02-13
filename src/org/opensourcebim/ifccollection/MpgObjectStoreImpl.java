@@ -472,28 +472,71 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		
 		this.getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
 			List<MpgScalingType> scalers = null;
-			if (foundScalers.containsKey(o.getNLsfbCode())) {
-				scalers = foundScalers.get(o.getNLsfbCode());
+			String NLsfbKey = o.getNLsfbCode().toLowerCase().trim();
+			if (foundScalers.containsKey(NLsfbKey)) {
+				scalers = foundScalers.get(NLsfbKey);
 			} else {
-				scalers = findScalersForNlsfbCode(o.getNLsfbCode());
-				foundScalers.put(o.getNLsfbCode(), scalers);
+				scalers = findScalersForNlsfbCode(NLsfbKey);
+				foundScalers.put(NLsfbKey, scalers);
 			}
-			scalers.forEach(s -> o.getGeometry().addScalingType(s));
+			if (scalers.size() > 0) {
+				scalers.forEach(s -> o.getGeometry().addScalingType(s));
+				o.getGeometry().setIsComplete(true);
+			} else {
+				// fallback option is to look at similar IfcProducts
+				if (foundScalers.containsKey(o.getObjectType())) {
+					scalers = foundScalers.get(o.getObjectType());
+				} else {
+					scalers = findScalersForProductType(o.getObjectType());
+					foundScalers.put(o.getObjectType(), scalers);
+				}
+				
+				if (scalers.size() > 0) {
+					scalers.forEach(s -> o.getGeometry().addScalingType(s));
+					o.getGeometry().setIsComplete(true);
+				}
+				else {
+					System.out.println("and I stiiiiill haven't found what I'm looking for...");
+				}
+			}
 		});
+		Long nonCompliant = this.getObjects().stream()
+				.filter(o -> o.getGeometry().getScalerTypes().size() == 0).count();
+		System.out.println(nonCompliant);
 	}
 
-	private List<MpgScalingType> findScalersForNlsfbCode(String nLsfbCode) {
-		@SuppressWarnings("unchecked")
-		List<List<MpgScalingType>> candidates = (List<List<MpgScalingType>>)(
-				this.getObjects().stream()
-				.filter(o -> o.getNLsfbCode() != null)
-				.filter(o -> o.getNLsfbCode().equalsIgnoreCase(nLsfbCode))
+	private List<MpgScalingType> findScalersForProductType(String productType) {
+		List<List<MpgScalingType>> candidates = this.getObjects().stream()
+				.filter(o -> o.getObjectType() != null)
+				.filter(o -> o.getObjectType().equals(productType))
+				.filter(o -> o.getGeometry().getIsComplete())
 				.map(o -> o.getGeometry().getScalerTypes())
-				.map(st -> (List<MpgScalingType>)st)
 				.distinct()
-				.collect(Collectors.toList()));
+				.collect(Collectors.toList());
 
-		return candidates.get(0);
+		Optional<List<MpgScalingType>> scaler = candidates.stream().filter(st -> st.size() > 1).findFirst();
+		if (scaler.isPresent()) {
+			return scaler.get();
+		} else {
+			return new ArrayList<MpgScalingType>();
+		}
+	}
+
+	private List<MpgScalingType> findScalersForNlsfbCode(String nlsfbCode) {
+		List<List<MpgScalingType>> candidates = this.getObjects().stream()
+				.filter(o -> o.getNLsfbCode() != null)
+				.filter(o -> o.getNLsfbCode().equals(nlsfbCode))
+				.filter(o -> o.getGeometry().getIsComplete())
+				.map(o -> o.getGeometry().getScalerTypes())
+				.distinct()
+				.collect(Collectors.toList());
+
+		Optional<List<MpgScalingType>> scaler = candidates.stream().filter(st -> st.size() > 1).findFirst();
+		if (scaler.isPresent()) {
+			return scaler.get();
+		} else {
+			return new ArrayList<MpgScalingType>();
+		}
 	}
 
 }
