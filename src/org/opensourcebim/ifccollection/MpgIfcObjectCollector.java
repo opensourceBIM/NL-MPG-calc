@@ -209,13 +209,14 @@ public class MpgIfcObjectCollector {
 
 		// set all parent child relations for elements
 		objectStore.recreateParentChildMap(childToParentMap);
-		
+
 		// try to find the right NLsfb codes for decomposed objects without nlsfb codes
 		objectStore.resolveNlsfbCodes();
-		
-		// try to find the correct scaling types for objects that could not have their geometry resolved
+
+		// try to find the correct scaling types for objects that could not have their
+		// geometry resolved
 		objectStore.resolveUnknownGeometries();
-		
+
 		objectStore.validateIfcDataCollection();
 
 		return objectStore;
@@ -280,20 +281,21 @@ public class MpgIfcObjectCollector {
 				JsonNode geomData = mapper.readTree(geometry.getAdditionalData());
 				if (geomData != null && geomData.size() > 0) {
 					geom.setIsComplete(true);
-					// determine orientation of the reference frame by checking areas with the floor
-					// area.
-					double along_x_area = geomData.get("SURFACE_AREA_ALONG_X").asDouble();
-					double along_y_area = geomData.get("SURFACE_AREA_ALONG_Y").asDouble();
-					double along_z_area = geomData.get("SURFACE_AREA_ALONG_Z").asDouble();
 
 					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
-
-					geom.setFloorArea(this.convertArea(along_z_area));
 
 					// get the max dimensions over the principal axes.
 					double max_dim_x = geomData.get("BOUNDING_BOX_SIZE_ALONG_X").asDouble();
 					double max_dim_y = geomData.get("BOUNDING_BOX_SIZE_ALONG_Y").asDouble();
 					double max_dim_z = geomData.get("BOUNDING_BOX_SIZE_ALONG_Z").asDouble();
+
+					// area retrieval from the additional data cause a lot of problems with double
+					// sided objects (windows with multiple planes etc.)
+					double along_x_area = max_dim_y * max_dim_z;
+					double along_y_area = max_dim_z * max_dim_x;
+					double along_z_area = max_dim_x * max_dim_y;
+
+					geom.setFloorArea(this.convertArea(along_z_area));
 
 					int[] unitAxesArea = new int[2];
 					int[] scaleAxesArea = new int[1];
@@ -302,19 +304,25 @@ public class MpgIfcObjectCollector {
 					double length_face_area = 0.0;
 					double width_face_area = 0.0;
 					double avg_thickness_of_face = 0.0;
-					if ((largest_face_area - along_z_area) < 1e-8) {
+
+					// determine which area is largest and base scaling on that. I've included a 95%
+					// threshold for largest face area to be relevant
+					if (along_z_area >= along_y_area && along_z_area >= along_x_area
+							&& along_z_area / largest_face_area > 0.95) {
 						// this should be floors, slabs etc.
 						scaleAxesArea[0] = 3; // scale on thickess of floor (in z-dir)
 						unitAxesArea[0] = 1;
 						unitAxesArea[1] = 2;
-					} else if ((largest_face_area - along_y_area) < 1e-8) {
+					} else if (along_y_area >= along_z_area && along_y_area >= along_x_area
+							&& along_y_area / largest_face_area > 0.95) {
 						// this case should be vertical walls, windows, doors etc.
 						scaleAxesArea[0] = 2; // scale on thickess of wall (in y-dir)
 						unitAxesArea[0] = 3;
 						unitAxesArea[1] = 1;
-					} else if ((largest_face_area - along_x_area) < 1e-8) {
+					} else if (along_x_area >= along_y_area && along_x_area >= along_z_area
+							&& along_x_area / largest_face_area > 0.95) {
 						// x area is largest these cases have not been covered yet.
-						// - the products triggered here are walls, roofs, doors (?), pipes, railings etc.
+						// - the products triggered here are walls, roofs, doors (?), pipes, railings
 						// next question: will these be scaled over the thickness?
 						geom.setIsComplete(false);
 					} else {
@@ -343,7 +351,8 @@ public class MpgIfcObjectCollector {
 
 					// dimensions have been checked wrt angle of object. set rest of max dims
 					geom.setFaceArea(this.convertArea(largest_face_area));
-					// for now omit convert length as bbox does not seem to match with the ifcModel length unit
+					// for now omit convert length as bbox does not seem to match with the ifcModel
+					// length unit
 					geom.setMaxXDimension(max_dim_x);
 					geom.setMaxYDimension(max_dim_y);
 					geom.setMaxZDimension(max_dim_z);
