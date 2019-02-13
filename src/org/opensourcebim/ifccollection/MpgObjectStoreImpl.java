@@ -456,7 +456,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			if (!o.getParentId().isEmpty()) {
 				MpgObject p = this.getObjectByGuid(o.getParentId()).get();
 				String parentCode = p.getNLsfbCode();
-				if (!parentCode.isEmpty()) {
+				if (parentCode != null && !parentCode.isEmpty()) {
 					o.setNLsfbCode(parentCode);
 				}
 			}
