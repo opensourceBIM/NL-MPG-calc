@@ -281,6 +281,22 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		}
 		return products;
 	}
+	
+	@Override
+	public NmdProductCard getFullProductCardById(Integer productId) {
+		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
+		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
+		params.add(new KeyValuePair("ProductID", productId.toString()));
+		params.add(new KeyValuePair("includeNULLs", true));
+
+		HttpResponse response = this.performGetRequestWithParams(this.apiPath + "ProfielsetsEnSchalingBijProduct", params);
+
+		// do something with the entity to get the token
+		JsonNode resp_node = this.responseToJson(response);		
+		
+		
+		return new NmdProductCardImpl();
+	}
 
 	/*
 	 * Add missing data to the NmdProfileSet
@@ -327,7 +343,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 
 		return profileSets;
 	}
-
+	
 	private void loadFaseProfielDataForSet(JsonNode profielSetNode, NmdProfileSetImpl set) {
 		// laad faseprofiel specifieke data
 		JsonNode profielen = profielSetNode.get("Profiel");

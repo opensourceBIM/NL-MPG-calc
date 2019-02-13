@@ -33,4 +33,6 @@ public interface NmdDataService {
 	List<NmdProductCard> getProductsForElement(NmdElement element);
 
 	Boolean getAdditionalProfileDataForCard(NmdProductCard c);
+
+	NmdProductCard getFullProductCardById(Integer productId);
 }

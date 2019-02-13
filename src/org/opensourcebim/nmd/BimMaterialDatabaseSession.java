@@ -78,4 +78,10 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 		return null;
 	}
 
+	@Override
+	public NmdProductCard getFullProductCardById(Integer productId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

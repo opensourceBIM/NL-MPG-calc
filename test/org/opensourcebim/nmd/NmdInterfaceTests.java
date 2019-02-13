@@ -14,8 +14,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
-//import com.fasterxml.jackson.databind.JsonNode;
-//import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class NmdInterfaceTests {
 
@@ -185,6 +185,15 @@ public class NmdInterfaceTests {
 		// only 5 categories should be in there CUAST (T = Totaal)
 		assertTrue(0 < mappings.getScalingFormula().size());
 	}
+	
+	@Test
+	public void getFullProductCardById() {
+		connect();
+		Integer id = 9;
+		NmdProductCard card = db.getFullProductCardById(id);
+		assertTrue(card.getProfileSets().size() > 0);
+		assertTrue(card.getProfileSets().stream().allMatch(ps -> ps.getQuantity() > 0));
+	}
 
 	@Test
 	public void getCompleteDataSet() {
@@ -194,9 +203,9 @@ public class NmdInterfaceTests {
 			db.getAdditionalProfileDataForCard(pc);
 		}));
 	
-//		ObjectMapper mapper = new ObjectMapper();
-//		JsonNode node = mapper.valueToTree(db.getData());
-//		System.out.println("test");
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode node = mapper.valueToTree(db.getData());
+		System.out.println("test");
 		assertTrue(db.getData().stream()
 				.flatMap(e -> e.getProducts().stream()
 						.flatMap(pc -> pc.getProfileSets().stream())).count() > 0);
