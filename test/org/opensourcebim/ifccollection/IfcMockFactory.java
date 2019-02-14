@@ -58,45 +58,44 @@ public class IfcMockFactory {
 
 		return model;
 	}
-	
+
 	public void addProductToModel(IfcModelInterface mockModel, String name, String parentId) {
 		List<IfcProduct> products = mockModel.getAllWithSubTypes(IfcProduct.class);
-		
+
 		IfcProduct newProduct = addIfcProductToModel(null, name);
 		BasicEList<IfcRelDecomposes> relations = new BasicEList<IfcRelDecomposes>();
 		// add potential children as decomposed elements
-		if (parentId != null)
-		{
+		if (parentId != null) {
 			IfcObjectDefinition parentObject = mockModel.getAllWithSubTypes(IfcProduct.class).stream()
 					.filter(o -> o.getGlobalId().equals(parentId)).collect(Collectors.toList()).get(0);
-			
+
 			IfcRelDecomposes mockRel = mock(IfcRelDecomposes.class);
 			when(mockRel.getRelatingObject()).thenReturn(parentObject);
 			relations.add(mockRel);
 		}
-		
+
 		when(newProduct.getDecomposes()).thenReturn(relations);
-		
+
 		// for now add empty reldefinedBy
 		when(newProduct.getIsDefinedBy()).thenReturn(new BasicEList<IfcRelDefines>());
-		
+
 		products.add(newProduct);
 		when(mockModel.getAllWithSubTypes(IfcProduct.class)).thenReturn(products);
 	}
-		
+
 	public void addSpaceToModel(IfcModelInterface mockModel, IfcProduct parent) {
-		
+
 		List<IfcSpace> products = mockModel.getAllWithSubTypes(IfcSpace.class);
 		IfcSpace space = createGenericIfcProduct(IfcSpace.class, parent);
-		
+
 		// add some boundedBy relation to mock that the space is an internalspace
 		BasicEList<IfcRelSpaceBoundary> boundedBy = new BasicEList<IfcRelSpaceBoundary>();
 		boundedBy.add(mock(IfcRelSpaceBoundary.class));
 		when(space.getBoundedBy()).thenReturn(boundedBy);
-		
+
 		products.add(space);
 		when(mockModel.getAllWithSubTypes(IfcSpace.class)).thenReturn(products);
-		
+
 	}
 
 	public <T extends IfcProduct> void addGenericIfcProductToModel(IfcModelInterface mockModel, Class<T> productClass,
@@ -105,9 +104,11 @@ public class IfcMockFactory {
 		products.add(createGenericIfcProduct(productClass, parent));
 		when(mockModel.getAllWithSubTypes(productClass)).thenReturn(products);
 	}
-	
+
 	/**
-	 * Get Mock product with Geometry, the difference with the generic method is that products can be linked to materials.
+	 * Get Mock product with Geometry, the difference with the generic method is
+	 * that products can be linked to materials.
+	 * 
 	 * @return a Mocked IfcProduct object
 	 */
 	private IfcProduct addIfcProductToModel(IfcObjectDefinition parent, String name) {
@@ -117,7 +118,7 @@ public class IfcMockFactory {
 
 		String id = UUID.randomUUID().toString();
 		when(mockProduct.getGlobalId()).thenReturn(id);
-		
+
 		return mockProduct;
 	}
 
@@ -127,9 +128,8 @@ public class IfcMockFactory {
 	 * @param productClass
 	 * @return
 	 */
-	private <T extends IfcProduct> T createGenericIfcProduct(Class<T> productClass,
-			IfcObjectDefinition parent) {
-		
+	private <T extends IfcProduct> T createGenericIfcProduct(Class<T> productClass, IfcObjectDefinition parent) {
+
 		T mockProduct = mock(productClass);
 		when(mockProduct.getGeometry()).thenReturn(geometry);
 
@@ -143,9 +143,10 @@ public class IfcMockFactory {
 
 		return mockProduct;
 	}
-	
+
 	/**
 	 * Adds an IfcRelAssociatesMaterial to the associates
+	 * 
 	 * @param mat Material object to add to the associates list
 	 */
 	public void addMaterial(IfcMaterialSelect mat) {
@@ -186,7 +187,8 @@ public class IfcMockFactory {
 
 		unittypes.add(getUnitMock(IfcUnitEnum.VOLUMEUNIT, this.projectUnitPrefix));
 		unittypes.add(getUnitMock(IfcUnitEnum.AREAUNIT, this.projectUnitPrefix));
-
+		unittypes.add(getUnitMock(IfcUnitEnum.LENGTHUNIT, this.projectUnitPrefix));
+		
 		when(units.getUnits()).thenReturn(unittypes);
 		when(project.getUnitsInContext()).thenReturn(units);
 
@@ -206,6 +208,14 @@ public class IfcMockFactory {
 		GeometryInfo geom = mock(GeometryInfo.class);
 		when(geom.getVolume()).thenReturn(volume);
 		when(geom.getArea()).thenReturn(area);
+		Double faceArea = Math.pow(volume, 2.0/3.0);
+		when(geom.getAdditionalData()).thenReturn(
+				"{\"TOTAL_SURFACE_AREA\":" + String.valueOf(faceArea * 6.0)
+				+ ",\"TOTAL_SHAPE_VOLUME\":" + volume
+				+ ",\"SURFACE_AREA_ALONG_X\":" + faceArea 
+				+ ",\"SURFACE_AREA_ALONG_Y\":" + faceArea 
+				+ ",\"SURFACE_AREA_ALONG_Z\":" + faceArea 
+				+ ",\"LARGEST_FACE_AREA\":" + faceArea + "}");
 		return geom;
 	}
 
@@ -216,8 +226,7 @@ public class IfcMockFactory {
 	}
 
 	public IfcMaterial getIfcMaterialMock(String name) {
-		if (name != null && !name.isEmpty()) 
-		{
+		if (name != null && !name.isEmpty()) {
 			IfcMaterial mat = mock(IfcMaterial.class);
 			when(mat.getName()).thenReturn(name);
 			long oid = Integer.toUnsignedLong(name.hashCode());

@@ -1,5 +1,6 @@
 package org.opensourcebim.ifccollection;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,9 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.MutableTriple;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.geometry.GeometryInfo;
@@ -18,6 +17,8 @@ import org.bimserver.models.ifc2x3tc1.IfcAnnotation;
 import org.bimserver.models.ifc2x3tc1.IfcBoolean;
 import org.bimserver.models.ifc2x3tc1.IfcBuilding;
 import org.bimserver.models.ifc2x3tc1.IfcBuildingStorey;
+import org.bimserver.models.ifc2x3tc1.IfcClassificationNotationSelect;
+import org.bimserver.models.ifc2x3tc1.IfcClassificationReference;
 import org.bimserver.models.ifc2x3tc1.IfcElementQuantity;
 import org.bimserver.models.ifc2x3tc1.IfcFurnishingElement;
 import org.bimserver.models.ifc2x3tc1.IfcIdentifier;
@@ -41,6 +42,7 @@ import org.bimserver.models.ifc2x3tc1.IfcQuantityArea;
 import org.bimserver.models.ifc2x3tc1.IfcQuantityLength;
 import org.bimserver.models.ifc2x3tc1.IfcQuantityVolume;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
+import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesClassification;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesMaterial;
 import org.bimserver.models.ifc2x3tc1.IfcRelDecomposes;
 import org.bimserver.models.ifc2x3tc1.IfcRelDefines;
@@ -62,8 +64,12 @@ import org.bimserver.models.ifc2x3tc1.impl.IfcSpaceImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcVirtualElementImpl;
 import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.IfcUtils;
+import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.EList;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Class to retrieve the material properties from the IfcModel
@@ -80,20 +86,20 @@ public class MpgIfcObjectCollector {
 	// reporting units and imported units to help convert measurements
 	private AreaUnit areaUnit = AreaUnit.SQUARED_METER;
 	private VolumeUnit volumeUnit = VolumeUnit.CUBIC_METER;
+	private LengthUnit lengthUnit = LengthUnit.METER;
 	private AreaUnit modelAreaUnit;
 	private VolumeUnit modelVolumeUnit;
+	private LengthUnit modelLengthUnit;
+	private ObjectMapper mapper = new ObjectMapper();
 
 	public MpgIfcObjectCollector() {
 		objectStore = new MpgObjectStoreImpl();
+		objectStore.setUnits(volumeUnit, areaUnit, lengthUnit);
 
-		ignoredProducts = Arrays.asList(
-				IfcSite.class, IfcSiteImpl.class, 
-				IfcBuilding.class, IfcBuildingImpl.class,
-				IfcBuildingStorey.class, IfcBuildingStoreyImpl.class, 
-				IfcFurnishingElement.class, IfcFurnishingElementImpl.class,
-				IfcOpeningElement.class, IfcOpeningElementImpl.class, 
-				IfcVirtualElement.class, IfcVirtualElementImpl.class,
-				IfcSpace.class, IfcSpaceImpl.class,
+		ignoredProducts = Arrays.asList(IfcSite.class, IfcSiteImpl.class, IfcBuilding.class, IfcBuildingImpl.class,
+				IfcBuildingStorey.class, IfcBuildingStoreyImpl.class, IfcFurnishingElement.class,
+				IfcFurnishingElementImpl.class, IfcOpeningElement.class, IfcOpeningElementImpl.class,
+				IfcVirtualElement.class, IfcVirtualElementImpl.class, IfcSpace.class, IfcSpaceImpl.class,
 				IfcAnnotation.class, IfcAnnotationImpl.class);
 	}
 
@@ -113,15 +119,16 @@ public class MpgIfcObjectCollector {
 		// get project wide parameters
 		modelVolumeUnit = IfcUtils.getVolumeUnit(ifcModel);
 		modelAreaUnit = IfcUtils.getAreaUnit(ifcModel);
+		modelLengthUnit = IfcUtils.getLengthUnit(ifcModel);
 
 		// loop through IfcSpaces
 		for (IfcSpace space : ifcModel.getAllWithSubTypes(IfcSpace.class)) {
-			
+
 			// omit any external spaces.
 			if (space.getBoundedBy().size() == 0) {
 				continue;
 			}
-				
+
 			EList<IfcRelDecomposes> parentDecomposedProduct = space.getIsDecomposedBy();
 
 			// if there is any space that decomposes in this space we can omit the addition
@@ -132,97 +139,69 @@ public class MpgIfcObjectCollector {
 						.filter(relation -> relation.getRelatingObject() instanceof IfcSpace).count() > 0;
 			}
 
-			// ToDo: include geometric check
-			boolean isIncludedGeometrically = false;
+			MpgGeometry geom = getGeometryFromProduct(space);
 
-			Pair<Double, Double> geom = getGeometryFromProduct(space);
-
-			if (!isIncludedGeometrically && !isIncludedSemantically) {
-				objectStore.getSpaces().add(new MpgSpaceImpl(space.getGlobalId(), geom.getRight(), geom.getLeft()));
+			// ToDo: also include geometric check?
+			if (!isIncludedSemantically) {
+				objectStore.getSpaces()
+						.add(new MpgSpaceImpl(space.getGlobalId(), geom.getVolume(), geom.getFloorArea()));
 			}
 		}
 
 		Map<String, String> childToParentMap = new HashMap<String, String>();
 
 		// loop through IfcProduct that constitute the physical building.
-		for (IfcProduct element : ifcModel.getAllWithSubTypes(IfcProduct.class)) {
+		for (IfcProduct product : ifcModel.getAllWithSubTypes(IfcProduct.class)) {
 
 			// ignore any elements that are irrelevant for the mpg calculations
-			if (!this.ignoredProducts.contains(element.getClass())) {
+			if (!this.ignoredProducts.contains(product.getClass())) {
 
-				// create the mpg element
-				String newMpgElementId = element.getName() + "-" + element.getGlobalId();
-				this.objectStore.addElement(newMpgElementId);
-				MpgElement newMpgElement = this.objectStore.getElementByName(newMpgElementId);
-				
-				if (StringUtils.isBlank(element.getGlobalId())) {
+				if (StringUtils.isBlank(product.getGlobalId())) {
 					continue;
 				}
-				
+
 				// collect child to parent relations
-				element.getDecomposes().stream()
-					.map(rel -> rel.getRelatingObject())
-					.filter(o -> o instanceof IfcProduct).map(o -> (IfcProduct) o).forEach(o -> {
-						if (!childToParentMap.containsKey(element.getGlobalId())
-								&& o.getGlobalId() != element.getGlobalId()) {
+				product.getDecomposes().stream().map(rel -> rel.getRelatingObject())
+						.filter(o -> o instanceof IfcProduct).map(o -> (IfcProduct) o).forEach(o -> {
+							if (!childToParentMap.containsKey(product.getGlobalId())
+									&& o.getGlobalId() != product.getGlobalId()) {
 
-							childToParentMap.put(element.getGlobalId(), o.getGlobalId());
+								childToParentMap.put(product.getGlobalId(), o.getGlobalId());
 
-						} else {
-							if (o.getGlobalId() != element.getGlobalId()) {
-								System.out.println(">> " + element.getGlobalId() + ", " + o.getGlobalId());
+							} else {
+								if (o.getGlobalId() != product.getGlobalId()) {
+									System.out.println(">> " + product.getGlobalId() + ", " + o.getGlobalId());
+								}
 							}
-						}
-					});
+						});
 
-				MpgObjectImpl mpgObject = new MpgObjectImpl(element.getOid(), element.getGlobalId(), element.getName(),
-						element.getClass().getSimpleName(), "", objectStore);
+				MpgObjectImpl mpgObject = new MpgObjectImpl(product.getOid(), product.getGlobalId(), product.getName(),
+						product.getClass().getSimpleName(), "", objectStore);
 
-				
-				this.getPropertySetsFromIfcProduct(element, mpgObject);
+				MpgGeometry geom = getGeometryFromProduct(product);
+				if (geom.getVolume().isNaN()) {
+					// if the geomServer does nto return a volume we have to try it through
+					// properties.
+					mpgObject.setGeometry(this.getGeometryFromPropertySet(product, mpgObject));
+				} else {
+					mpgObject.setGeometry(geom);
+				}
 
-				// first try to set the geometry by properties
-				Double vol = null;
-				if(mpgObject.getProperties().containsKey("volume")) {
-					vol = ((double)mpgObject.getProperties().get("volume"));
-				}
-				if(mpgObject.getProperties().containsKey("netvolume") && vol == null) {
-					vol = ((double)mpgObject.getProperties().get("netvolume"));
-				}
-				if (vol != null) {
-					mpgObject.setVolume(vol);
-				}
-				
-				Double area = null;
-				if(mpgObject.getProperties().containsKey("grosssidearea")) {
-					area = ((double)mpgObject.getProperties().get("grosssidearea"));
-				}
-				if(mpgObject.getProperties().containsKey("area")) {
-					area = ((double)mpgObject.getProperties().get("area"));
-				}
-				if(mpgObject.getProperties().containsKey("netarea") && area == null) {
-					area = ((double)mpgObject.getProperties().get("netarea"));
-				}
-				if (area != null) {
-					mpgObject.setArea(area);
-				}
-				
-				// if we cannot find the properties do it through ifcOpenShell plugin geometry (area is not correct!)
-				Pair<Double, Double> geom = getGeometryFromProduct(element);
-				if (mpgObject.getVolume() == null) {mpgObject.setVolume(geom.getRight());}
-				if (mpgObject.getArea() == null) {mpgObject.setArea(geom.getLeft());}
-				
-					
 				// set Pset materials
 				if (mpgObject.getProperties().containsKey("material")) {
-					String mat = (String)(mpgObject.getProperties().get("material"));
+					String mat = (String) (mpgObject.getProperties().get("material"));
 					mpgObject.addMaterialSource(mat, null, "P_Set");
 				}
-				
+
 				// retrieve information and add found values to the various data objects
-				this.getMaterialsFromIfcProduct(element, mpgObject);
+				this.getMaterialsFromIfcProduct(product, mpgObject);
 
 				// all properties are set. add it to the store.
+				// create the mpg element
+				String newMpgElementId = product.getName() + "-" + product.getGlobalId();
+				this.objectStore.addElement(newMpgElementId);
+				MpgElement newMpgElement = this.objectStore.getElementByName(newMpgElementId);
+
 				objectStore.getObjects().add(mpgObject);
 				newMpgElement.setMpgObject(mpgObject);
 			}
@@ -230,28 +209,206 @@ public class MpgIfcObjectCollector {
 
 		// set all parent child relations for elements
 		objectStore.recreateParentChildMap(childToParentMap);
+
+		// try to find the right NLsfb codes for decomposed objects without nlsfb codes
+		objectStore.resolveNlsfbCodes();
+
+		// try to find the correct scaling types for objects that could not have their
+		// geometry resolved
+		objectStore.resolveUnknownGeometries();
+
 		objectStore.validateIfcDataCollection();
 
 		return objectStore;
 	}
 
 	/**
-	 * retrieve the volume of an element based on itself, the template type and any
-	 * decomposed elements
+	 * Alternative method to get geometry parameters based on the property sets.
+	 * 
+	 * @param product   IfcProduct object
+	 * @param mpgObject mpgObject to add parsed properties to.
+	 * @return mpgGeometry object
+	 */
+	private MpgGeometry getGeometryFromPropertySet(IfcProduct product, MpgObjectImpl mpgObject) {
+
+		this.getPropertySetsFromIfcProduct(product, mpgObject);
+		MpgGeometry geom = new MpgGeometry();
+
+		// first try to set the geometry by properties
+		Double vol = null;
+		if (mpgObject.getProperties().containsKey("volume")) {
+			vol = ((double) mpgObject.getProperties().get("volume"));
+		}
+		if (mpgObject.getProperties().containsKey("netvolume") && vol == null) {
+			vol = ((double) mpgObject.getProperties().get("netvolume"));
+		}
+		if (vol != null) {
+			geom.setVolume(vol);
+		}
+
+		Double area = null;
+		if (mpgObject.getProperties().containsKey("grosssidearea")) {
+			area = ((double) mpgObject.getProperties().get("grosssidearea"));
+		}
+		if (mpgObject.getProperties().containsKey("area")) {
+			area = ((double) mpgObject.getProperties().get("area"));
+		}
+		if (mpgObject.getProperties().containsKey("netarea") && area == null) {
+			area = ((double) mpgObject.getProperties().get("netarea"));
+		}
+		if (area != null) {
+			geom.setFloorArea(area);
+		}
+		return geom;
+	}
+
+	/**
+	 * retrieve the geometric properties of an ifcProduct
 	 * 
 	 * @param prod the product to evaluate
-	 * @return a Tuple with are and volume of the input product
+	 * @return a MpgGeometry object with relevant data stored
 	 */
-	private Pair<Double, Double> getGeometryFromProduct(IfcProduct prod) {
+	private MpgGeometry getGeometryFromProduct(IfcProduct prod) {
 		GeometryInfo geometry = prod.getGeometry();
-		double area = 0.0;
-		double volume = 0.0;
 
-		if (geometry != null) {			
-			area = this.getAreaUnit().convert(geometry.getArea(), modelAreaUnit);
-			volume = this.getVolumeUnit().convert(geometry.getVolume(), modelVolumeUnit);
-		} 
-		return new ImmutablePair<Double, Double>(area, volume);
+		MpgGeometry geom = new MpgGeometry();
+
+		if (geometry != null) {
+
+			geom.setVolume(this.convertVolume(geometry.getVolume()));
+
+			try {
+				JsonNode geomData = mapper.readTree(geometry.getAdditionalData());
+				if (geomData != null && geomData.size() > 0) {
+					geom.setIsComplete(true);
+
+					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
+
+					// get the max dimensions over the principal axes.
+					double max_dim_x = geomData.get("BOUNDING_BOX_SIZE_ALONG_X").asDouble();
+					double max_dim_y = geomData.get("BOUNDING_BOX_SIZE_ALONG_Y").asDouble();
+					double max_dim_z = geomData.get("BOUNDING_BOX_SIZE_ALONG_Z").asDouble();
+
+					// area retrieval from the additional data cause a lot of problems with double
+					// sided objects (windows with multiple planes etc.)
+					double along_x_area = max_dim_y * max_dim_z;
+					double along_y_area = max_dim_z * max_dim_x;
+					double along_z_area = max_dim_x * max_dim_y;
+
+					geom.setFloorArea(this.convertArea(along_z_area));
+
+					int[] unitAxesArea = new int[2];
+					int[] scaleAxesArea = new int[1];
+
+					// create the 2 dim scaler type
+					double length_face_area = 0.0;
+					double width_face_area = 0.0;
+					double avg_thickness_of_face = 0.0;
+
+					// determine which area is largest and base scaling on that. I've included a 95%
+					// threshold for largest face area to be relevant
+					if (along_z_area >= along_y_area && along_z_area >= along_x_area
+							&& along_z_area / largest_face_area > 0.95) {
+						// this should be floors, slabs etc.
+						scaleAxesArea[0] = 3; // scale on thickess of floor (in z-dir)
+						unitAxesArea[0] = 1;
+						unitAxesArea[1] = 2;
+					} else if (along_y_area >= along_z_area && along_y_area >= along_x_area
+							&& along_y_area / largest_face_area > 0.95) {
+						// this case should be vertical walls, windows, doors etc.
+						scaleAxesArea[0] = 2; // scale on thickess of wall (in y-dir)
+						unitAxesArea[0] = 3;
+						unitAxesArea[1] = 1;
+					} else if (along_x_area >= along_y_area && along_x_area >= along_z_area
+							&& along_x_area / largest_face_area > 0.95) {
+						// x area is largest these cases have not been covered yet.
+						// - the products triggered here are walls, roofs, doors (?), pipes, railings
+						// next question: will these be scaled over the thickness?
+						geom.setIsComplete(false);
+					} else {
+						// similar to z case, but then refered in the local roof ref frame.
+						scaleAxesArea[0] = 3; // scale on thickess of floor (in z-dir)
+						unitAxesArea[0] = 1;
+						unitAxesArea[1] = 2;
+
+						// these are slanted areas such as roofs etc.
+						// **ASSUME** extrusion in x direction.
+						// angle_of_face_area = Math.atan(max_dim_z / max_dim_y);
+						length_face_area = Math.sqrt(Math.pow(max_dim_y, 2) + Math.pow(max_dim_z, 2));
+						width_face_area = largest_face_area / length_face_area;
+						avg_thickness_of_face = geom.getVolume() / largest_face_area;
+
+						// replace the max dims with the slanted area dimensions in a local ref frame
+						// (z axis perpendicular to face area)
+						max_dim_z = avg_thickness_of_face;
+						max_dim_y = length_face_area;
+						max_dim_x = width_face_area;
+					}
+
+					MpgScalingType areaScale = new MpgScalingType();
+					areaScale.setScaleAxes(scaleAxesArea);
+					areaScale.setUnitAxes(unitAxesArea);
+
+					// dimensions have been checked wrt angle of object. set rest of max dims
+					geom.setFaceArea(this.convertArea(largest_face_area));
+					// for now omit convert length as bbox does not seem to match with the ifcModel
+					// length unit
+					geom.setMaxXDimension(max_dim_x);
+					geom.setMaxYDimension(max_dim_y);
+					geom.setMaxZDimension(max_dim_z);
+
+					// create the scaler for slender objects
+					int[] unitAxesLength = new int[1];
+					int[] scaleAxesLength = new int[2];
+
+					if (max_dim_z >= max_dim_y && max_dim_z >= max_dim_x) {
+						// z is largest dim or all axes are equal
+						scaleAxesLength[0] = 1;
+						scaleAxesLength[1] = 2;
+						unitAxesLength[0] = 3;
+					} else if (max_dim_y >= max_dim_z && max_dim_y >= max_dim_x) {
+						// y is largest dim
+						scaleAxesLength[0] = 3;
+						scaleAxesLength[1] = 1;
+						unitAxesLength[0] = 2;
+
+					} else {
+						// x is largest
+						scaleAxesLength[0] = 2;
+						scaleAxesLength[1] = 3;
+						unitAxesLength[0] = 1;
+					}
+
+					MpgScalingType lengthScale = new MpgScalingType();
+					lengthScale.setScaleAxes(scaleAxesLength);
+					lengthScale.setUnitAxes(unitAxesLength);
+
+					if (geom.getIsComplete()) {
+						// add both scalers to the geometry only if there is a clear geometry found
+						geom.addScalingType(lengthScale);
+						geom.addScalingType(areaScale);
+					}
+
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		return geom;
+	}
+
+	private Double convertVolume(Double value) {
+		return this.getVolumeUnit().convert(value, modelVolumeUnit);
+	}
+
+	private Double convertArea(Double value) {
+		return this.getAreaUnit().convert(value, modelAreaUnit);
+	}
+
+	private Double convertLength(Double value) {
+		return this.lengthUnit.convert(value, modelLengthUnit);
 	}
 
 	/**
@@ -281,7 +438,7 @@ public class MpgIfcObjectCollector {
 	 * the Property collection method
 	 * 
 	 * @param typeObjecttemplate type to retrieve
-	 * @param mpgObject mpgObject to add properties to
+	 * @param mpgObject          mpgObject to add properties to
 	 */
 	private void getPropertySetFromTypeObject(IfcTypeObject typeObject, MpgObjectImpl mpgObject) {
 		EList<IfcPropertySetDefinition> propertySets = typeObject.getHasPropertySets();
@@ -291,14 +448,14 @@ public class MpgIfcObjectCollector {
 			}
 		}
 	}
-	
+
 	private void resolvePropertySetAndAddProperties(IfcPropertySetDefinition propSet, MpgObjectImpl mpgObject) {
 		if (propSet instanceof IfcElementQuantity) {
-			addPropertiesFromPropertySetDefinition((IfcElementQuantity)propSet, mpgObject);
+			addPropertiesFromPropertySetDefinition((IfcElementQuantity) propSet, mpgObject);
 		} else if (propSet instanceof IfcPropertySet) {
-			addPropertiesFromPropertySetDefinition((IfcPropertySet)propSet, mpgObject);
+			addPropertiesFromPropertySetDefinition((IfcPropertySet) propSet, mpgObject);
 		} else {
-			//System.out.println("found unidentified propertyset definition");
+			// System.out.println("found unidentified propertyset definition");
 		}
 	}
 
@@ -323,7 +480,7 @@ public class MpgIfcObjectCollector {
 			}
 		}
 	}
-	
+
 	private void addPropertiesFromPropertySetDefinition(IfcPropertySet defs, MpgObjectImpl mpgObject) {
 
 		for (IfcProperty prop : defs.getHasProperties()) {
@@ -341,7 +498,7 @@ public class MpgIfcObjectCollector {
 				} else if (ifcValue instanceof IfcIdentifier) {
 					value = ((IfcIdentifier) ifcValue).getWrappedValue();
 				}
-				
+
 				if (value != null) {
 					mpgObject.addProperty(name, value);
 				}
@@ -406,6 +563,18 @@ public class MpgIfcObjectCollector {
 						productLayers.addAll(getMaterialLayer((IfcMaterialLayer) relatingMaterial));
 					}
 				}
+				if (ifcRelAssociates instanceof IfcRelAssociatesClassification) {
+					IfcRelAssociatesClassification classes = (IfcRelAssociatesClassification) ifcRelAssociates;
+					IfcClassificationNotationSelect relClass = classes.getRelatingClassification();
+
+					if (relClass instanceof IfcClassificationReference) {
+						IfcClassificationReference relRef = (IfcClassificationReference) relClass;
+						if (relRef.getReferencedSource().getName().toLowerCase().contains("sfb")) {
+							targetObject.setNLsfbCode(relRef.getItemReference());
+						}
+					}
+
+				}
 			}
 
 			// check total volume matches up with found materials and thickness sums and
@@ -423,8 +592,9 @@ public class MpgIfcObjectCollector {
 			productLayers.forEach(layer -> {
 				String materialName = layer.getLeft();
 				String materialGuid = layer.getMiddle();
-				double volumeRatio = layer.getRight() / totalThickness * targetObject.getVolume();
-				double area = targetObject.getVolume() * volumeRatio / layer.getRight();
+				double vol = targetObject.getGeometry().getVolume();
+				double volumeRatio = layer.getRight() / totalThickness * vol;
+				double area = vol * volumeRatio / layer.getRight();
 				targetObject.addLayer(new MpgLayerImpl(volumeRatio, area, materialName, materialGuid));
 				targetObject.addMaterialSource(materialName, materialGuid, matSourceLayer);
 			});
@@ -474,15 +644,12 @@ public class MpgIfcObjectCollector {
 		return areaUnit;
 	}
 
-	public void setAreaUnit(AreaUnit areaUnit) {
-		this.areaUnit = areaUnit;
-	}
-
 	public VolumeUnit getVolumeUnit() {
 		return volumeUnit;
 	}
 
-	public void setVolumeUnit(VolumeUnit volumeUnit) {
-		this.volumeUnit = volumeUnit;
+	public LengthUnit GetLengthUnit() {
+		return lengthUnit;
 	}
+
 }

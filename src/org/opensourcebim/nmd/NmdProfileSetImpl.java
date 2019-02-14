@@ -1,29 +1,27 @@
 package org.opensourcebim.nmd;
 
 import java.util.HashMap;
-import java.util.Set;
-
-import org.opensourcebim.ifccollection.MpgObject;
+import org.opensourcebim.nmd.scaling.NmdScaler;
 
 public class NmdProfileSetImpl implements NmdProfileSet {
 	private String name;
-	private Integer profielId;
+	private int profielId;
 	private String unit;
 
-	private int productLifeTime;
-	private int category;
+	private int profileLifeTime;
 	
 	/**
 	 * NmdBasisProfiles available for this material specification.
 	 * Can be different for specs within the same productcard
 	 */
 	private HashMap<String, NmdFaseProfiel> profiles;
-	private Boolean isFullProfile;
-	private Integer parentProfileId;
-	private int cuasCode;
+	private boolean isScalable;
+	private NmdScaler scaler;
+	private double quantity;
 
 	public NmdProfileSetImpl() {		
 		this.profiles = new HashMap<String, NmdFaseProfiel>();
+		this.quantity = 1.0;
 	}
 	
 	@Override
@@ -52,34 +50,26 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	public void setUnit(String unit) {
 		this.unit = unit;
 	}
+	
 
 	@Override
-	public Integer getCategory() {
-		return this.category;
-	}
-
-	public void setCategory(Integer category) {
-		this.category = category;
-	}
-
-	@Override
-	public Integer getProductLifeTime() {
-		return this.productLifeTime;
-	}
-
-	public void setProductLifeTime(Integer lifetime) {
-		this.productLifeTime = lifetime;
+	public Double getQuantity() {
+		return this.quantity;
 	}
 	
-	@Override
-	public Integer getCuasCode() {
-		return this.cuasCode;
-	}
-	
-	public void setCuasCode(int cuasCode) {
-		this.cuasCode = cuasCode;
+	public void setQuantity(double q) {
+		this.quantity = q;
 	}
 
+	@Override
+	public Integer getProfileLifeTime() {
+		return this.profileLifeTime;
+	}
+
+	public void setProfileLifetime(Integer lifetime) {
+		this.profileLifeTime = lifetime;
+	}
+	
 	@Override
 	public NmdFaseProfiel getFaseProfiel(String fase) {
 		return this.profiles.getOrDefault(fase, null);
@@ -90,51 +80,25 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	}
 
 	@Override
-	public Set<String> getDefinedProfiles() {
-		return profiles.keySet();
+	public HashMap<String, NmdFaseProfiel> getAllFaseProfielen() {
+		return this.profiles;
+	}
+	
+	@Override
+	public Boolean getIsScalable() {
+		return this.isScalable;
+	}
+	
+	public void setIsScalable(Boolean scaleFlag) {
+		this.isScalable = scaleFlag;
+	}
+
+	public void setScaler(NmdScaler scaler) {
+		this.scaler = scaler;
 	}
 
 	@Override
-	public Boolean getIsFullProfile() {
-		return this.isFullProfile;
-	}
-	
-	public void setIsFullProfile(Boolean flag) {
-		this.isFullProfile = flag;
-	}
-
-	@Override
-	public Integer getParentProfielId() {
-		return this.parentProfileId;
-	}
-	
-	public void setParentProfielId(Integer id) {
-		this.parentProfileId = id;
-	}
-	
-	public Double getRequiredNumberOfUnits(MpgObject object) {
-		if (object == null || this.profiles.size() == 0) {
-			return Double.NaN;
-		}
-		
-		String productUnit = this.getUnit();
-		if (productUnit.equals("m1")) {
-			return object.getVolume() / object.getArea();
-		}
-		if (productUnit.equals("m2")) {
-			return object.getArea();
-		}
-		if (productUnit.equals("m3")) {
-			return object.getVolume();
-		}
-		if (productUnit.equals("p")) {
-			return 1.0; // product per piece. always return 1 per profielset.
-		}
-		if (productUnit.equals("kg")) {
-			return Double.NaN;
-		}
-		
-		return Double.NaN;
-		
+	public NmdScaler getScaler() {
+		return this.scaler;
 	}
 }

@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 
@@ -38,8 +40,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				nmdDataService.login();
 				nmdDataService.preLoadData();
 			}
-
-			
 			
 			// get data per material - run through services in order
 			for (MpgElement element : ifcResults.getElements()) {
@@ -66,21 +66,28 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		for (NmdDataService nmdDataService : services) {
 			
 			// resolve which product card to retrieve based on the input MpgElement
+			if (mpgElement.getMpgObject() == null)
+			{
+				return;
+			}
+			
 			String ifcProductType = mpgElement.getMpgObject().getObjectType();
 			String[] foundMap = map.getOrDefault(ifcProductType, emptyMap);
 			if (foundMap == null) { break; }
 			
-			Optional<NmdProductCard> dbProduct = nmdDataService.getData().stream()
-				.filter(product -> Arrays.stream(foundMap).anyMatch(code -> {
-					return product.getNLsfbCode().contains(code);
-				}))
+			Optional<ImmutablePair<Integer, NmdProductCard>> dbProduct = nmdDataService.getData().stream()
+				.filter(el -> Arrays.stream(foundMap).anyMatch(code -> code == el.getNLsfbCode()))
+				.flatMap(el -> el.getProducts().stream()
+							.map(pc -> new ImmutablePair<Integer, NmdProductCard>(el.getCUASId(), pc))
+						)
 				.findFirst();
 			if (!dbProduct.isPresent()) { break; }
 			
-			retrievedMaterial = dbProduct.get();
-			nmdDataService.getProfielSetsByProductCard(retrievedMaterial);
-			if (retrievedMaterial.getProfileSets().size() > 0) {
-				mpgElement.setProductCard(retrievedMaterial);
+			// create a copy
+			retrievedMaterial = new NmdProductCardImpl(dbProduct.get().getValue());
+
+			if (nmdDataService.getAdditionalProfileDataForCard(retrievedMaterial)) {
+				mpgElement.addProductCard(dbProduct.get().getKey(), retrievedMaterial);
 				mpgElement.setMappingMethod(NmdMapping.Direct);
 				break;
 			}

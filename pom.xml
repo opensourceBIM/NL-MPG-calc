@@ -29,7 +29,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>pluginbase</artifactId>
-			<version>1.5.121-SNAPSHOT</version>
+			<version>1.5.126-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
@@ -39,7 +39,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimserverclientlib</artifactId>
-			<version>1.5.121-SNAPSHOT</version>
+			<version>1.5.126-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

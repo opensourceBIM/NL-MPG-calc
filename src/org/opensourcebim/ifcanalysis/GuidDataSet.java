@@ -33,7 +33,7 @@ public class GuidDataSet {
 			this.addRecord(guid);
 			this.setRecordValue(guid, "name", obj.getObjectName());
 			this.setRecordValue(guid, "productType", obj.getObjectType());
-			this.setRecordValue(guid, "volume", obj.getVolume());
+			this.setRecordValue(guid, "volume", obj.getGeometry().getVolume());
 			this.setRecordValue(guid, "directMats", obj.getMaterialNamesBySource("direct"));
 			this.setRecordValue(guid, "layerMats", obj.getMaterialNamesBySource("layer"));
 			this.setRecordValue(guid, "typeMats", obj.getMaterialNamesBySource("type"));

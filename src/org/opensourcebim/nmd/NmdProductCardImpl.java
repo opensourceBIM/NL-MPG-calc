@@ -1,31 +1,46 @@
 package org.opensourcebim.nmd;
 
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import org.opensourcebim.ifccollection.MpgGeometry;
+import org.opensourcebim.ifccollection.MpgObject;
 
 public class NmdProductCardImpl implements NmdProductCard {
-	private String name;
+	
 	private String description;
-	private int dataCategory;
-	private String nlsfbCode;
-	private String rawCode;
-	private String elementName;
-	private double lifeTime;
 	private Set<NmdProfileSet> specifications;
 	private Boolean isTotaalProduct;
-	
+	private String unit;
+	private Integer category;
+	private Boolean isScalable;
+	private Integer productLifetime;
+	private Integer parentId;
+	private Integer id;
+
 	public NmdProductCardImpl() {
 		this.specifications = new HashSet<NmdProfileSet>();
-		this.setRAWCode("");
-		this.setNLsfbCode("");
 		this.isTotaalProduct = false;
+		this.description = "";
 	}
-	
-	@Override
-	public String getName() {
-		return this.name;
+
+	/**
+	 * Copy constructor
+	 * 
+	 * @param input constructor
+	 */
+	public NmdProductCardImpl(NmdProductCard p) {
+
+		if (p == null) {
+			p = new NmdProductCardImpl();
+		}
+
+		this.specifications = new HashSet<NmdProfileSet>();
+		this.specifications.addAll(p.getProfileSets());
+		this.setUnit(p.getUnit());
+		this.setDescription(p.getDescription());
+		this.setIsTotaalProduct(p.getIsTotaalProduct());
 	}
 
 	@Override
@@ -34,94 +49,113 @@ public class NmdProductCardImpl implements NmdProductCard {
 	}
 
 	@Override
-	public int getDataCategory() {
-		return this.dataCategory;
+	public String getUnit() {
+		return this.unit;
 	}
 
-	@Override
-	public String getNLsfbCode() {
-		return this.nlsfbCode;
+	public void setUnit(String unit) {
+		this.unit = unit;
 	}
-
-	@Override
-	public String getRAWCode() {
-		return this.rawCode;
-	}
-	
-	@Override
-	public String getElementName() {
-		return this.elementName;
-	}
-
-
-	@Override
-	public double getLifeTime() {
-		return this.lifeTime;
-	}
-
 
 	@Override
 	public Set<NmdProfileSet> getProfileSets() {
 		return this.specifications;
 	}
-	
+
 	@Override
 	public void addProfileSet(NmdProfileSet spec) {
 		this.specifications.add(spec);
 	}
 
 	@Override
-	public String print() {
-		return "not implemented";
-	}
-	
-	@Override 
-	public Boolean getIsTotaalProduct() {
-		return this.isTotaalProduct;
+	public void addProfileSets(Collection<NmdProfileSet> specs) {
+		this.specifications.addAll(specs);
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	@Override
+	public Boolean getIsTotaalProduct() {
+		return this.isTotaalProduct;
 	}
 
 	public void setDescription(String description) {
 		this.description = description;
 	}
 
-	public void setDataCategory(int dataCategory) {
-		this.dataCategory = dataCategory;
-	}
-
-	public void setNLsfbCode(String productCode) {
-		this.nlsfbCode = productCode;
-	}
-
-	public void setRAWCode(String elementCode) {
-		this.rawCode = elementCode;
-	}
-
-	public void setElementName(String elementName) {
-		this.elementName = elementName;
-	}
-
-	public void setLifeTime(double lifeTime) {
-		this.lifeTime = lifeTime;
-	}
-
 	public void setIsTotaalProduct(boolean b) {
 		this.isTotaalProduct = b;
 	}
 
-	
-	/**
-	 * Make sure that all cuas phases are covered
-	 * TODO: what if there are multiple sets for a single cuas phase?
-	 * @return boolean to indicate
-	 */
 	@Override
-	public boolean isFullyCovered() {	
-		List<Integer> cuasCodes = this.getProfileSets().stream().map(ps -> ps.getCuasCode()).collect(Collectors.toList());
-		return this.getIsTotaalProduct() || 
-				(cuasCodes.size() == 4 && cuasCodes.stream().mapToInt(Integer::intValue).sum() == 10);
+	public Integer getCategory() {
+		return this.category;
+	}
+
+	public void setCategory(Integer cat) {
+		this.category = cat;
+	}
+
+	@Override
+	public Boolean getIsScalable() {
+		return this.isScalable;
+	}
+
+	public void setIsScalable(Boolean scalable) {
+		this.isScalable = scalable;
+	}
+
+	@Override
+	public Integer getLifetime() {
+		return this.productLifetime;
+	}
+
+	public void setLifetime(Integer lifetime) {
+		this.productLifetime = lifetime;
+	}
+
+	@Override
+	public Integer getParentProductId() {
+		return this.parentId;
+	}
+
+	public void setParentProductId(Integer id) {
+		this.parentId = id;
+	}
+
+	@Override
+	public Integer getProductId() {
+		return this.id;
+	}
+	
+	public void setProductId(Integer id) {
+		this.id = id;
+	}
+	
+	@Override
+	public double getRequiredNumberOfUnits(MpgObject object) {
+		if (object == null || this.getProfileSets().size() == 0) {
+			return Double.NaN;
+		}
+		MpgGeometry geom = object.getGeometry();
+		
+		
+		String productUnit = this.getUnit().toLowerCase();
+		if (productUnit.equals("m1")) {
+			return geom.getPrincipalDimension();
+		}
+		if (productUnit.equals("m2")) {
+			return geom.getFaceArea();
+		}
+		if (productUnit.equals("m3")) {
+			return geom.getVolume();
+		}
+		if (productUnit.equals("p")) {
+			return 1.0; // product per piece. always return 1 per profielset.
+		}
+		if (productUnit.equals("kg")) {
+			return Double.NaN; // we do not have densities of products, we will need to figure out how to fix this.
+		}
+		
+		return Double.NaN;
+		
 	}
 }

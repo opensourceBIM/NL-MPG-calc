@@ -1,16 +1,22 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.bimserver.utils.AreaUnit;
+import org.bimserver.utils.LengthUnit;
+import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.BasicEList;
 import org.opensourcebim.ifcanalysis.GuidCollection;
 import org.opensourcebim.nmd.NmdProductCard;
@@ -28,7 +34,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	private HashSet<MpgElement> mpgElements;
 
-	
 	@JsonIgnore
 	private List<MpgObject> mpgObjects;
 
@@ -73,6 +78,10 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@JsonIgnore
 	private List<ImmutablePair<String, MpgObject>> decomposedRelations;
 
+	private VolumeUnit volumeUnit;
+	private AreaUnit areaUnit;
+	private LengthUnit lengthUnit;
+
 	public MpgObjectStoreImpl() {
 		setElements(new HashSet<>());
 		setObjects(new BasicEList<MpgObject>());
@@ -87,6 +96,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		setGuidsWithUndefinedLayerMats(new GuidCollection(this, "# of objects that have undefined layers"));
 		setGuidsWithRedundantMaterialSpecs(
 				new GuidCollection(this, "# of objects that cannot be linked to materials 1-on-1"));
+		this.setUnits(VolumeUnit.CUBIC_METER, AreaUnit.SQUARED_METER, LengthUnit.METER);
 	}
 
 	public void reset() {
@@ -98,6 +108,34 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		getGuidsWithoutVolume().reset();
 		getGuidsWithUndefinedLayerMats().reset();
 		getGuidsWithRedundantMaterials().reset();
+	}
+
+	@Override
+	public VolumeUnit getVolumeUnit() {
+		return this.volumeUnit;
+	}
+
+	@Override
+	public AreaUnit getAreaUnit() {
+		return this.areaUnit;
+	}
+
+	@Override
+	public LengthUnit getLengthUnit() {
+		return this.lengthUnit;
+	}
+
+	/**
+	 * Set the units used when storing the mpgObjects
+	 * 
+	 * @param volumeUnit volume unit fo ifcProduct
+	 * @param areaUnit   area unit of ifcProducts
+	 * @param lengthUnit length unit of ifcProducts
+	 */
+	public void setUnits(VolumeUnit volumeUnit, AreaUnit areaUnit, LengthUnit lengthUnit) {
+		this.volumeUnit = volumeUnit;
+		this.areaUnit = areaUnit;
+		this.lengthUnit = lengthUnit;
 	}
 
 	@Override
@@ -117,17 +155,17 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void setProductCardForElement(String name, NmdProductCard specs) {
+	public void addProductCardToElement(String name, Integer cuasCode, NmdProductCard card) {
 		MpgElement el = getElementByName(name);
-		if( el != null) {
-			el.setProductCard(specs);
+		if (el != null) {
+			el.addProductCard(cuasCode, card);
 		}
 	}
-	
+
 	@Override
 	public void setObjectForElement(String name, MpgObject mpgObject) {
 		MpgElement el = getElementByName(name);
-		if( el != null) {
+		if (el != null) {
 			el.setMpgObject(mpgObject);
 		}
 	}
@@ -188,7 +226,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public MpgElement getElementByName(String name) {
-		Optional<MpgElement> element = getElements().stream().filter(e-> e.getIfcName().equalsIgnoreCase(name)).findFirst();
+		Optional<MpgElement> element = getElements().stream().filter(e -> e.getIfcName().equalsIgnoreCase(name))
+				.findFirst();
 		return element.isPresent() ? element.get() : null;
 	}
 
@@ -209,7 +248,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public double getTotalVolumeOfProductType(String productType) {
-		return getObjectsByProductType(productType).stream().collect(Collectors.summingDouble(o -> o.getVolume()));
+		return getObjectsByProductType(productType).stream()
+				.collect(Collectors.summingDouble(o -> o.getGeometry().getVolume()));
 	}
 
 	@Override
@@ -257,10 +297,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 */
 	@Override
 	public boolean isElementDataComplete() {
-
-		return getElements().stream().allMatch(element -> 
-			element.getNmdProductCard() == null ? false : element.getNmdProductCard().isFullyCovered()
-		);
+		return this.mpgElements.stream().allMatch(e -> {
+			return e.getNmdProductCards().size() > 0 && e.getMpgObject() != null && e.getIsFullyCovered();
+		});
 	}
 
 	@Override
@@ -356,10 +395,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public boolean isIfcDataComplete() {
-		return getGuidsWithoutMaterial().getSize() == 0 
-				&& getGuidsWithoutVolume().getSize() == 0
-				&& getGuidsWithRedundantMaterials().getSize() == 0 
-				&& getGuidsWithUndefinedLayerMats().getSize() == 0;
+		return getGuidsWithoutMaterial().getSize() == 0 && getGuidsWithoutVolume().getSize() == 0
+				&& getGuidsWithRedundantMaterials().getSize() == 0 && getGuidsWithUndefinedLayerMats().getSize() == 0;
 	}
 
 	@Override
@@ -403,11 +440,92 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public Stream<String> getAllMaterialNames() {
-		return this.getElements().stream()
-				.flatMap(e -> e.getMpgObject().getListedMaterials().stream())
+		return this.getElements().stream().flatMap(e -> e.getMpgObject().getListedMaterials().stream())
 				.map(s -> s.getName()).filter(n -> {
 					return (n != null && !n.isEmpty());
-				})
-				.distinct();
+				}).distinct();
+	}
+
+	/**
+	 * go through all objects without an NLSFB code and try to find matching or
+	 * 'parent' objects that do have a type.
+	 */
+	public void resolveNlsfbCodes() {
+
+		this.getObjects().stream().filter(o -> o.getNLsfbCode() == "" || o.getNLsfbCode() == null).forEach(o -> {
+			if (!o.getParentId().isEmpty()) {
+				MpgObject p = this.getObjectByGuid(o.getParentId()).get();
+				String parentCode = p.getNLsfbCode();
+				if (!parentCode.isEmpty()) {
+					o.setNLsfbCode(parentCode);
+				}
+			}
+		});
+	}
+
+	/**
+	 * run through mpgObjects where no geometry could be found and match these with
+	 * first: similar nlsfb code objects and second (Not implemented yet)
+	 */
+	public void resolveUnknownGeometries() {
+		// maintain a map with already found scalers to boost performance.
+		HashMap<String, List<MpgScalingType>> foundScalers = new HashMap<String, List<MpgScalingType>>();
+		Function<MpgObject, String> getNLsfbProp = (MpgObject e) -> {
+			return e.getNLsfbCode();
+		};
+		Function<MpgObject, String> getProdTypeProp = (MpgObject e) -> {
+			return e.getObjectType();
+		};
+
+		// TODO: we can make this a lot more abstract to run this for any set of properties, but let's skip that for now.
+		this.getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
+			List<MpgScalingType> scalers = null;
+			String NLsfbKey = o.getNLsfbCode();
+
+			if (foundScalers.containsKey(NLsfbKey)) {
+				scalers = foundScalers.get(NLsfbKey);
+			} else {
+				scalers = findScalersForMpgObjectProperty(getNLsfbProp, NLsfbKey);
+				foundScalers.put(NLsfbKey, scalers);
+			}
+			if (scalers.size() > 0) {
+				scalers.forEach(s -> o.getGeometry().addScalingType(s));
+				o.getGeometry().setIsComplete(true);
+			} else {
+				// fallback option is to look at similar IfcProducts
+				String prodTypeKey = o.getObjectType();
+				if (foundScalers.containsKey(prodTypeKey)) {
+					scalers = foundScalers.get(prodTypeKey);
+				} else {
+					scalers = findScalersForMpgObjectProperty(getProdTypeProp, prodTypeKey);
+					foundScalers.put(prodTypeKey, scalers);
+				}
+
+				if (scalers.size() > 0) {
+					scalers.forEach(s -> o.getGeometry().addScalingType(s));
+					o.getGeometry().setIsComplete(true);
+				}
+			}
+		});
+	}
+	
+	/**
+	 * Get the scalers matching a referenceProperty value by looking for scalers in all objects with an equal property value
+	 * @param propMethod Function that returns the requested property from an MpgObject
+	 * @param referenceProperty the reference property value that the other objects should match with.
+	 * @return the MpgScalingType that is most likely to match
+	 */
+	private List<MpgScalingType> findScalersForMpgObjectProperty(Function<MpgObject, String> propMethod,
+			String referenceProperty) {
+		List<List<MpgScalingType>> candidates = this.getObjects().stream().filter(o -> propMethod.apply(o) != null)
+				.filter(o -> propMethod.apply(o).equals(referenceProperty)).filter(o -> o.getGeometry().getIsComplete())
+				.map(o -> o.getGeometry().getScalerTypes()).distinct().collect(Collectors.toList());
+
+		Optional<List<MpgScalingType>> scaler = candidates.stream().filter(st -> st.size() > 1).findFirst();
+		if (scaler.isPresent()) {
+			return scaler.get();
+		} else {
+			return new ArrayList<MpgScalingType>();
+		}
 	}
 }

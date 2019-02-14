@@ -13,8 +13,9 @@ public interface MpgObject {
 	String getParentId();
 	void setParentId(String value);
 	
-	Double getVolume();
-	Double getArea();
+	String getNLsfbCode();
+	
+	MpgGeometry getGeometry();
 	
 	void addMaterialSource(String name, String guid, String source);
 	List<MaterialSource> getListedMaterials();
@@ -31,4 +32,5 @@ public interface MpgObject {
 	boolean hasUndefinedVolume(boolean includeChildren);
 	boolean hasRedundantMaterials(boolean includeChildren);
 	boolean hasUndefinedLayers(boolean includeChildren);
+	void setNLsfbCode(String parentCode);
 }

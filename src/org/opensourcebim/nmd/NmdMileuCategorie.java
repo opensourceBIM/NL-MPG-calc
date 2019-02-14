@@ -1,5 +1,4 @@
-package org.opensourcebim.mpgcalculation;
-
+package org.opensourcebim.nmd;
 
 /**
  * class for the various impact factors that can be present in a single

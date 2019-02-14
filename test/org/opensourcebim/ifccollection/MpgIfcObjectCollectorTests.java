@@ -214,7 +214,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		factory.addProductToModel(ifcModel, null, null);
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(1.0e-9, collector.results().getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(1.0e-9, collector.results().getObjects().get(0).getGeometry().getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -225,7 +225,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.results().getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(3, collector.results().getObjects().get(0).getGeometry().getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -240,7 +240,7 @@ public class MpgIfcObjectCollectorTests {
 		factory.addProductToModel(ifcModel, null, null);
 		
 		collector.collectIfcModelObjects(ifcModel);
-		assertEquals(3, collector.results().getObjects().get(0).getVolume(), 1e-8);
+		assertEquals(3, collector.results().getObjects().get(0).getGeometry().getVolume(), 1e-8);
 	}
 	
 	@Test
@@ -329,7 +329,7 @@ public class MpgIfcObjectCollectorTests {
 		
 		collector.collectIfcModelObjects(ifcModel);
 		assertEquals(4.0, collector.results().getSpaces().get(0).getVolume(), 1e-8);
-		assertEquals(1.0, collector.results().getSpaces().get(0).getArea(), 1e-8);
+		assertEquals(Math.pow(4.0, (2.0/3.0)), collector.results().getSpaces().get(0).getArea(), 1e-8);
 	}
 	
 	@Test

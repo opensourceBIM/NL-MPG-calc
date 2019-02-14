@@ -1,5 +1,8 @@
 package org.opensourcebim.nmd;
+import java.util.Collection;
 import java.util.Set;
+
+import org.opensourcebim.ifccollection.MpgObject;
 
 /**
  * Storage container to contain the lifecycle coefficients to do the MPG
@@ -12,29 +15,28 @@ import java.util.Set;
  * @author vijj
  *
  */
-public interface NmdProductCard {
-	String getName();
-
+public interface NmdProductCard{
+		
 	String getDescription();
-
-	int getDataCategory();
-
-	String getNLsfbCode();
-
-	String getRAWCode();
-
-	String getElementName();
-	
-	double getLifeTime();
 
 	Boolean getIsTotaalProduct();
 	
 	Set<NmdProfileSet> getProfileSets();
 
 	void addProfileSet(NmdProfileSet spec);
+	void addProfileSets(Collection<NmdProfileSet> specs);
 
-	String print();
+	String getUnit();
 
-	boolean isFullyCovered();
+	Integer getCategory();
 
+	Boolean getIsScalable();
+
+	Integer getLifetime();
+
+	Integer getParentProductId();
+
+	Integer getProductId();
+
+	double getRequiredNumberOfUnits(MpgObject mpgObject);
 }

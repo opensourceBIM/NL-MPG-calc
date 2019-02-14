@@ -5,25 +5,26 @@ import static org.junit.Assert.assertFalse;
 
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgLayer;
 import org.opensourcebim.ifccollection.MpgLayerImpl;
-import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
+import org.opensourcebim.ifccollection.MpgScalingType;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdFaseProfielImpl;
+import org.opensourcebim.nmd.NmdMileuCategorie;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProductCardImpl;
 import org.opensourcebim.nmd.NmdProfileSet;
 import org.opensourcebim.nmd.NmdProfileSetImpl;
 import org.opensourcebim.nmd.NmdReferenceResources;
+import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
 public class mpgCalculatorTests {
 
@@ -77,7 +78,7 @@ public class mpgCalculatorTests {
 	@Test
 	public void testReturnIncompleteDataStatusWhenMpgObjectsAreNotFullyCovered() {
 		// adding a profile set that is not a totaalproduct will trigger a warning
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1, 1);
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.IncompleteData, results.getStatus());
@@ -90,17 +91,18 @@ public class mpgCalculatorTests {
 		String name = "steel beam";
 		String unit = "m3";
 		int category = 1;
-		NmdProductCardImpl card = new NmdProductCardImpl();
-		card.setName(name);
-		card.setDataCategory(category);
-
-		// since we're not adding a totaalproduct we need to cover every CUAS stage individually
-		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 1));
-		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 2));
-		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 3));
-		card.addProfileSet(createProfileSet(name, unit, 1, category, false, 4));
-		card.setIsTotaalProduct(false);
-		store.setProductCardForElement(ifcName, card);
+		
+		// add a product for every CUAS stage (1 to 4, omit 5)
+		for(int i = 1; i < 5; i++) {
+			NmdProductCardImpl card = new NmdProductCardImpl();
+			card.setUnit(unit);
+			card.setCategory(category);
+			card.setLifetime(1);
+			// since we're not adding a totaalproduct we need to cover every CUAS stage individually
+			card.addProfileSet(createProfileSet(name, unit, 1));
+			card.setIsTotaalProduct(false);
+			store.addProductCardToElement(ifcName, i, card);
+		}
 		addUnitIfcObjectForElement(ifcName, 1.0, 1.0);
 
 		startCalculations(1.0);
@@ -109,7 +111,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testResultsReturnSuccessStatusWhenCalculationsSucceed() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.Success, results.getStatus());
@@ -117,7 +119,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostCannotBeNaN() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
 
 		startCalculations(1.0);
 		assertFalse(results.getTotalCost().isNaN());
@@ -125,7 +127,7 @@ public class mpgCalculatorTests {
 	
 	@Test
 	public void testTotalCostIsNonZeroOnCompleteProduct() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
 
 		startCalculations(1.0);
 		assertFalse(results.getTotalCost() == 0);
@@ -133,7 +135,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testCategory3DataIncreasesTotalCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 3, 5);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 3, 5, 1);
 
 		startCalculations(1.0);
 		// 30% increase in cost for category 3 data
@@ -143,7 +145,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerSquareMeterFloorArea() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
 
 		Double totalArea = 10.0;
 		addSpace(totalArea);
@@ -155,10 +157,11 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperationYear() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
+		Double totalLifeTime = 10.0;
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, totalLifeTime.intValue());
 		addSpace(1.0);
 
-		Double totalLifeTime = 10.0;
+
 		startCalculations(totalLifeTime);
 
 		assertEquals(results.getTotalCost() / totalLifeTime, results.getTotalCorrectedCost(), 1e-8);
@@ -166,9 +169,8 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperatingYearAndFloorArea() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
-
 		Double factor = 10.0;
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, factor.intValue());
 		addSpace(factor); // 10m2 floor
 		startCalculations(factor); // 10 years of designlife
 		assertEquals(results.getTotalCost() / (factor * factor), results.getTotalCorrectedCost(), 1e-8);
@@ -176,7 +178,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostPerMaterialReturnsZeroWhenMaterialNotPresent() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
 
 		startCalculations(1);
 
@@ -185,9 +187,9 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostPerMaterialReturnsOnlyCostOfRelevantMaterial() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5);
-		addMaterialWithproductCard("brick", "brick and mortar", "m2", 1, 5);
-		addMaterialWithproductCard("brick2", "brick and mortar", "m2", 1, 5);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
+		addMaterialWithproductCard("brick", "brick and mortar", "m2", 1, 5, 1);
+		addMaterialWithproductCard("brick2", "brick and mortar", "m2", 1, 5, 1);
 		
 		startCalculations(1);
 
@@ -204,12 +206,12 @@ public class mpgCalculatorTests {
 		
 		store.addElement("Brick Wall");
 		NmdProductCardImpl productCard = new NmdProductCardImpl();
-		productCard.setName("Brick and mortar");
-		productCard.setDataCategory(1);
-
-		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1, false, 1));
-		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1, false, 1));
-		store.setProductCardForElement("Brick Wall", productCard);
+		productCard.setUnit("m2");
+		productCard.setLifetime(10);
+		productCard.setCategory(1);
+		productCard.addProfileSet(createProfileSet("bricks", "m2", 10));
+		productCard.addProfileSet(createProfileSet("mortar", "m2", 1));
+		store.addProductCardToElement("Brick Wall", 1, productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
 		
 		startCalculations(10);
@@ -220,13 +222,13 @@ public class mpgCalculatorTests {
 		// repeat the calculation with mortar added first - different replacement time
 		store.addElement("Brick Wall");
 		productCard = new NmdProductCardImpl();
-		productCard.setName("Brick and mortar");
-		productCard.setDataCategory(1);
+		productCard.setUnit("m2");
+		productCard.setLifetime(10);
+		productCard.setCategory(1);
+		productCard.addProfileSet(createProfileSet("mortar", "m2", 1));
+		productCard.addProfileSet(createProfileSet("bricks", "m2", 10));
 
-		productCard.addProfileSet(createProfileSet("mortar", "m2", 1, 1, false, 1));
-		productCard.addProfileSet(createProfileSet("bricks", "m2", 10, 1, false, 1));
-
-		store.setProductCardForElement("Brick Wall", productCard);
+		store.addProductCardToElement("Brick Wall", 1, productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
 		
 		startCalculations(10);
@@ -234,7 +236,7 @@ public class mpgCalculatorTests {
 
 		// the first construction element lifespan should be taken for all of the elements
 		// changing the order should therefore change the results (bad design?)
-		assertFalse((totalCostBrickFirst - totalCostMortarFirst) < 1e-8);
+		assertFalse((totalCostBrickFirst - totalCostMortarFirst) > 1e-8);
 	}
 
 	/**
@@ -250,17 +252,16 @@ public class mpgCalculatorTests {
 		this.results = calculator.getResults();
 	}
 
-	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int cuasCode) {
+	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int cuasCode, int lifetime) {
 		store.addElement(ifcMatName);
-		store.setProductCardForElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category, cuasCode));
+		store.addProductCardToElement(ifcMatName, cuasCode, createUnitProductCard(nmdMatName, unit, category, lifetime));
 		addUnitIfcObjectForElement(ifcMatName, 1.0, 1.0);
 	}
 	
 	private void addUnitIfcObjectForElement(String ifcMatName, double volume, double area) {
 		MpgObjectImpl mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), ifcMatName + " element", "Slab",
 				"", store);
-		mpgObject.setArea(1.0);
-		mpgObject.setVolume(1.0);
+		mpgObject.setGeometry(createDummyGeometry());
 
 		MpgLayer testObject = new MpgLayerImpl(volume, area, ifcMatName, Integer.toString(ifcMatName.hashCode()));
 		mpgObject.addLayer(testObject);
@@ -268,6 +269,30 @@ public class mpgCalculatorTests {
 		store.addObject(mpgObject);
 
 		store.setObjectForElement(ifcMatName, mpgObject);
+	}
+
+	private MpgGeometry createDummyGeometry() {
+		MpgGeometry g = new MpgGeometry();
+		g.setVolume(1.0);
+		g.setFloorArea(1.0);
+		g.setFaceArea(1.0);
+		g.setMaxXDimension(1.0);
+		g.setMaxYDimension(1.0);
+		g.setMaxZDimension(1.0);
+		
+		MpgScalingType rodScaler = new MpgScalingType();
+		rodScaler.setUnitAxes(new int[]{3});
+		rodScaler.setScaleAxes(new int[]{1, 2});
+		
+		g.addScalingType(rodScaler);
+		
+		MpgScalingType areaScaler = new MpgScalingType();
+		areaScaler.setUnitAxes(new int[]{1, 2});
+		areaScaler.setScaleAxes(new int[]{3});
+		
+		g.addScalingType(areaScaler);
+		
+		return g;
 	}
 
 	/**
@@ -280,22 +305,21 @@ public class mpgCalculatorTests {
 		store.addSpace(new MpgSpaceImpl(UUID.randomUUID().toString(), floorArea * 3, floorArea));
 	}
 
-	private NmdProductCard createUnitProductCard(String name, String unit, int category, int cuasCode) {
+	private NmdProductCard createUnitProductCard(String name, String unit, int category, int lifetime) {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
-		specs.setName(name);
-		specs.setDataCategory(category);
-
-		specs.addProfileSet(createProfileSet(name, unit, 1, category, false, cuasCode));
-		specs.setIsTotaalProduct(cuasCode == 5);
+		specs.setLifetime(lifetime);
+		specs.setDescription(name);
+		specs.setCategory(category);
+		specs.setUnit(unit);
+		specs.addProfileSet(createProfileSet(name, unit, lifetime));
 
 		return specs;
 	}
 
-	private NmdProfileSet createProfileSet(String name, String unit, int lifetime, int category, Boolean isTotaalProfiel, int cuasCode) {
+	private NmdProfileSet createProfileSet(String name, String unit, int lifetime) {
 		NmdProfileSetImpl spec = new NmdProfileSetImpl();
 		
-		spec.setCategory(category);
-		spec.setProductLifeTime(lifetime);
+		spec.setProfileLifetime(lifetime);
 		spec.addFaseProfiel("TransportToSite", createUnitProfile("TransportToSite"));
 		spec.addFaseProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements"));
 		spec.addFaseProfiel("Disposal", createUnitProfile("Disposal"));
@@ -308,10 +332,14 @@ public class mpgCalculatorTests {
 
 		spec.setUnit(unit);
 		spec.setProfielId(1);
+		spec.setIsScalable(true);
+		// as a dummy add a scaler that will do no adjustment
+		spec.setScaler(new NmdLinearScaler("m", 
+				new Double[] {1.0, 0.0, 0.0}, 
+				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
+				new Double[] {1.0, 1.0}));
 		spec.setName(name);
-		spec.setIsFullProfile(isTotaalProfiel);
-		spec.setCuasCode(cuasCode);
-		
+
 		return spec;
 	}
 

@@ -1,6 +1,5 @@
 package org.opensourcebim.nmd;
 
-import java.io.FileNotFoundException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -25,13 +24,13 @@ public interface NmdDataService {
 
 	void setRequestDate(Calendar newDate);
 
-	List<NmdProductCard> getAllProductSets();
-	
-	List<NmdProductCard> getChildProductSetsForProductSet(NmdProductCard product) throws FileNotFoundException;
-	
-	Boolean getProfielSetsByProductCard(NmdProductCard product);
-	
+	List<NmdElement> getAllElements();
+			
+	List<NmdElement> getData();
+
 	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids);
 
-	List<NmdProductCard> getData();
+	List<NmdProductCard> getProductsForElement(NmdElement element);
+
+	Boolean getAdditionalProfileDataForCard(NmdProductCard c);
 }

@@ -2,8 +2,6 @@ package org.opensourcebim.nmd;
 
 import java.util.HashMap;
 
-import org.opensourcebim.mpgcalculation.NmdMileuCategorie;
-
 /*
  * Datastore for mappings from the NMD that only have to be retrieved once per session. 
  */
@@ -13,6 +11,7 @@ public class NmdReferenceResources {
 	private HashMap<Integer, String> unitMapping;
 	private HashMap<Integer, NmdMileuCategorie> milieuCategorieMapping;
 	private HashMap<Integer, String> cuasCategorieMapping;
+	private HashMap<Integer, String> scalingFormula;
 	
 	public NmdReferenceResources() {
 		setFaseMapping(new HashMap<Integer, String>());
@@ -50,5 +49,13 @@ public class NmdReferenceResources {
 
 	public void setCuasCategorieMapping(HashMap<Integer, String> cuasCategorieMapping) {
 		this.cuasCategorieMapping = cuasCategorieMapping;
+	}
+
+	public HashMap<Integer, String> getScalingFormula() {
+		return scalingFormula;
+	}
+
+	public void setScalingFormula(HashMap<Integer, String> scalingFormula) {
+		this.scalingFormula = scalingFormula;
 	}	
 }

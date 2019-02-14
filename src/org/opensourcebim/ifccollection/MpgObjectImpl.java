@@ -26,8 +26,8 @@ public class MpgObjectImpl implements MpgObject {
 	private Supplier<MpgObjectStore> store;
 	private List<MaterialSource> listedMaterials;
 
-	private Double volume;
-	private Double area;
+	private MpgGeometry geometry;
+	private String nlsfb;
 
 	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId,
 			MpgObjectStore objectStore) {
@@ -97,23 +97,24 @@ public class MpgObjectImpl implements MpgObject {
 	public void setGlobalId(String globalId) {
 		this.globalId = globalId;
 	}
-
+	
 	@Override
-	public Double getVolume() {
-		return this.volume;
-	}
-
-	public void setVolume(double value) {
-		this.volume = value;
-	}
-		
-	@Override
-	public Double getArea() {
-		return this.area;
+	public MpgGeometry getGeometry() {
+		return this.geometry;
 	}
 	
-	public void setArea(double value) {
-		this.area = value;
+	public void setGeometry(MpgGeometry geom) {
+		this.geometry = geom;
+	}
+	
+	@Override
+	public String getNLsfbCode() {
+		return this.nlsfb;
+	}
+	
+	@Override
+	public void setNLsfbCode(String code) {
+		this.nlsfb = code;
 	}
 
 	@Override
@@ -194,7 +195,7 @@ public class MpgObjectImpl implements MpgObject {
 
 	@Override
 	public boolean hasUndefinedVolume(boolean includeChildren) {
-		boolean ownCheck = getVolume() == 0;
+		boolean ownCheck = getGeometry().getVolume() == 0;
 		boolean hasChildren = getStore().getChildren(this.getGlobalId()).count() > 0;
 		boolean childCheck = includeChildren
 				&& getStore().getChildren(this.getGlobalId()).anyMatch(o -> o.hasUndefinedVolume(includeChildren));

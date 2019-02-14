@@ -14,8 +14,6 @@ import org.opensourcebim.mpgcalculation.MpgCostFactor;
  *
  */
 public interface NmdFaseProfiel {
-
-	String getDescription();
 	
 	String getFase();
 	
@@ -24,4 +22,6 @@ public interface NmdFaseProfiel {
 	double getProfielCoefficient(String milieuCategorie);
 	
 	void setProfielCoefficient(String milieuCategorie, double value);
+	
+	Double getCoefficientSum();
 }
