@@ -190,9 +190,9 @@ public class NmdInterfaceTests {
 	public void getFullProductCardById() {
 		connect();
 		Integer id = 9;
-		NmdProductCard card = db.getFullProductCardById(id);
-		assertTrue(card.getProfileSets().size() > 0);
-		assertTrue(card.getProfileSets().stream().allMatch(ps -> ps.getQuantity() > 0));
+		HashMap<Integer, Double> maps = db.getQuantitiesOfProfileSetsForProduct(id);
+		assertTrue(maps.size() > 0);
+		assertTrue(maps.values().stream().allMatch(v -> v > 0.0));
 	}
 
 	@Test

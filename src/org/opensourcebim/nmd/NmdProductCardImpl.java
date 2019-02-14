@@ -64,12 +64,16 @@ public class NmdProductCardImpl implements NmdProductCard {
 
 	@Override
 	public void addProfileSet(NmdProfileSet spec) {
-		this.specifications.add(spec);
+		if (spec != null) {
+			this.specifications.add(spec);
+		}
 	}
 
 	@Override
 	public void addProfileSets(Collection<NmdProfileSet> specs) {
-		this.specifications.addAll(specs);
+		if (specs != null && specs.size() > 0) {
+			this.specifications.addAll(specs);
+		}
 	}
 
 	@Override

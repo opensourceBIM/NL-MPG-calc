@@ -34,5 +34,5 @@ public interface NmdDataService {
 
 	Boolean getAdditionalProfileDataForCard(NmdProductCard c);
 
-	NmdProductCard getFullProductCardById(Integer productId);
+	HashMap<Integer, Double> getQuantitiesOfProfileSetsForProduct(Integer productId);
 }

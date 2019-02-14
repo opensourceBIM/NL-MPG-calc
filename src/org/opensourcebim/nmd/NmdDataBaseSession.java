@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -276,14 +277,12 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 					products.add(this.getProductCardDataFromJson(p));
 				}
 			});
-		} else {
-			System.out.println("found some exception");
-		}
+		} 
 		return products;
 	}
 	
 	@Override
-	public NmdProductCard getFullProductCardById(Integer productId) {
+	public HashMap<Integer, Double> getQuantitiesOfProfileSetsForProduct(Integer productId) {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
 		params.add(new KeyValuePair("ProductID", productId.toString()));
@@ -291,11 +290,21 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 
 		HttpResponse response = this.performGetRequestWithParams(this.apiPath + "ProfielsetsEnSchalingBijProduct", params);
 
+		HashMap<Integer, Double> res = new HashMap<Integer, Double>();
 		// do something with the entity to get the token
 		JsonNode resp_node = this.responseToJson(response);		
 		
+		JsonNode psNodes = resp_node.get("results");
+		if (psNodes != null) {
+			psNodes.forEach(ps -> {
+				Integer id = ps.get("ProfielSetID").asInt(-1);
+				Double q = ps.get("Hoeveelheid").asDouble(1.0);
+				q = q > 0.0 ? q : 1.0;
+				res.put(id, q);
+			});
+		}			
 		
-		return new NmdProductCardImpl();
+		return res;
 	}
 
 	/*
@@ -347,46 +356,49 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	private void loadFaseProfielDataForSet(JsonNode profielSetNode, NmdProfileSetImpl set) {
 		// laad faseprofiel specifieke data
 		JsonNode profielen = profielSetNode.get("Profiel");
-		profielen.forEach(p -> {
-			Integer fase = TryParseJsonNode(p.get("FaseID"), -1);
-			String faseName = this.getResources().getFaseMapping().get(fase);
-
-			NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(faseName, this.getResources());
-
-			p.get("ProfielMilieuEffecten").forEach(val -> {
-				Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
-				Double catVal = TryParseJsonNode(val.get("MilieuWaarde"), Double.NaN);
-
-				profiel.setProfielCoefficient(
-						this.getResources().getMilieuCategorieMapping().get(catId).getDescription(), catVal);
+		if (profielen != null) {
+			profielen.forEach(p -> {
+				Integer fase = TryParseJsonNode(p.get("FaseID"), -1);
+				String faseName = this.getResources().getFaseMapping().get(fase);
+	
+				NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(faseName, this.getResources());
+	
+				p.get("ProfielMilieuEffecten").forEach(val -> {
+					Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
+					Double catVal = TryParseJsonNode(val.get("MilieuWaarde"), Double.NaN);
+	
+					profiel.setProfielCoefficient(
+							this.getResources().getMilieuCategorieMapping().get(catId).getDescription(), catVal);
+				});
+	
+				set.addFaseProfiel(faseName, profiel);
 			});
-
-			set.addFaseProfiel(faseName, profiel);
-		});
+		}
 	}
 
-	private NmdProfileSetImpl getDetailedProfielSetData(JsonNode profielSetNode) {
+	private NmdProfileSetImpl getDetailedProfielSetData(JsonNode psNode) {
 		NmdProfileSetImpl set = new NmdProfileSetImpl();
-		set.setProfileLifetime(TryParseJsonNode(profielSetNode.get("Levensduur"), -1));
+		set.setProfileLifetime(TryParseJsonNode(psNode.get("Levensduur"), -1));
 		set.setUnit(this.getResources().getUnitMapping()
-				.get(TryParseJsonNode(profielSetNode.get("ProfielSetEenheidID"), -1)));
+				.get(TryParseJsonNode(psNode.get("ProfielSetEenheidID"), -1)));
 
-		set.setProfielId(TryParseJsonNode(profielSetNode.get("ProfielSetID"), -1));
-		set.setName(TryParseJsonNode(profielSetNode.get("ProfielSetNaam"), ""));
+		set.setQuantity(TryParseJsonNode(psNode.get("Hoeveelheid"), 1));
+		set.setProfielId(TryParseJsonNode(psNode.get("ProfielSetID"), -1));
+		set.setName(TryParseJsonNode(psNode.get("ProfielSetNaam"), ""));
 
-		int scalerType = TryParseJsonNode(profielSetNode.get("SchalingsFormuleID"), -1);
+		int scalerType = TryParseJsonNode(psNode.get("SchalingsFormuleID"), -1);
 		if (scalerType > 0) {
 			set.setIsScalable(true);
-			double scalerDim1 = TryParseJsonNode(profielSetNode.get("SchalingsMaatX1"), Double.NaN);
-			double scalerDim2 = TryParseJsonNode(profielSetNode.get("SchalingsMaatX2"), Double.NaN);
-			int scalerUnit = TryParseJsonNode(profielSetNode.get("EenheidID_SchalingsMaat"), -1);
-			double scalerCoeffA = TryParseJsonNode(profielSetNode.get("SchalingA"), Double.NaN);
-			double scalerCoeffB = TryParseJsonNode(profielSetNode.get("SchalingB"), Double.NaN);
-			double scalerCoeffC = TryParseJsonNode(profielSetNode.get("SchalingC"), Double.NaN);
-			double scalerMinDim1 = TryParseJsonNode(profielSetNode.get("MinX1"), Double.NaN);
-			double scalerMinDim2 = TryParseJsonNode(profielSetNode.get("MinX2"), Double.NaN);
-			double scalerMaxDim1 = TryParseJsonNode(profielSetNode.get("MaxX1"), Double.NaN);
-			double scalerMaxDim2 = TryParseJsonNode(profielSetNode.get("MaxX2"), Double.NaN);
+			double scalerDim1 = TryParseJsonNode(psNode.get("SchalingsMaatX1"), Double.NaN);
+			double scalerDim2 = TryParseJsonNode(psNode.get("SchalingsMaatX2"), Double.NaN);
+			int scalerUnit = TryParseJsonNode(psNode.get("EenheidID_SchalingsMaat"), -1);
+			double scalerCoeffA = TryParseJsonNode(psNode.get("SchalingA"), Double.NaN);
+			double scalerCoeffB = TryParseJsonNode(psNode.get("SchalingB"), Double.NaN);
+			double scalerCoeffC = TryParseJsonNode(psNode.get("SchalingC"), Double.NaN);
+			double scalerMinDim1 = TryParseJsonNode(psNode.get("MinX1"), Double.NaN);
+			double scalerMinDim2 = TryParseJsonNode(psNode.get("MinX2"), Double.NaN);
+			double scalerMaxDim1 = TryParseJsonNode(psNode.get("MaxX1"), Double.NaN);
+			double scalerMaxDim2 = TryParseJsonNode(psNode.get("MaxX2"), Double.NaN);
 
 			String scalerTypeName = this.getResources().getScalingFormula().get(scalerType);
 			String scalerUnitName = this.getResources().getUnitMapping().get(scalerUnit);
@@ -404,7 +416,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 			set.setIsScalable(false);
 		}
 
-		this.loadFaseProfielDataForSet(profielSetNode, set);
+		this.loadFaseProfielDataForSet(psNode, set);
 
 		return set;
 	}
@@ -413,7 +425,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	 * Try to get a set of profiel set data from the json node to populate the
 	 * NmdProfielSetobject
 	 */
-	private NmdProductCard getProductCardDataFromJson(JsonNode prodNode) {
+	private NmdProductCardImpl getProductCardDataFromJson(JsonNode prodNode) {
 		NmdProductCardImpl prod = new NmdProductCardImpl();
 
 		prod.setLifetime(TryParseJsonNode(prodNode.get("Levensduur"), -1));
@@ -427,7 +439,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		prod.setDescription(TryParseJsonNode(prodNode.get("ProductNaam"), ""));
 		prod.setCategory(TryParseJsonNode(prodNode.get("CategorieID"), 3));
 		prod.setIsScalable(TryParseJsonNode(prodNode.get("IsSchaalbaar"), false));
-
+		
 		// TODO add product attributes
 
 		return prod;

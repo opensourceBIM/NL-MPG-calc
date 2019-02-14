@@ -79,7 +79,7 @@ public class BimMaterialDatabaseSession implements EditableDataService {
 	}
 
 	@Override
-	public NmdProductCard getFullProductCardById(Integer productId) {
+	public HashMap<Integer, Double> getQuantitiesOfProfileSetsForProduct(Integer productId) {
 		// TODO Auto-generated method stub
 		return null;
 	}

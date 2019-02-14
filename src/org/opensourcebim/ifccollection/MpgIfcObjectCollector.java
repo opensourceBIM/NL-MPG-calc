@@ -161,19 +161,20 @@ public class MpgIfcObjectCollector {
 				}
 
 				// collect child to parent relations
-				product.getDecomposes().stream().map(rel -> rel.getRelatingObject())
-						.filter(o -> o instanceof IfcProduct).map(o -> (IfcProduct) o).forEach(o -> {
-							if (!childToParentMap.containsKey(product.getGlobalId())
-									&& o.getGlobalId() != product.getGlobalId()) {
+				product.getDecomposes().stream()
+					.map(rel -> rel.getRelatingObject())
+					.filter(o -> o instanceof IfcProduct).map(o -> (IfcProduct) o).forEach(o -> {
+						if (!childToParentMap.containsKey(product.getGlobalId())
+								&& o.getGlobalId() != product.getGlobalId()) {
 
-								childToParentMap.put(product.getGlobalId(), o.getGlobalId());
+							childToParentMap.put(product.getGlobalId(), o.getGlobalId());
 
-							} else {
-								if (o.getGlobalId() != product.getGlobalId()) {
-									System.out.println(">> " + product.getGlobalId() + ", " + o.getGlobalId());
-								}
+						} else {
+							if (o.getGlobalId() != product.getGlobalId()) {
+								System.out.println(">> " + product.getGlobalId() + ", " + o.getGlobalId());
 							}
-						});
+						}
+					});
 
 				MpgObjectImpl mpgObject = new MpgObjectImpl(product.getOid(), product.getGlobalId(), product.getName(),
 						product.getClass().getSimpleName(), "", objectStore);
@@ -182,6 +183,7 @@ public class MpgIfcObjectCollector {
 				if (geom.getVolume().isNaN()) {
 					// if the geomServer does nto return a volume we have to try it through
 					// properties.
+					// TODO: untie the addition of properties and the addition of geometry
 					mpgObject.setGeometry(this.getGeometryFromPropertySet(product, mpgObject));
 				} else {
 					mpgObject.setGeometry(geom);
@@ -195,7 +197,8 @@ public class MpgIfcObjectCollector {
 
 				// retrieve information and add found values to the various data objects
 				this.getMaterialsFromIfcProduct(product, mpgObject);
-
+				this.getProductClassications(product, mpgObject);
+				
 				// all properties are set. add it to the store.
 				// create the mpg element
 				String newMpgElementId = product.getName() + "-" + product.getGlobalId();
@@ -528,6 +531,32 @@ public class MpgIfcObjectCollector {
 		}
 	}
 
+	/**
+	 * Try find the NLsfb classification of an object and add it to the MpgObject
+	 * @param sourceObject IfcObjectDefinition from ifc file
+	 * @param targetObject MpgObject to add the NLsfb code to
+	 */
+	private void getProductClassications(IfcObjectDefinition sourceObject, MpgObjectImpl targetObject) {
+
+		EList<IfcRelAssociates> associates = sourceObject.getHasAssociations();
+		if (associates != null && !associates.isEmpty()) {
+			for (IfcRelAssociates ifcRelAssociates : associates) {
+				if (ifcRelAssociates instanceof IfcRelAssociatesClassification) {
+					IfcRelAssociatesClassification classes = (IfcRelAssociatesClassification) ifcRelAssociates;
+					IfcClassificationNotationSelect relClass = classes.getRelatingClassification();
+
+					if (relClass instanceof IfcClassificationReference) {
+						IfcClassificationReference relRef = (IfcClassificationReference) relClass;
+						if (relRef.getReferencedSource().getName().toLowerCase().contains("sfb")) {
+							targetObject.setNLsfbCode(relRef.getItemReference());
+						}
+					}
+
+				}
+			}
+		}
+	}
+
 	private void getMaterialsFromObject(IfcObjectDefinition sourceObject, MpgObjectImpl targetObject) {
 
 		EList<IfcRelAssociates> associates = sourceObject.getHasAssociations();
@@ -563,18 +592,6 @@ public class MpgIfcObjectCollector {
 						productLayers.addAll(getMaterialLayer((IfcMaterialLayer) relatingMaterial));
 					}
 				}
-				if (ifcRelAssociates instanceof IfcRelAssociatesClassification) {
-					IfcRelAssociatesClassification classes = (IfcRelAssociatesClassification) ifcRelAssociates;
-					IfcClassificationNotationSelect relClass = classes.getRelatingClassification();
-
-					if (relClass instanceof IfcClassificationReference) {
-						IfcClassificationReference relRef = (IfcClassificationReference) relClass;
-						if (relRef.getReferencedSource().getName().toLowerCase().contains("sfb")) {
-							targetObject.setNLsfbCode(relRef.getItemReference());
-						}
-					}
-
-				}
 			}
 
 			// check total volume matches up with found materials and thickness sums and
@@ -605,13 +622,15 @@ public class MpgIfcObjectCollector {
 	 * get the relevant data from a material layer object
 	 * 
 	 * @param layer the material layer object to parse
-	 * @return an object with material layer information
+	 * @return an object with material layer information. 
+	 * return empty values for matname and matid when no material is defined
 	 */
 	private List<Triple<String, String, Double>> getMaterialLayer(IfcMaterialLayer layer) {
 		IfcMaterial material = layer.getMaterial();
 		List<Triple<String, String, Double>> res = new ArrayList<Triple<String, String, Double>>();
 		MutableTriple<String, String, Double> triple = new MutableTriple<String, String, Double>(
-				material != null ? material.getName() : "", material != null ? Long.toString(material.getOid()) : "",
+				material != null ? material.getName() : "",
+				material != null ? Long.toString(material.getOid()) : "",
 				layer.getLayerThickness());
 
 		res.add(triple);
