@@ -303,6 +303,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
+	@JsonIgnore
 	public GuidCollection getGuidsWithoutMaterial() {
 		return guidsWithoutMaterial;
 	}
@@ -312,6 +313,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
+	@JsonIgnore
 	public GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials() {
 		return guidsWithoutMaterialAndWithoutFullDecomposedMaterials;
 	}
@@ -322,6 +324,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
+	@JsonIgnore
 	public GuidCollection getGuidsWithoutVolume() {
 		return guidsWithoutVolume;
 	}
@@ -331,6 +334,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
+	@JsonIgnore
 	public GuidCollection getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes() {
 		return guidsWithoutVolumeAndWithoutFullDecomposedVolumes;
 	}
@@ -341,6 +345,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
+	@JsonIgnore
 	public GuidCollection getGuidsWithRedundantMaterials() {
 		return guidsWithRedundantMats;
 	}
@@ -350,6 +355,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
+	@JsonIgnore
 	public GuidCollection getGuidsWithUndefinedLayerMats() {
 		return guidsWithUndefinedLayerMats;
 	}
