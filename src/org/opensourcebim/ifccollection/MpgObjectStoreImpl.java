@@ -464,6 +464,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 				String parentCode = p.getNLsfbCode();
 				if (parentCode != null && !parentCode.isEmpty()) {
 					o.setNLsfbCode(parentCode);
+					o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "resolved from: " + p.getGlobalId());
 				}
 			}
 		});
@@ -483,7 +484,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			return e.getObjectType();
 		};
 
-		// TODO: we can make this a lot more abstract to run this for any set of properties, but let's skip that for now.
+		// TODO: we can make this a lot more abstract to run this for any set of properties,
+		// but let's skip that for now.
 		this.getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
 			List<MpgScalingType> scalers = null;
 			String NLsfbKey = o.getNLsfbCode();
@@ -497,6 +499,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			if (scalers.size() > 0) {
 				scalers.forEach(s -> o.getGeometry().addScalingType(s));
 				o.getGeometry().setIsComplete(true);
+				o.addTag(MpgInfoTagType.geometryFromResolvedType, "resolved by NLsfb match");
 			} else {
 				// fallback option is to look at similar IfcProducts
 				String prodTypeKey = o.getObjectType();
@@ -510,6 +513,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 				if (scalers.size() > 0) {
 					scalers.forEach(s -> o.getGeometry().addScalingType(s));
 					o.getGeometry().setIsComplete(true);
+					o.addTag(MpgInfoTagType.geometryFromResolvedType, "resolved by IfcProduct type macth");
 				}
 			}
 		});
@@ -523,9 +527,13 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 */
 	private List<MpgScalingType> findScalersForMpgObjectProperty(Function<MpgObject, String> propMethod,
 			String referenceProperty) {
-		List<List<MpgScalingType>> candidates = this.getObjects().stream().filter(o -> propMethod.apply(o) != null)
-				.filter(o -> propMethod.apply(o).equals(referenceProperty)).filter(o -> o.getGeometry().getIsComplete())
-				.map(o -> o.getGeometry().getScalerTypes()).distinct().collect(Collectors.toList());
+		List<List<MpgScalingType>> candidates = this.getObjects().stream()
+				.filter(o -> propMethod.apply(o) != null)
+				.filter(o -> propMethod.apply(o).equals(referenceProperty))
+				.filter(o -> o.getGeometry().getIsComplete())
+				.map(o -> o.getGeometry().getScalerTypes())
+				.distinct()
+				.collect(Collectors.toList());
 
 		Optional<List<MpgScalingType>> scaler = candidates.stream().filter(st -> st.size() > 1).findFirst();
 		if (scaler.isPresent()) {

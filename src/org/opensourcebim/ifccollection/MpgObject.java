@@ -23,6 +23,9 @@ public interface MpgObject {
 
 	Map<String, Object> getProperties();
 	
+	List<MpgInfoTag> getAllTags();
+	List<MpgInfoTag> getTagsByType(MpgInfoTagType type);
+	
 	void addLayer(MpgLayer layer);
 	
 	String print();
@@ -33,4 +36,5 @@ public interface MpgObject {
 	boolean hasRedundantMaterials(boolean includeChildren);
 	boolean hasUndefinedLayers(boolean includeChildren);
 	void setNLsfbCode(String parentCode);
+	void addTag(MpgInfoTagType tagType, String message);
 }

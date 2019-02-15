@@ -176,16 +176,19 @@ public class MpgIfcObjectCollector {
 						}
 					});
 
-				MpgObjectImpl mpgObject = new MpgObjectImpl(product.getOid(), product.getGlobalId(), product.getName(),
+				MpgObjectImpl mpgObject = new MpgObjectImpl(product.getOid(), 
+						product.getGlobalId(), 
+						product.getName(),
 						product.getClass().getSimpleName(), "", objectStore);
 
+				this.getPropertySetsFromIfcProduct(product, mpgObject);
 				MpgGeometry geom = getGeometryFromProduct(product);
 				if (geom.getVolume().isNaN()) {
-					// if the geomServer does nto return a volume we have to try it through
-					// properties.
-					// TODO: untie the addition of properties and the addition of geometry
+					// if the geomServer does not return a volume we have to try it through properties.
+					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "geometry from properties");
 					mpgObject.setGeometry(this.getGeometryFromPropertySet(product, mpgObject));
 				} else {
+					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "geometry from ifcopenShell");
 					mpgObject.setGeometry(geom);
 				}
 
@@ -226,15 +229,13 @@ public class MpgIfcObjectCollector {
 	}
 
 	/**
-	 * Alternative method to get geometry parameters based on the property sets.
+	 * Alternative method to get geometry parameters based on the property sets. Should be discarded!
 	 * 
 	 * @param product   IfcProduct object
 	 * @param mpgObject mpgObject to add parsed properties to.
 	 * @return mpgGeometry object
 	 */
 	private MpgGeometry getGeometryFromPropertySet(IfcProduct product, MpgObjectImpl mpgObject) {
-
-		this.getPropertySetsFromIfcProduct(product, mpgObject);
 		MpgGeometry geom = new MpgGeometry();
 
 		// first try to set the geometry by properties
@@ -262,6 +263,7 @@ public class MpgIfcObjectCollector {
 		if (area != null) {
 			geom.setFloorArea(area);
 		}
+		geom.setIsComplete(false);
 		return geom;
 	}
 
@@ -391,7 +393,6 @@ public class MpgIfcObjectCollector {
 						geom.addScalingType(lengthScale);
 						geom.addScalingType(areaScale);
 					}
-
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block

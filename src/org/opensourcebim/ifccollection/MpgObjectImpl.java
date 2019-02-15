@@ -28,6 +28,7 @@ public class MpgObjectImpl implements MpgObject {
 
 	private MpgGeometry geometry;
 	private String nlsfb;
+	private List<MpgInfoTag> tags;
 
 	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId,
 			MpgObjectStore objectStore) {
@@ -136,7 +137,21 @@ public class MpgObjectImpl implements MpgObject {
 	
 	public void addProperty(String name, Object value) {
 		this.properties.put(name, value);
-		
+	}
+	
+	@Override
+	public List<MpgInfoTag> getAllTags() {
+		return this.tags;
+	}
+	
+	@Override
+	public  List<MpgInfoTag> getTagsByType(MpgInfoTagType type) {
+		return tags.stream().filter(t -> t.getType().equals(type)).collect(Collectors.toList());
+	}
+	
+	@Override
+	public void addTag(MpgInfoTagType tagType, String message) {
+		this.tags.add(new MpgInfoTag(tagType, message));
 	}
 
 	@Override
