@@ -1,5 +1,6 @@
 package org.opensourcebim.ifccollection;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ public class MpgObjectImpl implements MpgObject {
 		this.parentId = parentId;
 
 		properties = new HashMap<String, Object>();
+		tags = new ArrayList<MpgInfoTag>();
 		this.listedMaterials = new BasicEList<MaterialSource>();
 
 		this.store = () -> {
