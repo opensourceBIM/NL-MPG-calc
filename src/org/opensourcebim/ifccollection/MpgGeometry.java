@@ -12,7 +12,6 @@ public class MpgGeometry {
 	private double floorArea;
 	private double faceArea;
 
-	private Double[] maxDimensions;
 	private Boolean isComplete;
 	
 	private List<MpgScalingType> scaleParams;
@@ -24,7 +23,6 @@ public class MpgGeometry {
 
 		setIsComplete(false);
 		
-		maxDimensions = new Double[3];
 		scaleParams = new ArrayList<MpgScalingType>();
 	}
 
@@ -52,16 +50,15 @@ public class MpgGeometry {
 		this.faceArea = largestFaceArea;
 	}
 
-	// return the largest axis - change for diagonal elements.
+	// return the largest axis
 	@JsonIgnore
 	public Double getPrincipalDimension() {
-	      return Collections.max(Arrays.asList(maxDimensions));
+		if (getScalerTypes().size() == 0) {
+			return Double.NaN;
+		}
+	    return getScalerTypes().get(0).getUnitDims()[0];
 	}
 	
-	public void setPrincipalDimensions(Double[] vals) {
-		this.maxDimensions = vals;
-	}
-
 	public void addScalingType(MpgScalingType scaleData) {
 		this.scaleParams.add(scaleData);
 	}
