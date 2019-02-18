@@ -539,7 +539,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		if (geom.isPresent()) {
 			return geom.get();
 		} else {
-			return new MpgGeometry();
+			return null;
 		}
 	}
 }

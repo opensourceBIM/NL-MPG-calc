@@ -68,10 +68,11 @@ public class MpgGeometry {
 	
 	// add a scaler type based on another geometry
 	public void addScalingTypesFromGeometry(MpgGeometry geom) {
-		double scaleFactor = this.getVolume() / geom.getVolume();
+		// determine length scale factor based on geometry ratio
+		Double scaleFactor = Math.pow(this.getVolume() / geom.getVolume(), (1.0/3.0));
 		
 		geom.scaleParams.forEach(st -> {
-			MpgScalingType newScale = new MpgScalingType(st, scaleFactor);
+			MpgScalingType newScale = new MpgScalingType(st, scaleFactor.isNaN() ? 1.0 : scaleFactor);
 			this.addScalingType(newScale);	
 		});
 	}
