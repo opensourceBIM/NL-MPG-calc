@@ -276,19 +276,16 @@ public class mpgCalculatorTests {
 		g.setVolume(1.0);
 		g.setFloorArea(1.0);
 		g.setFaceArea(1.0);
-		g.setMaxXDimension(1.0);
-		g.setMaxYDimension(1.0);
-		g.setMaxZDimension(1.0);
 		
 		MpgScalingType rodScaler = new MpgScalingType();
-		rodScaler.setUnitAxes(new int[]{3});
-		rodScaler.setScaleAxes(new int[]{1, 2});
+		rodScaler.setUnitDims(new Double[]{5.0});
+		rodScaler.setScaleDims(new Double[]{1.0, 1.0});
 		
 		g.addScalingType(rodScaler);
 		
 		MpgScalingType areaScaler = new MpgScalingType();
-		areaScaler.setUnitAxes(new int[]{1, 2});
-		areaScaler.setScaleAxes(new int[]{3});
+		areaScaler.setUnitDims(new Double[]{1.0, 1.0});
+		areaScaler.setScaleDims(new Double[]{5.0});
 		
 		g.addScalingType(areaScaler);
 		

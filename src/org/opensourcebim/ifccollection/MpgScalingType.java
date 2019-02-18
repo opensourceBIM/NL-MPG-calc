@@ -8,28 +8,27 @@ package org.opensourcebim.ifccollection;
  */
 public class MpgScalingType {
 
-	String unit;
-	private int[] unitAxes;
-	private int[] scaleAxes;
+	private Double[] unitDims;
+	private Double[] scaleDims;
 	
 	public MpgScalingType() {
 		
 	}
 	
-	public int[] getUnitAxes() {
-		return unitAxes;
+	public Double[] getUnitDims() {
+		return unitDims;
 	}
 
-	public void setUnitAxes(int[] unitAxes) {
-		this.unitAxes = unitAxes;
+	public void setUnitDims(Double[] unitDims) {
+		this.unitDims = unitDims;
 	}
 
-	public int[] getScaleAxes() {
-		return scaleAxes;
+	public Double[] getScaleDims() {
+		return scaleDims;
 	}
 
-	public void setScaleAxes(int[] scaleAxes) {
-		this.scaleAxes = scaleAxes;
+	public void setScaleDims(Double[] scaleDims) {
+		this.scaleDims = scaleDims;
 	}
 	
 }

@@ -1,6 +1,8 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -23,9 +25,6 @@ public class MpgGeometry {
 		setIsComplete(false);
 		
 		maxDimensions = new Double[3];
-		setMaxXDimension(Double.NaN);
-		setMaxYDimension(Double.NaN);
-		setMaxZDimension(Double.NaN);
 		scaleParams = new ArrayList<MpgScalingType>();
 	}
 
@@ -53,34 +52,14 @@ public class MpgGeometry {
 		this.faceArea = largestFaceArea;
 	}
 
-	public Double getMaxXDimension() {
-		return maxDimensions[0];
-	}
-
-	public Double getMaxYDimension() {
-		return maxDimensions[1];
-	}
-
-	public Double getMaxZDimension() {
-		return maxDimensions[2];
-	}
-
-	public void setMaxXDimension(Double val) {
-		this.maxDimensions[0] = val;
-	}
-
-	public void setMaxYDimension(Double val) {
-		this.maxDimensions[1] = val;
-	}
-
-	public void setMaxZDimension(Double val) {
-		this.maxDimensions[2] = val;
-	}
-
 	// return the largest axis - change for diagonal elements.
 	@JsonIgnore
 	public Double getPrincipalDimension() {
-		return maxDimensions[scaleParams.get(0).getUnitAxes()[0]];
+	      return Collections.max(Arrays.asList(maxDimensions));
+	}
+	
+	public void setPrincipalDimensions(Double[] vals) {
+		this.maxDimensions = vals;
 	}
 
 	public void addScalingType(MpgScalingType scaleData) {
@@ -98,12 +77,7 @@ public class MpgGeometry {
 		// scaler that belongs to a slender object (pipes etc. to scale over a cross
 		// sectional area		
 		int scalerIndex = dim % 2;
-		int[] scaleAxes = scaleParams.get(scalerIndex).getScaleAxes();
-		Double[] dims = new Double[scaleAxes.length];
-		for (int i = 0; i < scaleAxes.length; i++) {
-			dims[i] = maxDimensions[scaleAxes[i]];
-		}
-		return dims;
+		return  scaleParams.get(scalerIndex).getScaleDims();
 	}
 
 	public Boolean getIsComplete() {
