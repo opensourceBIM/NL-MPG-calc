@@ -476,7 +476,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 */
 	public void resolveUnknownGeometries() {
 		// maintain a map with already found scalers to boost performance.
-		HashMap<String, List<MpgScalingType>> foundScalers = new HashMap<String, List<MpgScalingType>>();
+		HashMap<String, MpgGeometry> foundGeometries = new HashMap<String, MpgGeometry>();
 		Function<MpgObject, String> getNLsfbProp = (MpgObject e) -> {
 			return e.getNLsfbCode();
 		};
@@ -487,33 +487,33 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		// TODO: we can make this a lot more abstract to run this for any set of properties,
 		// but let's skip that for now.
 		this.getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
-			List<MpgScalingType> scalers = null;
+			MpgGeometry geom = null;
 			String NLsfbKey = o.getNLsfbCode();
 
-			if (foundScalers.containsKey(NLsfbKey)) {
-				scalers = foundScalers.get(NLsfbKey);
+			if (foundGeometries.containsKey(NLsfbKey)) {
+				geom = foundGeometries.get(NLsfbKey);
 			} else {
-				scalers = findScalersForMpgObjectProperty(getNLsfbProp, NLsfbKey);
-				foundScalers.put(NLsfbKey, scalers);
+				geom = findGeometryForMpgObjectProperty(getNLsfbProp, NLsfbKey);
+				foundGeometries.put(NLsfbKey, geom);
 			}
-			if (scalers.size() > 0) {
-				scalers.forEach(s -> o.getGeometry().addScalingType(s));
+			if (geom != null) {
+				o.getGeometry().addScalingTypesFromGeometry(geom);
 				o.getGeometry().setIsComplete(true);
 				o.addTag(MpgInfoTagType.geometryFromResolvedType, "resolved by NLsfb match");
 			} else {
 				// fallback option is to look at similar IfcProducts
 				String prodTypeKey = o.getObjectType();
-				if (foundScalers.containsKey(prodTypeKey)) {
-					scalers = foundScalers.get(prodTypeKey);
+				if (foundGeometries.containsKey(prodTypeKey)) {
+					geom = foundGeometries.get(prodTypeKey);
 				} else {
-					scalers = findScalersForMpgObjectProperty(getProdTypeProp, prodTypeKey);
-					foundScalers.put(prodTypeKey, scalers);
+					geom = findGeometryForMpgObjectProperty(getProdTypeProp, prodTypeKey);
+					foundGeometries.put(prodTypeKey, geom);
 				}
 
-				if (scalers.size() > 0) {
-					scalers.forEach(s -> o.getGeometry().addScalingType(s));
+				if (geom != null) {
+					o.getGeometry().addScalingTypesFromGeometry(geom);
 					o.getGeometry().setIsComplete(true);
-					o.addTag(MpgInfoTagType.geometryFromResolvedType, "resolved by IfcProduct type macth");
+					o.addTag(MpgInfoTagType.geometryFromResolvedType, "resolved by IfcProduct type match");
 				}
 			}
 		});
@@ -525,21 +525,21 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 * @param referenceProperty the reference property value that the other objects should match with.
 	 * @return the MpgScalingType that is most likely to match
 	 */
-	private List<MpgScalingType> findScalersForMpgObjectProperty(Function<MpgObject, String> propMethod,
+	private MpgGeometry findGeometryForMpgObjectProperty(Function<MpgObject, String> propMethod,
 			String referenceProperty) {
-		List<List<MpgScalingType>> candidates = this.getObjects().stream()
+		List<MpgGeometry> candidates = this.getObjects().stream()
 				.filter(o -> propMethod.apply(o) != null)
 				.filter(o -> propMethod.apply(o).equals(referenceProperty))
 				.filter(o -> o.getGeometry().getIsComplete())
-				.map(o -> o.getGeometry().getScalerTypes())
+				.map(o -> o.getGeometry())
 				.distinct()
 				.collect(Collectors.toList());
 
-		Optional<List<MpgScalingType>> scaler = candidates.stream().filter(st -> st.size() > 1).findFirst();
-		if (scaler.isPresent()) {
-			return scaler.get();
+		Optional<MpgGeometry> geom = candidates.stream().filter(g -> g.getScalerTypes().size() > 1).findFirst();
+		if (geom.isPresent()) {
+			return geom.get();
 		} else {
-			return new ArrayList<MpgScalingType>();
+			return new MpgGeometry();
 		}
 	}
 }

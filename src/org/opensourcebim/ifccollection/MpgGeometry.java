@@ -65,6 +65,16 @@ public class MpgGeometry {
 	public void addScalingType(MpgScalingType scaleData) {
 		this.scaleParams.add(scaleData);
 	}
+	
+	// add a scaler type based on another geometry
+	public void addScalingTypesFromGeometry(MpgGeometry geom) {
+		double scaleFactor = this.getVolume() / geom.getVolume();
+		
+		geom.scaleParams.forEach(st -> {
+			MpgScalingType newScale = new MpgScalingType(st, scaleFactor);
+			this.addScalingType(newScale);	
+		});
+	}
 
 	/**
 	 * Return the dimensions of the geometry that require scaling.

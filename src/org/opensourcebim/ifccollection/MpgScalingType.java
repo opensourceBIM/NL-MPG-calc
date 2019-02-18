@@ -15,6 +15,11 @@ public class MpgScalingType {
 		
 	}
 	
+	public MpgScalingType(MpgScalingType st, double scaleFactor) {
+		this.setUnitDims(applyScale(st.getUnitDims(), scaleFactor));
+		this.setScaleDims(applyScale(st.getScaleDims(), scaleFactor));
+	}
+
 	public Double[] getUnitDims() {
 		return unitDims;
 	}
@@ -29,6 +34,14 @@ public class MpgScalingType {
 
 	public void setScaleDims(Double[] scaleDims) {
 		this.scaleDims = scaleDims;
+	}
+	
+	private Double[] applyScale(Double[] in, Double factor) {
+		Double[] out = in.clone();
+		for (int i=0; i<in.length; i++) {
+			out[i] = in[i] * factor;
+		}
+		return out;
 	}
 	
 }
