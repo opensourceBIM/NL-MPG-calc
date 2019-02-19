@@ -30,6 +30,7 @@ public class MpgObjectImpl implements MpgObject {
 	private MpgGeometry geometry;
 	private String nlsfb;
 	private List<MpgInfoTag> tags;
+	private List<String> nlsfbAlternatives;
 
 	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId,
 			MpgObjectStore objectStore) {
@@ -48,6 +49,7 @@ public class MpgObjectImpl implements MpgObject {
 		properties = new HashMap<String, Object>();
 		tags = new ArrayList<MpgInfoTag>();
 		this.listedMaterials = new BasicEList<MaterialSource>();
+		this.nlsfbAlternatives = new ArrayList<String>();
 
 		this.store = () -> {
 			return objectStore;
@@ -118,6 +120,27 @@ public class MpgObjectImpl implements MpgObject {
 	@Override
 	public void setNLsfbCode(String code) {
 		this.nlsfb = code;
+		if (!nlsfbAlternatives.contains(code)) {
+			nlsfbAlternatives.add(0, code);
+		}
+	}
+	
+	@Override
+	public boolean hasNlsfbCode() {
+		return getNLsfbCode() == "" || getNLsfbCode() == null;
+	}
+	
+	@Override
+	public List<String> getNLsfbAlternatives() {
+		List<String> allCodes = new ArrayList<String>();
+		allCodes.addAll(nlsfbAlternatives);
+		allCodes.add(0, getNLsfbCode());
+		return allCodes;
+	}
+	
+	@Override
+	public void addNlsfbAlternatives(List<String> alternatives) {
+		this.nlsfbAlternatives.addAll(alternatives);
 	}
 
 	@Override

@@ -13,8 +13,10 @@ public interface MpgObject {
 	String getParentId();
 	void setParentId(String value);
 	
-	String getNLsfbCode();
-	
+	String getNLsfbCode();	
+	boolean hasNlsfbCode();
+	List<String> getNLsfbAlternatives();
+	void addNlsfbAlternatives(List<String> alternatives);
 	MpgGeometry getGeometry();
 	
 	void addMaterialSource(String name, String guid, String source);
@@ -37,4 +39,6 @@ public interface MpgObject {
 	boolean hasUndefinedLayers(boolean includeChildren);
 	void setNLsfbCode(String parentCode);
 	void addTag(MpgInfoTagType tagType, String message);
+
+
 }
