@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.bimserver.emf.IfcModelInterface;
+import org.bimserver.models.geometry.Bounds;
 import org.bimserver.models.geometry.GeometryInfo;
 import org.bimserver.models.ifc2x3tc1.IfcAnnotation;
 import org.bimserver.models.ifc2x3tc1.IfcBoolean;
@@ -216,13 +217,6 @@ public class MpgIfcObjectCollector {
 		// set all parent child relations for elements
 		objectStore.recreateParentChildMap(childToParentMap);
 
-		// try to find the right NLsfb codes for decomposed objects without nlsfb codes
-		objectStore.resolveNlsfbCodes();
-
-		// try to find the correct scaling types for objects that could not have their
-		// geometry resolved
-		objectStore.resolveUnknownGeometries();
-
 		objectStore.validateIfcDataCollection();
 
 		return objectStore;
@@ -286,7 +280,11 @@ public class MpgIfcObjectCollector {
 				JsonNode geomData = mapper.readTree(geometry.getAdditionalData());
 				if (geomData != null && geomData.size() > 0) {
 					geom.setIsComplete(true);
-
+					Bounds bounds = geometry.getBoundsUntransformed();
+					double x_dir = this.convertLength(bounds.getMax().getX() - bounds.getMin().getX());
+					double y_dir = this.convertLength(bounds.getMax().getY() - bounds.getMin().getY());
+					double z_dir = this.convertLength(bounds.getMax().getZ() - bounds.getMin().getZ());
+					
 					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
 					JsonNode largest_face_direction_node = geomData.get("LARGEST_FACE_DIRECTION");
 					List<Double> face_dir = new ArrayList<Double>(3);
@@ -301,6 +299,12 @@ public class MpgIfcObjectCollector {
 					
 					geom.setFloorArea(this.convertArea(geomData.get("SURFACE_AREA_ALONG_Z").asDouble()));
 					geom.setFaceArea(this.convertArea(largest_face_area));
+					
+					if(Math.abs(x_dir - max_dim_x) > 1e-8 
+							|| Math.abs(y_dir - max_dim_y) > 1e-8 
+							|| Math.abs(z_dir - max_dim_z) > 1e-8) {
+						System.out.println("");
+					}
 					
 					Double[] unitDimsArea = new Double[2];
 					Double[] scaleDimsArea = new Double[1];
@@ -386,7 +390,6 @@ public class MpgIfcObjectCollector {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-
 		}
 		return geom;
 	}
