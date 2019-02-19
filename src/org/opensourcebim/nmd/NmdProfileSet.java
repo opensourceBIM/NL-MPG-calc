@@ -1,6 +1,7 @@
 package org.opensourcebim.nmd;
 
 import java.util.HashMap;
+
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
 /**
