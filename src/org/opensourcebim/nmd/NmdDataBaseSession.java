@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;

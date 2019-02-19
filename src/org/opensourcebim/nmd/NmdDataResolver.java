@@ -13,7 +13,11 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
  */
 public interface NmdDataResolver {
 
-	MpgObjectStore NmdToMpg(MpgObjectStore ifcResults);
+	void NmdToMpg();
 
 	void addService(NmdDataService nmdDataService);
+
+	MpgObjectStore getStore();
+	
+	void setStore(MpgObjectStore store);
 }

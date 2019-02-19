@@ -1,17 +1,14 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.bimserver.utils.AreaUnit;
@@ -450,96 +447,5 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 				.map(s -> s.getName()).filter(n -> {
 					return (n != null && !n.isEmpty());
 				}).distinct();
-	}
-
-	/**
-	 * go through all objects without an NLSFB code and try to find matching or
-	 * 'parent' objects that do have a type.
-	 */
-	public void resolveNlsfbCodes() {
-
-		this.getObjects().stream().filter(o -> o.getNLsfbCode() == "" || o.getNLsfbCode() == null).forEach(o -> {
-			if (!o.getParentId().isEmpty()) {
-				MpgObject p = this.getObjectByGuid(o.getParentId()).get();
-				String parentCode = p.getNLsfbCode();
-				if (parentCode != null && !parentCode.isEmpty()) {
-					o.setNLsfbCode(parentCode);
-					o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "resolved from: " + p.getGlobalId());
-				}
-			}
-		});
-	}
-
-	/**
-	 * run through mpgObjects where no geometry could be found and match these with
-	 * first: similar nlsfb code objects and second (Not implemented yet)
-	 */
-	public void resolveUnknownGeometries() {
-		// maintain a map with already found scalers to boost performance.
-		HashMap<String, MpgGeometry> foundGeometries = new HashMap<String, MpgGeometry>();
-		Function<MpgObject, String> getNLsfbProp = (MpgObject e) -> {
-			return e.getNLsfbCode();
-		};
-		Function<MpgObject, String> getProdTypeProp = (MpgObject e) -> {
-			return e.getObjectType();
-		};
-
-		// TODO: we can make this a lot more abstract to run this for any set of properties,
-		// but let's skip that for now.
-		this.getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
-			MpgGeometry geom = null;
-			String NLsfbKey = o.getNLsfbCode();
-
-			if (foundGeometries.containsKey(NLsfbKey)) {
-				geom = foundGeometries.get(NLsfbKey);
-			} else {
-				geom = findGeometryForMpgObjectProperty(getNLsfbProp, NLsfbKey);
-				foundGeometries.put(NLsfbKey, geom);
-			}
-			if (geom != null) {
-				o.getGeometry().addScalingTypesFromGeometry(geom);
-				o.getGeometry().setIsComplete(true);
-				o.addTag(MpgInfoTagType.geometryFromResolvedType, "resolved by NLsfb match");
-			} else {
-				// fallback option is to look at similar IfcProducts
-				String prodTypeKey = o.getObjectType();
-				if (foundGeometries.containsKey(prodTypeKey)) {
-					geom = foundGeometries.get(prodTypeKey);
-				} else {
-					geom = findGeometryForMpgObjectProperty(getProdTypeProp, prodTypeKey);
-					foundGeometries.put(prodTypeKey, geom);
-				}
-
-				if (geom != null) {
-					o.getGeometry().addScalingTypesFromGeometry(geom);
-					o.getGeometry().setIsComplete(true);
-					o.addTag(MpgInfoTagType.geometryFromResolvedType, "resolved by IfcProduct type match");
-				}
-			}
-		});
-	}
-	
-	/**
-	 * Get the scalers matching a referenceProperty value by looking for scalers in all objects with an equal property value
-	 * @param propMethod Function that returns the requested property from an MpgObject
-	 * @param referenceProperty the reference property value that the other objects should match with.
-	 * @return the MpgScalingType that is most likely to match
-	 */
-	private MpgGeometry findGeometryForMpgObjectProperty(Function<MpgObject, String> propMethod,
-			String referenceProperty) {
-		List<MpgGeometry> candidates = this.getObjects().stream()
-				.filter(o -> propMethod.apply(o) != null)
-				.filter(o -> propMethod.apply(o).equals(referenceProperty))
-				.filter(o -> o.getGeometry().getIsComplete())
-				.map(o -> o.getGeometry())
-				.distinct()
-				.collect(Collectors.toList());
-
-		Optional<MpgGeometry> geom = candidates.stream().filter(g -> g.getScalerTypes().size() > 1).findFirst();
-		if (geom.isPresent()) {
-			return geom.get();
-		} else {
-			return null;
-		}
 	}
 }

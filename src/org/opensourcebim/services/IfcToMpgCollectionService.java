@@ -25,9 +25,10 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 		
 		// resolve any ifc to nmd coupling
 		NmdDataResolver resolver = new NmdDataResolverImpl();
-		MpgObjectStore resolvedData = resolver.NmdToMpg(ifcResults);
+		resolver.setStore(ifcResults);
+		resolver.NmdToMpg();
 				
-		return this.toBimBotsJsonOutput(resolvedData, "results object collection");
+		return this.toBimBotsJsonOutput(resolver.getStore(), "results object collection");
 	}
 
 	@Override

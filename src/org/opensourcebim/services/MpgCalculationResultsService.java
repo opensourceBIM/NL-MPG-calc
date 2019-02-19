@@ -27,11 +27,12 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 		
 		// resolve any ifc to nmd coupling
 		NmdDataResolver resolver = new NmdDataResolverImpl();
-		MpgObjectStore resolvedData = resolver.NmdToMpg(ifcResults);
+		resolver.setStore(ifcResults);
+		resolver.NmdToMpg();
 		
 		// calculate the mpg scores
 		MpgCalculator calculator = new MpgCalculator();
-		calculator.setObjectStore(resolvedData);
+		calculator.setObjectStore(resolver.getStore());
 		MpgCalculationResults calcResults = calculator.calculate(75.0);
 		
 		return this.toBimBotsJsonOutput(calcResults, "mpg calculation results");
