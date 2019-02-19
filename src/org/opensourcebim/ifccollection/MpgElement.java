@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
 
@@ -19,7 +17,7 @@ public class MpgElement {
 	private String BimBotIdentifier;
 	
 	private String ifcName;
-	private List<Pair<Integer, NmdProductCard>> productCards;
+	private List<NmdProductCard> productCards;
 	private MpgObject mpgObject;
 
 	private NmdMapping mappingMethod;
@@ -27,7 +25,7 @@ public class MpgElement {
 	public MpgElement(String name)
 	{
 		ifcName = name;
-		this.productCards = new ArrayList<Pair<Integer,NmdProductCard>>();
+		this.productCards = new ArrayList<NmdProductCard>();
 	}
 	
 	public void setMpgObject(MpgObject mpgObject) {
@@ -79,12 +77,12 @@ public class MpgElement {
 		return sb.toString();
 	}
 
-	public List<Pair<Integer, NmdProductCard>> getNmdProductCards() {
+	public List<NmdProductCard> getNmdProductCards() {
 		return productCards;
 	}
 
-	public void addProductCard(Integer cuasCode, NmdProductCard productCard) {
-		this.productCards.add(new ImmutablePair<Integer, NmdProductCard>(cuasCode, productCard));
+	public void addProductCard(NmdProductCard productCard) {
+		this.productCards.add(productCard);
 		
 		// check with the store which child elements will also be mapped with this action
 	}
@@ -100,12 +98,12 @@ public class MpgElement {
 	 */
 	public boolean requiresScaling() {
 		return this.getNmdProductCards().stream()
-				.flatMap(pc -> pc.getValue().getProfileSets().stream())
+				.flatMap(pc -> pc.getProfileSets().stream())
 				.anyMatch(ps -> ps.getIsScalable() && ps.getScaler() != null);
 	}
 
 	public boolean getIsFullyCovered() {
-		return this.productCards.stream().map(p -> p.getKey()).anyMatch(cuas -> cuas == 5) ||
-				this.productCards.stream().map(p -> p.getKey()).distinct().count() == 4;
+		// ToDO: check with NMD interface whether all mandatory elements are present
+		return false;
 	}
 }

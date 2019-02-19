@@ -78,7 +78,7 @@ public class mpgCalculatorTests {
 	@Test
 	public void testReturnIncompleteDataStatusWhenMpgObjectsAreNotFullyCovered() {
 		// adding a profile set that is not a totaalproduct will trigger a warning
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1, 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.IncompleteData, results.getStatus());
@@ -92,17 +92,15 @@ public class mpgCalculatorTests {
 		String unit = "m3";
 		int category = 1;
 		
-		// add a product for every CUAS stage (1 to 4, omit 5)
-		for(int i = 1; i < 5; i++) {
-			NmdProductCardImpl card = new NmdProductCardImpl();
-			card.setUnit(unit);
-			card.setCategory(category);
-			card.setLifetime(1);
-			// since we're not adding a totaalproduct we need to cover every CUAS stage individually
-			card.addProfileSet(createProfileSet(name, unit, 1));
-			card.setIsTotaalProduct(false);
-			store.addProductCardToElement(ifcName, i, card);
-		}
+		NmdProductCardImpl card = new NmdProductCardImpl();
+		card.setUnit(unit);
+		card.setCategory(category);
+		card.setLifetime(1);
+		// since we're not adding a totaalproduct we need to cover every CUAS stage individually
+		card.addProfileSet(createProfileSet(name, unit, 1));
+		card.setIsTotaalProduct(false);
+		store.addProductCardToElement(ifcName, card);
+
 		addUnitIfcObjectForElement(ifcName, 1.0, 1.0);
 
 		startCalculations(1.0);
@@ -111,7 +109,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testResultsReturnSuccessStatusWhenCalculationsSucceed() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.Success, results.getStatus());
@@ -119,7 +117,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostCannotBeNaN() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1.0);
 		assertFalse(results.getTotalCost().isNaN());
@@ -127,7 +125,7 @@ public class mpgCalculatorTests {
 	
 	@Test
 	public void testTotalCostIsNonZeroOnCompleteProduct() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1.0);
 		assertFalse(results.getTotalCost() == 0);
@@ -135,7 +133,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testCategory3DataIncreasesTotalCost() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 3, 5, 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 3, 1);
 
 		startCalculations(1.0);
 		// 30% increase in cost for category 3 data
@@ -145,7 +143,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerSquareMeterFloorArea() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
 
 		Double totalArea = 10.0;
 		addSpace(totalArea);
@@ -158,7 +156,7 @@ public class mpgCalculatorTests {
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperationYear() {
 		Double totalLifeTime = 10.0;
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, totalLifeTime.intValue());
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, totalLifeTime.intValue());
 		addSpace(1.0);
 
 
@@ -170,7 +168,7 @@ public class mpgCalculatorTests {
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperatingYearAndFloorArea() {
 		Double factor = 10.0;
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, factor.intValue());
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, factor.intValue());
 		addSpace(factor); // 10m2 floor
 		startCalculations(factor); // 10 years of designlife
 		assertEquals(results.getTotalCost() / (factor * factor), results.getTotalCorrectedCost(), 1e-8);
@@ -178,7 +176,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostPerMaterialReturnsZeroWhenMaterialNotPresent() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1);
 
@@ -187,9 +185,9 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostPerMaterialReturnsOnlyCostOfRelevantMaterial() {
-		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 5, 1);
-		addMaterialWithproductCard("brick", "brick and mortar", "m2", 1, 5, 1);
-		addMaterialWithproductCard("brick2", "brick and mortar", "m2", 1, 5, 1);
+		addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
+		addMaterialWithproductCard("brick", "brick and mortar", "m2", 1, 1);
+		addMaterialWithproductCard("brick2", "brick and mortar", "m2", 1, 1);
 		
 		startCalculations(1);
 
@@ -211,7 +209,7 @@ public class mpgCalculatorTests {
 		productCard.setCategory(1);
 		productCard.addProfileSet(createProfileSet("bricks", "m2", 10));
 		productCard.addProfileSet(createProfileSet("mortar", "m2", 1));
-		store.addProductCardToElement("Brick Wall", 1, productCard);
+		store.addProductCardToElement("Brick Wall", productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
 		
 		startCalculations(10);
@@ -228,7 +226,7 @@ public class mpgCalculatorTests {
 		productCard.addProfileSet(createProfileSet("mortar", "m2", 1));
 		productCard.addProfileSet(createProfileSet("bricks", "m2", 10));
 
-		store.addProductCardToElement("Brick Wall", 1, productCard);
+		store.addProductCardToElement("Brick Wall", productCard);
 		this.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
 		
 		startCalculations(10);
@@ -252,9 +250,9 @@ public class mpgCalculatorTests {
 		this.results = calculator.getResults();
 	}
 
-	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int cuasCode, int lifetime) {
+	private void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int lifetime) {
 		store.addElement(ifcMatName);
-		store.addProductCardToElement(ifcMatName, cuasCode, createUnitProductCard(nmdMatName, unit, category, lifetime));
+		store.addProductCardToElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category, lifetime));
 		addUnitIfcObjectForElement(ifcMatName, 1.0, 1.0);
 	}
 	
