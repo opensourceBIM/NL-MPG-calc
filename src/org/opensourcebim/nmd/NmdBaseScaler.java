@@ -59,15 +59,27 @@ public abstract class NmdBaseScaler implements NmdScaler {
 	 * 
 	 * @param x first dimension to check
 	 * @param y second dimension to check
-	 * @return Boolean that inidcates that the desired dims are within the scaling
+	 * @return Boolean that inidicates that the desired dims are within the scaling
 	 *         bounds
 	 */
+	@Override
 	public Boolean areDimsWithinBounds(Double x, Double y) {
 		// check whether to check the bounds for 1 or 2 dimensions
 		if (getNumberOfDimensions() == 1) {
-			return isWithinBounds(x, bounds[0], bounds[1]);
+			return isWithinBounds(x, bounds[0], bounds[1]) && isWithinBounds(y, bounds[0], bounds[1]);
 		} else {
 			return isWithinBounds(x, bounds[0], bounds[1]) && isWithinBounds(y, bounds[2], bounds[3]);
+		}
+	}
+	
+	@Override
+	public Boolean areDimsWithinBounds(Double[] dims, double conversionFactor) {
+		if (dims.length == 1) {
+			return areDimsWithinBounds(dims[0] * conversionFactor, null);
+		} else if (dims.length == 2) {
+			return areDimsWithinBounds(dims[0] * conversionFactor, dims[1] * conversionFactor);
+		} else {
+			return false;
 		}
 	}
 
@@ -109,7 +121,7 @@ public abstract class NmdBaseScaler implements NmdScaler {
 	}
 
 	/**
-	 * method to override by derived classes
+	 * abstract method to override by derived classes. will define the type of scaler
 	 * 
 	 * @param x value to calculate the y value (y(x))
 	 * @return y value from implemented method.

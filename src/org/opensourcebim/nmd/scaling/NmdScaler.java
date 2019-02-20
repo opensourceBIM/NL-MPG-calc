@@ -11,4 +11,8 @@ public interface NmdScaler {
 	String getUnit();
 	
 	Integer getNumberOfDimensions();
+
+	Boolean areDimsWithinBounds(Double x, Double y);
+	
+	Boolean areDimsWithinBounds(Double[] dims, double unitConversionFactor);
 }
