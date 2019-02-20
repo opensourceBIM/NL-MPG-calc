@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -276,10 +278,24 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 					products.add(this.getProductCardDataFromJson(p));
 				}
 			});
-		} 
+		}
 		return products;
 	}
 	
+	@Override
+	public List<NmdProductCard> getProductsForNLsfbCodes(Set<String> codes) {
+		if (getData().size() == 0) {
+			preLoadData();
+		}
+				
+		List<NmdProductCard> res = getData().stream()
+				.filter(el -> codes.stream()
+						.anyMatch(code -> code == null ? false : code.equals(el.getNLsfbCode())))
+				.flatMap(el -> el.getProducts().stream()).collect(Collectors.toList());
+		
+		return res;
+	}
+
 	@Override
 	public HashMap<Integer, Double> getQuantitiesOfProfileSetsForProduct(Integer productId) {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
@@ -287,12 +303,13 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		params.add(new KeyValuePair("ProductID", productId.toString()));
 		params.add(new KeyValuePair("includeNULLs", true));
 
-		HttpResponse response = this.performGetRequestWithParams(this.apiPath + "ProfielsetsEnSchalingBijProduct", params);
+		HttpResponse response = this.performGetRequestWithParams(this.apiPath + "ProfielsetsEnSchalingBijProduct",
+				params);
 
 		HashMap<Integer, Double> res = new HashMap<Integer, Double>();
 		// do something with the entity to get the token
-		JsonNode resp_node = this.responseToJson(response);		
-		
+		JsonNode resp_node = this.responseToJson(response);
+
 		JsonNode psNodes = resp_node.get("results");
 		if (psNodes != null) {
 			psNodes.forEach(ps -> {
@@ -301,8 +318,8 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 				q = q > 0.0 ? q : 1.0;
 				res.put(id, q);
 			});
-		}			
-		
+		}
+
 		return res;
 	}
 
@@ -351,7 +368,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 
 		return profileSets;
 	}
-	
+
 	private void loadFaseProfielDataForSet(JsonNode profielSetNode, NmdProfileSetImpl set) {
 		// laad faseprofiel specifieke data
 		JsonNode profielen = profielSetNode.get("Profiel");
@@ -359,17 +376,17 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 			profielen.forEach(p -> {
 				Integer fase = TryParseJsonNode(p.get("FaseID"), -1);
 				String faseName = this.getResources().getFaseMapping().get(fase);
-	
+
 				NmdFaseProfielImpl profiel = new NmdFaseProfielImpl(faseName, this.getResources());
-	
+
 				p.get("ProfielMilieuEffecten").forEach(val -> {
 					Integer catId = TryParseJsonNode(val.get("MilieuCategorieID"), -1);
 					Double catVal = TryParseJsonNode(val.get("MilieuWaarde"), Double.NaN);
-	
+
 					profiel.setProfielCoefficient(
 							this.getResources().getMilieuCategorieMapping().get(catId).getDescription(), catVal);
 				});
-	
+
 				set.addFaseProfiel(faseName, profiel);
 			});
 		}
@@ -378,8 +395,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	private NmdProfileSetImpl getDetailedProfielSetData(JsonNode psNode) {
 		NmdProfileSetImpl set = new NmdProfileSetImpl();
 		set.setProfileLifetime(TryParseJsonNode(psNode.get("Levensduur"), -1));
-		set.setUnit(this.getResources().getUnitMapping()
-				.get(TryParseJsonNode(psNode.get("ProfielSetEenheidID"), -1)));
+		set.setUnit(this.getResources().getUnitMapping().get(TryParseJsonNode(psNode.get("ProfielSetEenheidID"), -1)));
 
 		set.setQuantity(TryParseJsonNode(psNode.get("Hoeveelheid"), 1));
 		set.setProfielId(TryParseJsonNode(psNode.get("ProfielSetID"), -1));
@@ -434,11 +450,11 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		prod.setParentProductId(TryParseJsonNode(prodNode.get("OuderProductID"), -1));
 
 		prod.setIsTotaalProduct(TryParseJsonNode(prodNode.get("IsElementDekkend"), false));
-
+		prod.setIsMandatory(TryParseJsonNode(prodNode.get("ElementIsVerplicht"), false));
 		prod.setDescription(TryParseJsonNode(prodNode.get("ProductNaam"), ""));
 		prod.setCategory(TryParseJsonNode(prodNode.get("CategorieID"), 3));
 		prod.setIsScalable(TryParseJsonNode(prodNode.get("IsSchaalbaar"), false));
-		
+
 		// TODO add product attributes
 
 		return prod;

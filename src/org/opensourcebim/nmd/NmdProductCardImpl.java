@@ -18,6 +18,7 @@ public class NmdProductCardImpl implements NmdProductCard {
 	private Integer productLifetime;
 	private Integer parentId;
 	private Integer id;
+	private Boolean isMandatory;
 
 	public NmdProductCardImpl() {
 		this.specifications = new HashSet<NmdProfileSet>();
@@ -41,6 +42,7 @@ public class NmdProductCardImpl implements NmdProductCard {
 		this.parentId = p.getParentProductId();
 		this.specifications = new HashSet<NmdProfileSet>();
 		this.specifications.addAll(p.getProfileSets());
+		this.isMandatory = p.getIsMandatory();
 		this.setUnit(p.getUnit());
 		this.setDescription(p.getDescription());
 		this.setIsTotaalProduct(p.getIsTotaalProduct());
@@ -50,6 +52,11 @@ public class NmdProductCardImpl implements NmdProductCard {
 	public String getDescription() {
 		return this.description;
 	}
+	
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
 
 	@Override
 	public String getUnit() {
@@ -83,13 +90,18 @@ public class NmdProductCardImpl implements NmdProductCard {
 	public Boolean getIsTotaalProduct() {
 		return this.isTotaalProduct;
 	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
+	
 	public void setIsTotaalProduct(boolean b) {
 		this.isTotaalProduct = b;
+	}
+	
+	@Override
+	public Boolean getIsMandatory() {
+		return isMandatory;
+	}
+
+	public void setIsMandatory(Boolean flag) {
+		this.isMandatory = flag;
 	}
 
 	@Override

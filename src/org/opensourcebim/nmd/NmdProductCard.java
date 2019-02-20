@@ -20,6 +20,7 @@ public interface NmdProductCard{
 	String getDescription();
 
 	Boolean getIsTotaalProduct();
+	Boolean getIsMandatory();
 	
 	Set<NmdProfileSet> getProfileSets();
 

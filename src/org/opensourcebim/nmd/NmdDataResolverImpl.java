@@ -3,16 +3,24 @@ package org.opensourcebim.nmd;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.bimserver.utils.AreaUnit;
+import org.bimserver.utils.LengthUnit;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectStore;
+import org.opensourcebim.ifccollection.MpgScalingOrientation;
+import org.opensourcebim.mpgcalculation.MpgCostFactor;
+import org.opensourcebim.nmd.scaling.NmdScaler;
+import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
 /**
  * This implementation allows one of the services to be an editable data service
@@ -54,11 +62,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// try to find all possible nlsfb codes for a mpgObject
 		this.resolveNlsfbCodes();
 
-		// try to find the correct scaling dimensions for objects that could not have
-		// their
-		// geometry resolved - ToDo: check whether this still needs to be done or do we
-		// need to resolve
-		// this on selecting the NMD mapping?
+		// try to find the correct dimensions for objects that could not have
+		// their geometries resolved
 		this.resolveUnknownGeometries();
 
 		try {
@@ -95,55 +100,108 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	private void tryGetNmdDataForElement(MpgElement mpgElement) {
-		NmdProductCard retrievedMaterial = null;
-		NmdDataService nmdDataService = services.get(0);
 
 		// resolve which product card to retrieve based on the input MpgElement
 		if (mpgElement.getMpgObject() == null) {
 			return;
 		}
 
-		if (mpgElement.getMpgObject().getNLsfbAlternatives().size() == 0) {
+		Set<String> alternatives = mpgElement.getMpgObject().getNLsfbAlternatives();
+		if (alternatives.size() == 0 || alternatives.stream().allMatch(c -> c == null)) {
+			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
+					"No NLsfbcodes linked to the product");
+			mpgElement.setMappingMethod(NmdMapping.None);
 			return;
 		}
 
 		// find all the product cards that match with any of the mapped NLsfb codes.
-		List<NmdProductCard> candidates = nmdDataService.getData().stream()
-				.filter(el -> mpgElement.getMpgObject().getNLsfbAlternatives().stream()
-						.anyMatch(code -> code == el.getNLsfbCode()))
-				.flatMap(el -> el.getProducts().stream()).collect(Collectors.toList());
+		NmdDataService service = services.get(0);
+		List<NmdProductCard> candidates = service
+				.getProductsForNLsfbCodes(alternatives);
+
 		if (candidates.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NMD product card matching any of the NLsfb codes");
+			mpgElement.setMappingMethod(NmdMapping.None);
 			return;
 		}
 
+		// determine which candidate products should be added to the element
+		mapNmdProductToMpgElement(mpgElement, candidates, service);
+	}
+
+	/**
+	 * Find out wich candiate product should be mapped the the mpgElement.
+	 * 
+	 * @param mpgElement mpgElement to add product cards to
+	 * @param candidates possible nmProductCard matches for the mpgElement
+	 */
+	private void mapNmdProductToMpgElement(MpgElement mpgElement, List<NmdProductCard> candidates,
+			NmdDataService service) {
 		// find the most suitable candidate out of the earlier made selection
+		NmdProductCard prod = null;
+		List<NmdProductCard> viableCandidates = new ArrayList<NmdProductCard>();
 		for (NmdProductCard card : candidates) {
 			// create a copy
-			retrievedMaterial = new NmdProductCardImpl(card);
+			prod = new NmdProductCardImpl(card);
+			int dims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
+			if (service.getAdditionalProfileDataForCard(prod)) {
+				// determine scaling dimension 
+				MpgScalingOrientation orientation = mpgElement.getMpgObject().getGeometry().getScalerOrientation(dims);
 
-			if (nmdDataService.getAdditionalProfileDataForCard(retrievedMaterial)) {
-				// check if the item needs scaling and if yes in which direction and check
-				// whether it can be scaled.
-				// and find alternatives when this is not the case
-				// requires scaling?
-
-				// no: add item
-
-				// yes:
-				// add scale dimensions based on product card
-				// check dimensions within NMD scaler bounds
-				// yes: add item and set matching NLSfb code in product
-				// no: go to next cadidate
-
-				mpgElement.addProductCard(retrievedMaterial);
-				mpgElement.setMappingMethod(NmdMapping.Direct);
-
-				// suitable element found: exit the loop
-				break;
+				// check if the item falss within possible scaling range dimensions
+				if(canProductBeUsedForElement(prod, orientation)) {
+					// if there is a viable totaal product remove all other products and end the search
+					if(prod.getIsTotaalProduct()) {
+						mpgElement.addProductCard(prod);
+						mpgElement.setMappingMethod(NmdMapping.DirectTotaalProduct);
+						return;
+					}
+					if (prod.getIsMandatory()) {
+						viableCandidates.add(prod);
+					}
+				} 
 			}
 		}
+		if (viableCandidates.size() > 0) {
+			viableCandidates.forEach(c -> mpgElement.addProductCard(c));
+			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
+		} else {
+			mpgElement.setMappingMethod(NmdMapping.None);
+		}
+	}
+
+	/**
+	 * Check if the product card can be mapped on the element based on scaling restrictions
+	 * @param prod the canidate NmdProductCard 
+	 * @param mpgElement mpgElement that we want to add the productCard to
+	 * @return a boolean to indicate whether the ProductCard is a viable option
+	 */
+	private boolean canProductBeUsedForElement(NmdProductCard prod, MpgScalingOrientation orientation) {
+		boolean res = true;
+		int numDims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
+		for (NmdProfileSet profielSet : prod.getProfileSets()) {
+
+			// if there is no scaler defined, but the item is marked as scalable return true by default.
+			if (profielSet.getIsScalable() && profielSet.getScaler() != null) {
+				NmdScaler scaler = profielSet.getScaler();
+
+				String unit = scaler.getUnit();
+				if (numDims < 3) {
+
+					Double[] dims = orientation.getScaleDims();
+					Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit,
+							dims.length, this.getStore());
+					if (!scaler.areDimsWithinBounds(dims, convFactor)) {
+						res = false;
+					}
+				}
+			} else if (!profielSet.getIsScalable()) {
+				return false;
+			}
+		}
+		
+		return res;
 	}
 
 	/**
@@ -159,10 +217,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		this.getStore().getElements().forEach(el -> {
 
-			// first resolve NLsfb codes using decomposing ids if there is no NLsfb code at
-			// all.
+			// find NLsfb codes for child objects that have no cde themselves.
 			MpgObject o = el.getMpgObject();
-			if (o.hasNlsfbCode()) {
+			if (!o.hasNlsfbCode()) {
 				if (!o.getParentId().isEmpty()) {
 					MpgObject p = this.getStore().getObjectByGuid(o.getParentId()).get();
 					String parentCode = p.getNLsfbCode();
@@ -179,7 +236,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			if (foundMap == null) {
 				return;
 			} else {
-				o.addNlsfbAlternatives(Arrays.asList(foundMap));
+				o.addNlsfbAlternatives(new HashSet<String>(Arrays.asList(foundMap)));
 			}
 		});
 	}
@@ -212,9 +269,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				foundGeometries.put(NLsfbKey, geom);
 			}
 			if (geom != null) {
-				o.getGeometry().addScalingTypesFromGeometry(geom);
+				o.getGeometry().setDimensionsByVolumeRatio(geom);
 				o.getGeometry().setIsComplete(true);
-				o.addTag(MpgInfoTagType.geometryFromResolvedType, "resolved by NLsfb match");
+				o.addTag(MpgInfoTagType.geometryFromResolvedType, "dimensions resolved by NLsfb match");
 			} else {
 				// fallback option is to look at similar IfcProducts
 				String prodTypeKey = o.getObjectType();
@@ -226,14 +283,14 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				}
 
 				if (geom != null) {
-					o.getGeometry().addScalingTypesFromGeometry(geom);
+					o.getGeometry().setDimensionsByVolumeRatio(geom);
 					o.getGeometry().setIsComplete(true);
-					o.addTag(MpgInfoTagType.geometryFromResolvedType, "resolved by IfcProduct type match");
+					o.addTag(MpgInfoTagType.geometryFromResolvedType, "dimensions resolved by IfcProduct type match");
 				}
 			}
 		});
 	}
-
+	
 	/**
 	 * Get the scalers matching a referenceProperty value by looking for scalers in
 	 * all objects with an equal property value
@@ -250,7 +307,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				.filter(o -> propMethod.apply(o).equals(referenceProperty)).filter(o -> o.getGeometry().getIsComplete())
 				.map(o -> o.getGeometry()).distinct().collect(Collectors.toList());
 
-		Optional<MpgGeometry> geom = candidates.stream().filter(g -> g.getScalerTypes().size() > 1).findFirst();
+		Optional<MpgGeometry> geom = candidates.stream().filter(g -> g.getDimensions().length == 3).findFirst();
 		if (geom.isPresent()) {
 			return geom.get();
 		} else {
@@ -271,4 +328,5 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		return productMap;
 	}
+
 }
