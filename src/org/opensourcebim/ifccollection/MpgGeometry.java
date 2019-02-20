@@ -1,7 +1,6 @@
 package org.opensourcebim.ifccollection;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -12,7 +11,8 @@ public class MpgGeometry {
 
 	private Boolean isComplete;
 	
-	private List<MpgScalingType> scaleParams;
+	private Double[] principalDimensions;
+	private Double[] sortedDims;
 
 	public MpgGeometry() {
 		volume = Double.NaN;
@@ -20,8 +20,6 @@ public class MpgGeometry {
 		faceArea = Double.NaN;
 
 		setIsComplete(false);
-		
-		scaleParams = new ArrayList<MpgScalingType>();
 	}
 
 	public Double getVolume() {
@@ -51,40 +49,12 @@ public class MpgGeometry {
 	// return the largest axis
 	@JsonIgnore
 	public Double getPrincipalDimension() {
-		if (getScalerTypes().size() == 0) {
+		if (this.sortedDims.length == 0) {
 			return Double.NaN;
 		}
-	    return getScalerTypes().get(0).getUnitDims()[0];
+	    return this.sortedDims[0];
 	}
 	
-	public void addScalingType(MpgScalingType scaleData) {
-		this.scaleParams.add(scaleData);
-	}
-	
-	// add a scaler type based on another geometry
-	public void addScalingTypesFromGeometry(MpgGeometry geom) {
-		// determine length scale factor based on geometry ratio
-		Double scaleFactor = Math.pow(this.getVolume() / geom.getVolume(), (1.0/3.0));
-		
-		geom.scaleParams.forEach(st -> {
-			MpgScalingType newScale = new MpgScalingType(st, scaleFactor.isNaN() ? 1.0 : scaleFactor);
-			this.addScalingType(newScale);	
-		});
-	}
-
-	/**
-	 * Return the dimensions of the geometry that require scaling.
-	 * @param dim the dimensionality of the profileSet that is linked to this geometry
-	 * @return The dimensions of the geometry that require scaling
-	 */
-	public Double[] getScaleDims(int dim) {
-		// this is a bit counter-intuitive, but we need the scaler that belongs to an
-		// area object to scale over 1 dimension (thickness only) while we need the
-		// scaler that belongs to a slender object (pipes etc. to scale over a cross
-		// sectional area		
-		int scalerIndex = dim % 2;
-		return  scaleParams.get(scalerIndex).getScaleDims();
-	}
 
 	public Boolean getIsComplete() {
 		return isComplete;
@@ -94,7 +64,40 @@ public class MpgGeometry {
 		this.isComplete = isComplete;
 	}
 
-	public List<MpgScalingType> getScalerTypes() {
-		return this.scaleParams;
+	public Double[] getDimensions() {
+		return this.principalDimensions;
+	}
+
+	public void setDimensions(double x_dir, double y_dir, double z_dir) {
+		this.principalDimensions = new Double[] {x_dir, y_dir, z_dir};
+		this.sortedDims = new Double[] {x_dir, y_dir, z_dir};
+		Arrays.sort(sortedDims, Collections.reverseOrder());
+	}
+	
+	public MpgScalingOrientation getScalerOrientation(int numProductDimenions) {
+		MpgScalingOrientation scaler = new MpgScalingOrientation();
+		if (numProductDimenions == 1) {
+			scaler.setUnitDims(new Double[] {sortedDims[0]});
+			scaler.setScaleDims(new Double[] {sortedDims[1], sortedDims[2]});
+		} else {
+			scaler.setUnitDims(new Double[] {sortedDims[0], sortedDims[1]});
+			scaler.setScaleDims(new Double[] {sortedDims[2]});
+		}
+		return scaler;
+	}
+
+	/*
+	 * Assume equal shape of the two geometries and define the dimensions of the object by scaling 
+	 * the input geometry.
+	 */
+	public void setDimensionsByVolumeRatio(MpgGeometry geom) {
+		if (geom.getDimensions().length != 3) {
+			System.out.println("wut?");
+			return;
+		}
+		Double lengthRatio = Math.pow(this.getVolume() / geom.getVolume(), 1.0/3.0);
+		this.setDimensions(geom.getDimensions()[0] * lengthRatio,
+				geom.getDimensions()[1] * lengthRatio,
+				geom.getDimensions()[2] * lengthRatio);
 	}
 }

@@ -77,9 +77,10 @@ public class MpgCalculator {
 							int numDims = getUnitDimension(product.getUnit());
 							if (numDims < 3) {
 								
-								Double[] dims = element.getMpgObject().getGeometry().getScaleDims(numDims);
 								Double unitConversionFactor = getScalingUnitConversionFactor(unit, dims.length);
 								
+								MpgScalingOrientation or = element.getMpgObject().getGeometry().getScalerOrientation(numDims);
+								Double[] dims = or.getScaleDims();
 								scaleFactor = profielSet.getScaler().scaleWithConversion(dims, unitConversionFactor);
 							}
 						}

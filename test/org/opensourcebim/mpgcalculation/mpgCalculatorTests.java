@@ -14,7 +14,7 @@ import org.opensourcebim.ifccollection.MpgLayer;
 import org.opensourcebim.ifccollection.MpgLayerImpl;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
-import org.opensourcebim.ifccollection.MpgScalingType;
+import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdFaseProfielImpl;
@@ -271,22 +271,11 @@ public class mpgCalculatorTests {
 
 	private MpgGeometry createDummyGeometry() {
 		MpgGeometry g = new MpgGeometry();
-		g.setVolume(1.0);
+		g.setVolume(5.0);
 		g.setFloorArea(1.0);
 		g.setFaceArea(1.0);
-		
-		MpgScalingType rodScaler = new MpgScalingType();
-		rodScaler.setUnitDims(new Double[]{5.0});
-		rodScaler.setScaleDims(new Double[]{1.0, 1.0});
-		
-		g.addScalingType(rodScaler);
-		
-		MpgScalingType areaScaler = new MpgScalingType();
-		areaScaler.setUnitDims(new Double[]{1.0, 1.0});
-		areaScaler.setScaleDims(new Double[]{5.0});
-		
-		g.addScalingType(areaScaler);
-		
+		g.setDimensions(1.0, 1.0, 5.0);
+				
 		return g;
 	}
 

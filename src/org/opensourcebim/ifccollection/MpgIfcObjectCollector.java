@@ -286,105 +286,10 @@ public class MpgIfcObjectCollector {
 					double z_dir = this.convertLength(bounds.getMax().getZ() - bounds.getMin().getZ());
 					
 					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
-					JsonNode largest_face_direction_node = geomData.get("LARGEST_FACE_DIRECTION");
-					List<Double> face_dir = new ArrayList<Double>(3);
-					face_dir.add(largest_face_direction_node.get(0).asDouble(0.0));
-					face_dir.add(largest_face_direction_node.get(1).asDouble(0.0));
-					face_dir.add(largest_face_direction_node.get(2).asDouble(0.0));
-					
-					// get the max dimensions over the principal axes.
-					double max_dim_x = geomData.get("BOUNDING_BOX_SIZE_ALONG_X").asDouble();
-					double max_dim_y = geomData.get("BOUNDING_BOX_SIZE_ALONG_Y").asDouble();
-					double max_dim_z = geomData.get("BOUNDING_BOX_SIZE_ALONG_Z").asDouble();
-					
+										
 					geom.setFloorArea(this.convertArea(geomData.get("SURFACE_AREA_ALONG_Z").asDouble()));
 					geom.setFaceArea(this.convertArea(largest_face_area));
-					
-					if(Math.abs(x_dir - max_dim_x) > 1e-8 
-							|| Math.abs(y_dir - max_dim_y) > 1e-8 
-							|| Math.abs(z_dir - max_dim_z) > 1e-8) {
-						System.out.println("");
-					}
-					
-					Double[] unitDimsArea = new Double[2];
-					Double[] scaleDimsArea = new Double[1];
-
-					List<Double> along_dir = new ArrayList<Double>(3);
-					// get two orthogonal vectors wrt face_dir
-					if (Math.abs(face_dir.get(0)) < 1e-8) {
-						along_dir.add(1.0);
-						along_dir.add(0.0);
-						along_dir.add(0.0);
-					} else if (Math.abs(face_dir.get(1)) < 1e-8) {
-						along_dir.add(0.0);
-						along_dir.add(1.0);
-						along_dir.add(0.0);
-					} else if (Math.abs(face_dir.get(2)) < 1e-8) {
-						along_dir.add(0.0);
-						along_dir.add(0.0);
-						along_dir.add(1.0);
-					} else {
-						// normal vector is along none of the principal axes. create a generic orthogonal set.
-						// none of the elements is zero, so we can apply below and normalize the vector.
-						Double along_z = -1 *(face_dir.get(0) + face_dir.get(1)) / face_dir.get(2);
-						Double along_magnitude = Math.sqrt(2 + Math.pow(along_z,2));
-						along_dir.add(1.0 / along_magnitude);
-						along_dir.add(1.0 / along_magnitude);
-						along_dir.add(along_z / along_magnitude );
-					}
-					
-					// apply the cross product to get the last orhtogonal vector
-					List<Double> across_dir = new ArrayList<Double>(3);
-					across_dir.add(face_dir.get(1) * along_dir.get(2) - face_dir.get(2) * along_dir.get(1));
-					across_dir.add(face_dir.get(2) * along_dir.get(0) - face_dir.get(0) * along_dir.get(2));
-					across_dir.add(face_dir.get(0) * along_dir.get(1) - face_dir.get(1) * along_dir.get(0));
-					
-					// unit vector times the dimensions will give us the dimensions required
-					Double thickness = Math.abs(max_dim_x * face_dir.get(0) 
-							+ max_dim_y * face_dir.get(1) 
-							+ face_dir.get(2) * max_dim_z);
-					Double width = Math.abs(max_dim_x * along_dir.get(0) 
-							+ max_dim_y * along_dir.get(1) 
-							+ max_dim_z * along_dir.get(2));
-					Double length = Math.abs(max_dim_x * across_dir.get(0) 
-							+ max_dim_y * across_dir.get(1) 
-							+ max_dim_z * across_dir.get(2));
-					// determine thickness and the principal unit directions
-					scaleDimsArea[0] = thickness;
-					unitDimsArea[0] = width;
-					unitDimsArea[1] = length;
-
-					MpgScalingType areaScale = new MpgScalingType();
-					areaScale.setScaleDims(scaleDimsArea);
-					areaScale.setUnitDims(unitDimsArea);
-					
-					// create the scaler for slender objects
-					Double[] unitDimsLength = new Double[1];
-					Double[] scaleDimsLength = new Double[2];
-
-					if (thickness > length && thickness > width) {
-						scaleDimsLength[0] = length;
-						scaleDimsLength[1] = width;
-						unitDimsLength[0] = thickness;
-					} else if(length >= width) {
-						scaleDimsLength[0] = width;
-						scaleDimsLength[1] = thickness;
-						unitDimsLength[0] = length;
-					} else {
-						scaleDimsLength[0] = thickness;
-						scaleDimsLength[1] = length;
-						unitDimsLength[0] = width;
-					}
-
-					MpgScalingType lengthScale = new MpgScalingType();
-					lengthScale.setScaleDims(scaleDimsLength);
-					lengthScale.setUnitDims(unitDimsLength);
-
-					if (geom.getIsComplete()) {
-						// add both scalers to the geometry only if there is a clear geometry found
-						geom.addScalingType(lengthScale);
-						geom.addScalingType(areaScale);
-					}
+					geom.setDimensions(x_dir, y_dir, z_dir);
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block

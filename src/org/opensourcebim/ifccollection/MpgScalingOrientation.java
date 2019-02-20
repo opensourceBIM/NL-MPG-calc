@@ -6,16 +6,16 @@ package org.opensourcebim.ifccollection;
  * @author vijj
  *
  */
-public class MpgScalingType {
+public class MpgScalingOrientation {
 
 	private Double[] unitDims;
 	private Double[] scaleDims;
 	
-	public MpgScalingType() {
+	public MpgScalingOrientation() {
 		
 	}
 	
-	public MpgScalingType(MpgScalingType st, double scaleFactor) {
+	public MpgScalingOrientation(MpgScalingOrientation st, double scaleFactor) {
 		this.setUnitDims(applyScale(st.getUnitDims(), scaleFactor));
 		this.setScaleDims(applyScale(st.getScaleDims(), scaleFactor));
 	}
