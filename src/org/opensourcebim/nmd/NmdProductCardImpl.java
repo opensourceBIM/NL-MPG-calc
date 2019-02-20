@@ -36,6 +36,9 @@ public class NmdProductCardImpl implements NmdProductCard {
 			p = new NmdProductCardImpl();
 		}
 
+		this.id = p.getProductId();
+		this.isScalable = p.getIsScalable();
+		this.parentId = p.getParentProductId();
 		this.specifications = new HashSet<NmdProfileSet>();
 		this.specifications.addAll(p.getProfileSets());
 		this.setUnit(p.getUnit());
