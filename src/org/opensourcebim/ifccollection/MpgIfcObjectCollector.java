@@ -22,6 +22,7 @@ import org.bimserver.models.ifc2x3tc1.IfcClassificationNotationSelect;
 import org.bimserver.models.ifc2x3tc1.IfcClassificationReference;
 import org.bimserver.models.ifc2x3tc1.IfcElementQuantity;
 import org.bimserver.models.ifc2x3tc1.IfcFurnishingElement;
+import org.bimserver.models.ifc2x3tc1.IfcGrid;
 import org.bimserver.models.ifc2x3tc1.IfcIdentifier;
 import org.bimserver.models.ifc2x3tc1.IfcLabel;
 import org.bimserver.models.ifc2x3tc1.IfcMaterial;
@@ -59,6 +60,7 @@ import org.bimserver.models.ifc2x3tc1.impl.IfcAnnotationImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcBuildingImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcBuildingStoreyImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcFurnishingElementImpl;
+import org.bimserver.models.ifc2x3tc1.impl.IfcGridImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcOpeningElementImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcSiteImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcSpaceImpl;
@@ -101,7 +103,7 @@ public class MpgIfcObjectCollector {
 				IfcBuildingStorey.class, IfcBuildingStoreyImpl.class, IfcFurnishingElement.class,
 				IfcFurnishingElementImpl.class, IfcOpeningElement.class, IfcOpeningElementImpl.class,
 				IfcVirtualElement.class, IfcVirtualElementImpl.class, IfcSpace.class, IfcSpaceImpl.class,
-				IfcAnnotation.class, IfcAnnotationImpl.class);
+				IfcAnnotation.class, IfcAnnotationImpl.class, IfcGrid.class, IfcGridImpl.class);
 	}
 
 	public MpgObjectStore results() {
