@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensourcebim.nmd.NmdMapping;
 
 public class MpgObjectStoreTests {
 
@@ -40,9 +41,10 @@ public class MpgObjectStoreTests {
 		mpgObject.addLayer(new MpgLayerImpl(2, 1.0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
 		mpgObject.addMaterialSource("dummyMaterial", "", "layer");
 		objectStore.addObject(mpgObject);
-		objectStore.getElementByName("dummyMaterial").setBimBotIdentifier("some id");
+		objectStore.getElementByName("dummyMaterial").setMappingMethod(NmdMapping.DirectTotaalProduct);
 		
-		assertEquals("some id", objectStore.getElementsByProductType("Wall").get(0).getBimBotIdentifier());
+		assertEquals(NmdMapping.DirectTotaalProduct,
+				objectStore.getElementsByProductType("Wall").get(0).getMappingMethod());
 	}
 	
 	@Test

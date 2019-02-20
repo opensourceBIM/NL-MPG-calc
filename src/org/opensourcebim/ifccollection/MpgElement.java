@@ -13,8 +13,6 @@ import org.opensourcebim.nmd.NmdProductCard;
  *
  */
 public class MpgElement {
-	// id's
-	private String BimBotIdentifier;
 	
 	private String ifcName;
 	private List<NmdProductCard> productCards;
@@ -42,22 +40,6 @@ public class MpgElement {
 	 */
 	public String getIfcName() {
 		return this.ifcName;
-	}
-
-	/**
-	 * the id of the material for internal BimBot use.
-	 * @return a unique material identifier string
-	 */
-	public String getBimBotIdentifier() {
-		return BimBotIdentifier;
-	}
-	
-	/**
-	 * set the BimBot ID 
-	 * @param bimBotIdentifier - value to set the id to.
-	 */
-	public void setBimBotIdentifier(String bimBotIdentifier) {
-		BimBotIdentifier = bimBotIdentifier;
 	}
 	
 	public void setMappingMethod(NmdMapping mapping) {
