@@ -39,11 +39,7 @@ public class MpgGeometry {
 	}
 
 	public Double getFaceArea() {
-		return faceArea;
-	}
-
-	public void setFaceArea(Double largestFaceArea) {
-		this.faceArea = largestFaceArea;
+		return this.sortedDims[0] * this.sortedDims[1];
 	}
 
 	// return the largest axis

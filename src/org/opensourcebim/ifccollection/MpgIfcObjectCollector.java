@@ -290,7 +290,6 @@ public class MpgIfcObjectCollector {
 					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
 										
 					geom.setFloorArea(this.convertArea(geomData.get("SURFACE_AREA_ALONG_Z").asDouble()));
-					geom.setFaceArea(this.convertArea(largest_face_area));
 					geom.setDimensions(x_dir, y_dir, z_dir);
 				}
 			} catch (IOException e) {
