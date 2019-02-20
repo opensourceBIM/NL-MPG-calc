@@ -3,6 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Standard interface to provide material data from the source to the user.
@@ -31,6 +32,7 @@ public interface NmdDataService {
 	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids);
 
 	List<NmdProductCard> getProductsForElement(NmdElement element);
+	List<NmdProductCard> getProductsForNLsfbCodes(Set<String> codes);
 
 	Boolean getAdditionalProfileDataForCard(NmdProductCard c);
 

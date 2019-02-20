@@ -2,8 +2,10 @@ package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -30,7 +32,7 @@ public class MpgObjectImpl implements MpgObject {
 	private MpgGeometry geometry;
 	private String nlsfb;
 	private List<MpgInfoTag> tags;
-	private List<String> nlsfbAlternatives;
+	private Set<String> nlsfbAlternatives;
 
 	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId,
 			MpgObjectStore objectStore) {
@@ -49,7 +51,7 @@ public class MpgObjectImpl implements MpgObject {
 		properties = new HashMap<String, Object>();
 		tags = new ArrayList<MpgInfoTag>();
 		this.listedMaterials = new BasicEList<MaterialSource>();
-		this.nlsfbAlternatives = new ArrayList<String>();
+		this.nlsfbAlternatives = new HashSet<String>();
 
 		this.store = () -> {
 			return objectStore;
@@ -120,26 +122,25 @@ public class MpgObjectImpl implements MpgObject {
 	@Override
 	public void setNLsfbCode(String code) {
 		this.nlsfb = code;
-		if (!nlsfbAlternatives.contains(code)) {
-			nlsfbAlternatives.add(0, code);
-		}
+		nlsfbAlternatives.add(code);
 	}
 	
 	@Override
 	public boolean hasNlsfbCode() {
-		return getNLsfbCode() == "" || getNLsfbCode() == null;
+		return !(getNLsfbCode() == "" || getNLsfbCode() == null);
 	}
 	
 	@Override
-	public List<String> getNLsfbAlternatives() {
-		List<String> allCodes = new ArrayList<String>();
+	public Set<String> getNLsfbAlternatives() {
+		Set<String> allCodes = new HashSet<String>();
+		allCodes.add(getNLsfbCode());
 		allCodes.addAll(nlsfbAlternatives);
-		allCodes.add(0, getNLsfbCode());
+		
 		return allCodes;
 	}
 	
 	@Override
-	public void addNlsfbAlternatives(List<String> alternatives) {
+	public void addNlsfbAlternatives(Set<String> alternatives) {
 		this.nlsfbAlternatives.addAll(alternatives);
 	}
 

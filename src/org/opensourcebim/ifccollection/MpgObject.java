@@ -2,6 +2,7 @@ package org.opensourcebim.ifccollection;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface MpgObject {
 	
@@ -15,8 +16,8 @@ public interface MpgObject {
 	
 	String getNLsfbCode();	
 	boolean hasNlsfbCode();
-	List<String> getNLsfbAlternatives();
-	void addNlsfbAlternatives(List<String> alternatives);
+	Set<String> getNLsfbAlternatives();
+	void addNlsfbAlternatives(Set<String> alternatives);
 	MpgGeometry getGeometry();
 	
 	void addMaterialSource(String name, String guid, String source);
