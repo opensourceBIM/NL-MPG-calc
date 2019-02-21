@@ -340,24 +340,26 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		List<MpgElement> parents = this.parentElementsByGuid(globalId);
 
 		if (flag) {
+			// override all the children mappings
 			children.forEach(el -> {
-				// only map indirectly when there is no mapping method present.
-				// other mapping methods get precedence
-				if (el.getMappingMethod() == NmdMapping.None) {
-					el.setMappingMethod(NmdMapping.IndirectThroughParent);
-				}
+				el.setMappingMethod(NmdMapping.IndirectThroughParent);
+				el.removeProductCards();
 			});
+			
 			parents.forEach(el -> {
-				if (el.getMappingMethod() == NmdMapping.None) {
+				if (el.getMappingMethod() == NmdMapping.None && allChildrenAreMapped(el)) {
 					el.setMappingMethod(NmdMapping.IndirectThroughChildren);
 				}
 			});
 		} else {
+			// revert all hierarchical child mappings 
+			// (as there can only be a single parent with a direct mapping)
 			children.forEach(el -> {
 				if (el.getMappingMethod() == NmdMapping.IndirectThroughParent) {
 					el.setMappingMethod(NmdMapping.None);
 				}
 			});
+			// any parents that had a indirect through children mapping will be reverted
 			parents.forEach(el -> {
 				if (el.getMappingMethod() == NmdMapping.IndirectThroughChildren) {
 					el.setMappingMethod(NmdMapping.None);
@@ -367,6 +369,24 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	}
 
+	/**
+	 * Recursively check whether all children are mapped
+	 * @param el MpgElement to check hierarchy of
+	 * @return a flag to indicate that all chidren have a mapping
+	 */
+	private boolean allChildrenAreMapped(MpgElement el) {
+		List<MpgElement> childrenOfElement = decomposedRelations.stream()
+				.filter(kvp -> kvp.getKey().equals(el.getMpgObject().getGlobalId()))
+				.map(v -> v.getValue().getGlobalId())
+				.map(guid -> this.getElementByObjectGuid(guid));
+		
+		if (childrenOfElement.size() > 0) {
+			childrenOfElement.stream().allMatch(ce -> ce.hasMapping() || allChildrenAreMapped(ce));
+		} else {
+			return false;
+		}
+	}
+	
 	/**
 	 * get a collection of MpgElements that are higher up in the hierarchy than the
 	 * input element guid

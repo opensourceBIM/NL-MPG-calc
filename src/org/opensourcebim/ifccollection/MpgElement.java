@@ -96,8 +96,7 @@ public class MpgElement {
 		this.productCards.add(productCard);
 	}
 
-	public void removeProductCard() {
-		// unmap any child elements.
+	public void removeProductCards() {
 		this.productCards.clear();
 	}
 

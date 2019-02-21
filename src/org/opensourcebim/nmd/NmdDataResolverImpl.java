@@ -76,6 +76,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			// get data per material
 			for (MpgElement element : getStore().getElements()) {
 				// element could already have a mapping through a decomposes relation
+				// in that case skip to the next one.
 				if (!element.hasMapping()) {
 					resolveNmdMappingForElement(element);
 				}
@@ -109,11 +110,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return;
 		}
 
+		// find any relevant NLsfb codes
 		Set<String> alternatives = mpgElement.getMpgObject().getNLsfbAlternatives();
 		if (alternatives.size() == 0 || alternatives.stream().allMatch(c -> c == null)) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NLsfbcodes linked to the product");
-			mpgElement.setMappingMethod(NmdMapping.None);
 			return;
 		}
 
@@ -125,11 +126,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		if (candidates.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NMD product card matching any of the NLsfb codes");
-			mpgElement.setMappingMethod(NmdMapping.None);
 			return;
 		}
 
-		// determine which candidate products should be added to the element
+		// determine which candidate productCards should be added to the element
 		mapNmdProductToMpgElement(mpgElement, candidates, service);
 	}
 
