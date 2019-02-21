@@ -378,10 +378,10 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		List<MpgElement> childrenOfElement = decomposedRelations.stream()
 				.filter(kvp -> kvp.getKey().equals(el.getMpgObject().getGlobalId()))
 				.map(v -> v.getValue().getGlobalId())
-				.map(guid -> this.getElementByObjectGuid(guid));
+				.map(guid -> this.getElementByObjectGuid(guid)).collect(Collectors.toList());
 		
 		if (childrenOfElement.size() > 0) {
-			childrenOfElement.stream().allMatch(ce -> ce.hasMapping() || allChildrenAreMapped(ce));
+			return childrenOfElement.stream().allMatch(ce -> ce.hasMapping() || allChildrenAreMapped(ce));
 		} else {
 			return false;
 		}
