@@ -166,6 +166,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				} 
 			}
 		}
+		
 		if (viableCandidates.size() > 0) {
 			viableCandidates.forEach(c -> mpgElement.addProductCard(c));
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
@@ -215,7 +216,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 */
 	public void resolveNlsfbCodes() {
 
-		HashMap<String, String[]> map = getProductToNmdMap();
+		HashMap<String, String[]> map = getProductTypeToNmdElementMap();
 		String[] emptyMap = null;
 
 		this.getStore().getElements().forEach(el -> {
@@ -318,18 +319,26 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 	}
 
-	private HashMap<String, String[]> getProductToNmdMap() {
-		HashMap<String, String[]> productMap = new HashMap<String, String[]>();
-		productMap.put("Footing", new String[] { "16." });
-		productMap.put("Wall", new String[] { "21.", "22." });
-		productMap.put("Slab", new String[] { "23." });
-		productMap.put("Stair", new String[] { "24." });
-		productMap.put("Roof", new String[] { "27." });
-		productMap.put("Beam", new String[] { "28." });
-		productMap.put("Window", new String[] { "31.2", "32.2" });
-		productMap.put("Door", new String[] { "31.3", "32.3" });
-
-		return productMap;
+	private HashMap<String, String[]> getProductTypeToNmdElementMap() {
+		HashMap<String, String[]> elementMap = new HashMap<String, String[]>();
+		elementMap.put("BuildingElementProxy", new String[] { "11." , "32.35", "32.36", "32.37", "32.38", "32.39"});
+		elementMap.put("Footing", new String[] { "16." });
+		elementMap.put("Slab", new String[] { "13." , "23.", "28.2", "28.3", "33.21"});
+		elementMap.put("Pile", new String[] { "17."});
+		elementMap.put("Column", new String[] { "17.", "28.1" });
+		elementMap.put("Wall", new String[] { "21.", "22." });
+		elementMap.put("CurtainWall", new String[] { "21.24", "32.4" });
+		elementMap.put("Stair", new String[] { "24." });
+		elementMap.put("Roof", new String[] { "27." });
+		elementMap.put("Beam", new String[] { "28." });
+		elementMap.put("Window", new String[] { "31.2", "32.12", "32.2", "37.2" });
+		elementMap.put("Door", new String[] { "31.3", "32.11", "32.3" });
+		elementMap.put("Railing", new String[] { "34."});
+		elementMap.put("Covering", new String[] { "41.","42.","43.", "44.", "45.", "47.", "48."});
+		elementMap.put("FlowSegment", new String[] { "52.", "53.", "55.", "56.", "57."}); // many more
+		elementMap.put("FlowTerminal", new String[] { "74.1", "74.2"}); // many more
+		
+		return elementMap;
 	}
 
 }
