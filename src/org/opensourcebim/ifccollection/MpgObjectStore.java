@@ -61,8 +61,6 @@ public interface MpgObjectStore {
 	void addSpace(MpgSpace space);
 	double getTotalFloorArea();
 	
-	
-	void validateIfcDataCollection();
 	boolean isIfcDataComplete();
 	
 	GuidCollection getGuidsWithoutMaterial();
@@ -77,8 +75,6 @@ public interface MpgObjectStore {
 	@JsonIgnore
 	GuidCollection getGuidsWithUndefinedLayerMats();
 	
-	void SummaryReport();
-
 	boolean hasUndefinedVolume(MpgObject obj, boolean includeChildren);
 
 	boolean hasRedundantMaterials(MpgObject obj, boolean includeChildren);
@@ -86,4 +82,6 @@ public interface MpgObjectStore {
 	boolean hasUndefinedLayers(MpgObject obj, boolean includeChildren);
 
 	boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren);
+
+	void checkForMappingDependencies(String globalId, boolean flag);
 }

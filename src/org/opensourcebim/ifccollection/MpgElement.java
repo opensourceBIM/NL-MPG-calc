@@ -81,15 +81,14 @@ public class MpgElement {
 
 	public void addProductCard(NmdProductCard productCard) {
 		this.productCards.add(productCard);
-		
+		store.checkForMappingDependencies(this.getMpgObject().getGlobalId(), true);
 		// check with the store which child elements will also be mapped with this action
 	}
 	
 	public void removeProductCard() {
 		// unmap any child elements.
 		this.productCards.clear();
-		
-
+		store.checkForMappingDependencies(this.getMpgObject().getGlobalId(), false);
 	}
 
 	/**

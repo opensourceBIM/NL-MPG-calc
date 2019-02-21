@@ -99,9 +99,7 @@ public class MpgObjectStoreTests {
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(10, 1.0, "a linked material", Integer.toString("a linked material".hashCode())));
 		objectStore.addObject(mpgObject);
-		
-		objectStore.validateIfcDataCollection();
-		
+				
 		assertFalse("warning checker did not find the orphan material",
 				objectStore.isIfcDataComplete());
 	}
@@ -111,9 +109,7 @@ public class MpgObjectStoreTests {
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(10, 1.0, null, null));
 		objectStore.addObject(mpgObject);
-		
-		objectStore.validateIfcDataCollection();
-		
+			
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
 	}
@@ -125,8 +121,6 @@ public class MpgObjectStoreTests {
 		mpgObject.addLayer(new MpgLayerImpl(10, 1.0, null, null));
 		objectStore.addObject(mpgObject);
 		
-		objectStore.validateIfcDataCollection();
-		
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
 	}
@@ -137,8 +131,6 @@ public class MpgObjectStoreTests {
 		mpgObject.addMaterialSource("steel", Integer.toString("steel".hashCode()), null );
 		mpgObject.addMaterialSource("brick", Integer.toString("brick".hashCode()), null );
 		objectStore.addObject(mpgObject);
-		
-		objectStore.validateIfcDataCollection();
 		
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
@@ -156,8 +148,6 @@ public class MpgObjectStoreTests {
 		mpgObject2.addLayer(new MpgLayerImpl(10, 1.0, "steel", Integer.toString("steel".hashCode())));
 		objectStore.addObject(mpgObject2);
 		
-		objectStore.validateIfcDataCollection();
-		
 		assertFalse("warning checker did not find an object with no material linked",
 				objectStore.isIfcDataComplete());
 		assertEquals(1, objectStore.getGuidsWithUndefinedLayerMats().getSize());
@@ -174,8 +164,6 @@ public class MpgObjectStoreTests {
 		// mock volume as this will not be added in this way
 		obj.getGeometry().setVolume(layer.getVolume());
 		objectStore.addObject(obj);
-		
-		objectStore.validateIfcDataCollection();
 		
 		assertTrue("warning found in objectstore while it should not be there.",
 				objectStore.isIfcDataComplete());

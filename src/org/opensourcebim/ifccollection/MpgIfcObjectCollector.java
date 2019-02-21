@@ -219,8 +219,6 @@ public class MpgIfcObjectCollector {
 		// set all parent child relations for elements
 		objectStore.recreateParentChildMap(childToParentMap);
 
-		objectStore.validateIfcDataCollection();
-
 		return objectStore;
 	}
 
