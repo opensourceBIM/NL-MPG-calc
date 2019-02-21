@@ -38,6 +38,7 @@ public class MpgGeometry {
 		this.floorArea = floorArea;
 	}
 
+	@JsonIgnore
 	public Double getFaceArea() {
 		return this.sortedDims[0] * this.sortedDims[1];
 	}
