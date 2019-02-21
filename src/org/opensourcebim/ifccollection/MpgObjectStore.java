@@ -63,9 +63,12 @@ public interface MpgObjectStore {
 	
 	boolean isIfcDataComplete();
 	
-	GuidCollection getGuidsWithoutMaterial();
-	GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials();
+	void toggleMappingDependencies(String globalId, boolean flag);
 	
+	@JsonIgnore
+	GuidCollection getGuidsWithoutMaterial();
+	@JsonIgnore
+	GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials();
 	@JsonIgnore
 	GuidCollection getGuidsWithoutVolume();
 	@JsonIgnore
@@ -82,6 +85,4 @@ public interface MpgObjectStore {
 	boolean hasUndefinedLayers(MpgObject obj, boolean includeChildren);
 
 	boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren);
-
-	void checkForMappingDependencies(String globalId, boolean flag);
 }
