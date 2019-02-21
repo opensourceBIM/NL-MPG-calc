@@ -238,20 +238,37 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		// convert reponseNode to NmdProductCard info.
 		List<NmdElement> results = new ArrayList<NmdElement>();
 		respNode.get("results").forEach(f -> results.add(this.getElementDataFromJson(f)));
+		List<Integer> ids = results.stream().map(e -> e.getElementId()).collect(Collectors.toList());
+		results.addAll(getChildElements(ids));
 
-		// STEP 2 - get Element onderdelen
-		int initSize = results.size();
-		for (int i = 0; i < initSize; i++) {
-			NmdElement el = results.get(i);
+		return results;
+	}
+	
+	private List<NmdElement> getChildElements(List<Integer> parentIds) {
+		
+		List<NmdElement> results = new ArrayList<NmdElement>();
+		
+		parentIds.forEach(id -> {
+			
 			List<KeyValuePair> params_el = new ArrayList<KeyValuePair>();
 			params_el.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
-			params_el.add(new KeyValuePair("ElementID", el.getRAWCode()));
-
+			params_el.add(new KeyValuePair("ElementID", id));
+			
+			// load the json
 			HttpResponse responseEl = this.performGetRequestWithParams(this.apiPath + "ElementOnderdelen", params_el);
 			JsonNode respNodeEl = this.responseToJson(responseEl);
-			respNodeEl.get("results").forEach(f -> results.add(this.getElementDataFromJson(f)));
-		}
-
+			if (respNodeEl != null) {
+				// parse json to objects
+				List<NmdElement> newResults = new ArrayList<NmdElement>();
+				respNodeEl.get("results").forEach(f -> newResults.add(this.getElementDataFromJson(f)));
+				results.addAll(newResults);
+				
+				// repeat above process for new finds.
+				List<Integer> newResultIds = newResults.stream().map(r -> r.getElementId()).collect(Collectors.toList());
+				results.addAll(getChildElements(newResultIds));
+			}
+		});
+		
 		return results;
 	}
 
