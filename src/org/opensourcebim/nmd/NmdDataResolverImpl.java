@@ -75,7 +75,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 			// get data per material
 			for (MpgElement element : getStore().getElements()) {
-				tryGetNmdDataForElement(element);
+				// element could already have a mapping through a decomposes relation
+				if (!element.hasMapping()) {
+					resolveNmdMappingForElement(element);
+				}
 			}
 
 		} catch (ArrayIndexOutOfBoundsException ex) {
@@ -99,7 +102,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 	}
 
-	private void tryGetNmdDataForElement(MpgElement mpgElement) {
+	private void resolveNmdMappingForElement(MpgElement mpgElement) {
 
 		// resolve which product card to retrieve based on the input MpgElement
 		if (mpgElement.getMpgObject() == null) {

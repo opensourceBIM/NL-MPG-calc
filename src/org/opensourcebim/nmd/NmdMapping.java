@@ -7,6 +7,8 @@ public enum NmdMapping {
 	None,
 	DirectTotaalProduct,
 	DirectDeelProduct,
+	IndirectThroughParent,
+	IndirectThroughChildren,
 	Estimated,
 	UserMapping,
 }
