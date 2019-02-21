@@ -29,7 +29,7 @@ public interface NmdDataService {
 			
 	List<NmdElement> getData();
 
-	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids);
+	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<Integer> ids);
 
 	List<NmdProductCard> getProductsForElement(NmdElement element);
 	List<NmdProductCard> getProductsForNLsfbCodes(Set<String> codes);
@@ -37,4 +37,5 @@ public interface NmdDataService {
 	Boolean getAdditionalProfileDataForCard(NmdProductCard c);
 
 	HashMap<Integer, Double> getQuantitiesOfProfileSetsForProduct(Integer productId);
+
 }

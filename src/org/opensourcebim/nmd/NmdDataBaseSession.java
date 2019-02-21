@@ -259,7 +259,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	public List<NmdProductCard> getProductsForElement(NmdElement element) {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
-		params.add(new KeyValuePair("ElementID", element.getRAWCode()));
+		params.add(new KeyValuePair("ElementID", element.getElementId()));
 
 		HttpResponse response = this.performGetRequestWithParams(this.apiPath + "ProductenBijElement", params);
 
@@ -330,7 +330,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	public Boolean getAdditionalProfileDataForCard(NmdProductCard c) {
 
 		try {
-			HashMap<Integer, NmdProfileSet> setData = getProfileSetsByIds(Arrays.asList(c.getProductId().toString()));
+			HashMap<Integer, NmdProfileSet> setData = getProfileSetsByIds(Arrays.asList(c.getProductId()));
 
 			c.addProfileSets(setData.values());
 			return true;
@@ -340,10 +340,11 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	}
 
 	@Override
-	public HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<String> ids) {
+	public HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<Integer> ids) {
+		String idsString = String.join(",", ids.stream().map(id -> id.toString()).collect(Collectors.toList()));
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
-		params.add(new KeyValuePair("ProductIDs", String.join(",", ids)));
+		params.add(new KeyValuePair("ProductIDs", idsString));
 		params.add(new KeyValuePair("includeNULLs", true));
 
 		HttpResponse response = this.performGetRequestWithParams(this.apiPath + "ProductenProfielWaarden", params);
@@ -466,12 +467,12 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 	 */
 	private NmdElement getElementDataFromJson(JsonNode elementInfo) {
 		NmdElementImpl newElement = new NmdElementImpl();
-		newElement.setRawCode(elementInfo.get("ElementID").asText());
-		newElement.setNlsfbCode(elementInfo.get("ElementCode").asText());
-		newElement.setElementName(elementInfo.get("ElementNaam").asText());
-
-		newElement.setCUASId(TryParseJsonNode(elementInfo.get("CUAS_ID"), 5));
-
+		newElement.setElementId(TryParseJsonNode(elementInfo.get("ElementID"), -1));
+		newElement.setNlsfbCode(TryParseJsonNode(elementInfo.get("ElementCode"), ""));
+		newElement.setElementName(TryParseJsonNode(elementInfo.get("ElementNaam"), ""));
+		newElement.setParentId(TryParseJsonNode(elementInfo.get("OuderID"), -1));
+		newElement.setIsMandatory(TryParseJsonNode(elementInfo.get("Verplicht"), false));
+		
 		return newElement;
 	}
 }

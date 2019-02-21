@@ -95,7 +95,7 @@ public class NmdInterfaceTests {
 		connect();
 
 		NmdElementImpl el = new NmdElementImpl();
-		el.setRawCode("-42");
+		el.setElementId(-42);
 		assertTrue(0 == db.getProductsForElement(el).size());
 	}
 
@@ -104,14 +104,14 @@ public class NmdInterfaceTests {
 		connect();
 
 		NmdElementImpl el = new NmdElementImpl();
-		el.setRawCode("155");
+		el.setElementId(155);
 		assertTrue(0 < db.getProductsForElement(el).size());
 	}
 
 	@Test
 	public void testCanRetrieveProfileSetsBySingleId() {
 		connect();
-		List<String> ids = Arrays.asList("19");
+		List<Integer> ids = Arrays.asList(19);
 		HashMap<Integer, NmdProfileSet> profileSets = db.getProfileSetsByIds(ids);
 		assertTrue(0 < profileSets.size());
 	}
@@ -129,7 +129,7 @@ public class NmdInterfaceTests {
 	@Test
 	public void testCanRetrieveProfileSetsWithScalerInformation() {
 		connect();
-		List<String> ids = Arrays.asList("9", "19");
+		List<Integer> ids = Arrays.asList(9, 19);
 		HashMap<Integer, NmdProfileSet> profileSets = db.getProfileSetsByIds(ids);
 		assertTrue(2 == profileSets.size());
 		Entry<Integer, NmdProfileSet> set = profileSets.entrySet().iterator().next();
@@ -143,7 +143,7 @@ public class NmdInterfaceTests {
 	@Test
 	public void testCanRetrieveFullProductByProductId() {
 		NmdElementImpl el = new NmdElementImpl();
-		el.setRawCode("204");
+		el.setElementId(204);
 
 		connect();
 		assertTrue(db.getProductsForElement(el).size() > 0);
