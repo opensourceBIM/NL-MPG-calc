@@ -7,7 +7,6 @@ import java.util.Set;
 public interface MpgObject {
 	
 	long getObjectId();
-	List<MpgLayer> getLayers();
 	String getObjectName();
 	String getObjectType();
 	String getGlobalId();
@@ -15,11 +14,14 @@ public interface MpgObject {
 	void setParentId(String value);
 	
 	String getNLsfbCode();	
+	void setNLsfbCode(String code);
 	boolean hasNlsfbCode();
 	Set<String> getNLsfbAlternatives();
 	void addNlsfbAlternatives(Set<String> alternatives);
+	
 	MpgGeometry getGeometry();
 	
+	List<MpgLayer> getLayers();
 	void addMaterialSource(String name, String guid, String source);
 	List<MaterialSource> getListedMaterials();
 	List<String> getMaterialNamesBySource(String source);
@@ -31,14 +33,8 @@ public interface MpgObject {
 	
 	void addLayer(MpgLayer layer);
 	
-	String print();
 	boolean hasDuplicateMaterialNames();
 	
-	boolean hasUndefinedMaterials(boolean includeChildren);
-	boolean hasUndefinedVolume(boolean includeChildren);
-	boolean hasRedundantMaterials(boolean includeChildren);
-	boolean hasUndefinedLayers(boolean includeChildren);
-	void setNLsfbCode(String parentCode);
 	void addTag(MpgInfoTagType tagType, String message);
 
 

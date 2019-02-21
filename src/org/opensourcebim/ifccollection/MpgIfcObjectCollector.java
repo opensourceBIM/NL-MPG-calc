@@ -182,7 +182,7 @@ public class MpgIfcObjectCollector {
 				MpgObjectImpl mpgObject = new MpgObjectImpl(product.getOid(), 
 						product.getGlobalId(), 
 						product.getName(),
-						product.getClass().getSimpleName(), "", objectStore);
+						product.getClass().getSimpleName(), "");
 
 				this.getPropertySetsFromIfcProduct(product, mpgObject);
 				MpgGeometry geom = getGeometryFromProduct(product);

@@ -37,7 +37,7 @@ public class MpgObjectStoreTests {
 	public void testChangingAMaterialWillChangeAnyRelatedObjectMaterials() {
 		objectStore.addElement("dummyMaterial");
 		
-		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(2, 1.0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
 		mpgObject.addMaterialSource("dummyMaterial", "", "layer");
 		objectStore.addObject(mpgObject);
@@ -56,7 +56,7 @@ public class MpgObjectStoreTests {
 	public void testVolumePerMaterialWithNoVolumesReturnZero() {
 		objectStore.addElement("dummyMaterial");
 		
-		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(0, 1.0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
 		mpgObject.addLayer(new MpgLayerImpl(0, 1.0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
 		
@@ -71,7 +71,7 @@ public class MpgObjectStoreTests {
 		objectStore.addElement("dummyMaterial");
 		objectStore.addElement("ignoredMaterial");
 		
-		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(10, 1.0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
 		mpgObject.addLayer(new MpgLayerImpl(10, 1.0, "ignoredMaterial", Integer.toString("ignoredMaterial".hashCode())));
 		
@@ -96,7 +96,7 @@ public class MpgObjectStoreTests {
 	public void testWarningCheckReturnsFalseOnOrphanMaterials() {
 		objectStore.addElement("orphan material");
 		objectStore.addElement("a linked material");
-		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(10, 1.0, "a linked material", Integer.toString("a linked material".hashCode())));
 		objectStore.addObject(mpgObject);
 		
@@ -108,7 +108,7 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterial() {
-		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(10, 1.0, null, null));
 		objectStore.addObject(mpgObject);
 		
@@ -121,7 +121,7 @@ public class MpgObjectStoreTests {
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterialAndOrphanMaterial() {
 		objectStore.addElement("orphan material");
-		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(10, 1.0, null, null));
 		objectStore.addObject(mpgObject);
 		
@@ -133,7 +133,7 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithRedundantMaterials() {
-		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addMaterialSource("steel", Integer.toString("steel".hashCode()), null );
 		mpgObject.addMaterialSource("brick", Integer.toString("brick".hashCode()), null );
 		objectStore.addObject(mpgObject);
@@ -147,12 +147,12 @@ public class MpgObjectStoreTests {
 	@Test
 	public void testWarningCheckReturnsFalseOnPartiallyUndefinedMaterial() {
 		objectStore.addElement("steel");
-		MpgObject mpgObject1 = new MpgObjectImpl(1, "aaaa", "custom wall", "Wall", "", objectStore);
+		MpgObject mpgObject1 = new MpgObjectImpl(1, "aaaa", "custom wall", "Wall", "");
 		mpgObject1.addLayer(new MpgLayerImpl(10, 1.0, null, null));
 		mpgObject1.addLayer(new MpgLayerImpl(10, 1.0, "steel", Integer.toString("steel".hashCode())));
 		objectStore.addObject(mpgObject1);
 		
-		MpgObject mpgObject2 = new MpgObjectImpl(2, "bbbb", "custom wall", "Wall", "", objectStore);
+		MpgObject mpgObject2 = new MpgObjectImpl(2, "bbbb", "custom wall", "Wall", "");
 		mpgObject2.addLayer(new MpgLayerImpl(10, 1.0, "steel", Integer.toString("steel".hashCode())));
 		objectStore.addObject(mpgObject2);
 		
@@ -168,7 +168,7 @@ public class MpgObjectStoreTests {
 		objectStore.addElement("test material");
 		objectStore.addSpace(new MpgSpaceImpl("space_guid", 20, 60));
 
-		MpgObjectImpl obj = new MpgObjectImpl(1, "a", "custom wall", "Wall", "", objectStore);
+		MpgObjectImpl obj = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		MpgLayerImpl layer = new MpgLayerImpl(10, 1.0, "test material", Integer.toString("test material".hashCode()));
 		obj.addLayer(layer);
 		// mock volume as this will not be added in this way

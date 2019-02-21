@@ -2,10 +2,13 @@ package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Storage container to map mpgOject to the Nmdproducts
@@ -18,12 +21,16 @@ public class MpgElement {
 	private List<NmdProductCard> productCards;
 	private MpgObject mpgObject;
 
+	private MpgObjectStore store;
+	
 	private NmdMapping mappingMethod;
 	
-	public MpgElement(String name)
+	public MpgElement(String name, MpgObjectStore store)
 	{
 		ifcName = name;
 		this.productCards = new ArrayList<NmdProductCard>();
+		this.mappingMethod = NmdMapping.None;
+		this.store = store;
 	}
 	
 	public void setMpgObject(MpgObject mpgObject) {
@@ -32,6 +39,11 @@ public class MpgElement {
 	
 	public MpgObject getMpgObject() {
 		return this.mpgObject;
+	}
+	
+	@JsonIgnore
+	public MpgObjectStore getStore() {
+		return store;
 	}
 	
 	/**
@@ -48,6 +60,10 @@ public class MpgElement {
 	
 	public NmdMapping getMappingMethod() {
 		return mappingMethod;
+	}
+	
+	public boolean hasMapping() {
+		return this.mappingMethod != NmdMapping.None;
 	}
 	
 	public String print() {
@@ -71,7 +87,9 @@ public class MpgElement {
 	
 	public void removeProductCard() {
 		// unmap any child elements.
-		throw new NotImplementedException("still needs to be done");
+		this.productCards.clear();
+		
+
 	}
 
 	/**

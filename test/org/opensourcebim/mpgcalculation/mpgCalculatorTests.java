@@ -258,7 +258,7 @@ public class mpgCalculatorTests {
 	
 	private void addUnitIfcObjectForElement(String ifcMatName, double volume, double area) {
 		MpgObjectImpl mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), ifcMatName + " element", "Slab",
-				"", store);
+				"");
 		mpgObject.setGeometry(createDummyGeometry());
 
 		MpgLayer testObject = new MpgLayerImpl(volume, area, ifcMatName, Integer.toString(ifcMatName.hashCode()));

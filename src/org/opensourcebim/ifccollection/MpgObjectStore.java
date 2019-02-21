@@ -78,4 +78,12 @@ public interface MpgObjectStore {
 	GuidCollection getGuidsWithUndefinedLayerMats();
 	
 	void SummaryReport();
+
+	boolean hasUndefinedVolume(MpgObject obj, boolean includeChildren);
+
+	boolean hasRedundantMaterials(MpgObject obj, boolean includeChildren);
+
+	boolean hasUndefinedLayers(MpgObject obj, boolean includeChildren);
+
+	boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren);
 }
