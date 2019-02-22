@@ -14,7 +14,6 @@ import org.opensourcebim.ifccollection.MpgLayer;
 import org.opensourcebim.ifccollection.MpgLayerImpl;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
-import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdFaseProfielImpl;

@@ -2,8 +2,6 @@ package org.opensourcebim.mpgcalculation;
 
 import java.util.Set;
 
-import org.bimserver.utils.AreaUnit;
-import org.bimserver.utils.LengthUnit;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;

@@ -10,15 +10,14 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.bimserver.utils.AreaUnit;
-import org.bimserver.utils.LengthUnit;
+import org.apache.commons.lang3.StringUtils;
+import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
-import org.opensourcebim.mpgcalculation.MpgCostFactor;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
@@ -110,7 +109,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// first try to find any user defined mappings
 		NmdUserMap map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject());
 		if (map != null) {
-			// apply map and exit
+			// get products in map and exit if succeeded.
 		}
 
 		// STEP 1: find any relevant NLsfb codes
@@ -165,10 +164,22 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private List<NmdElement> selectCandidateElements(MpgElement mpgElement, List<NmdElement> candidates) {
 		// due to lack of test data now only apply a simple filter..
 		// ToDo: improve selection with most likely material match etc.
-		return candidates.stream(
+		List<MaterialSource> listedMaterials = mpgElement.getMpgObject().getListedMaterials();
+		
+		List<NmdElement> filteredCandidates = candidates.stream(
 				).filter(ce -> (ce.getIsMandatory() && ce.getProducts().size() > 0) 
-						|| ce.getProducts().stream().anyMatch(pc -> pc.getIsTotaalProduct()))
+						|| ce.getProducts().stream().anyMatch(pc -> pc.getIsTotaalProduct())
+						)
 				.collect(Collectors.toList());
+		
+		List<NmdElement> res = new ArrayList<NmdElement>();
+		listedMaterials.forEach(matName -> {
+			filteredCandidates.sort((el1, el2) ->  Integer.compare(
+					StringUtils.getLevenshteinDistance((CharSequence) matName, el1.getElementName()),
+					StringUtils.getLevenshteinDistance((CharSequence) matName, el2.getElementName())));
+			res.add(filteredCandidates.get(0));
+		});
+		return res;
 	}
 
 	/**
@@ -194,16 +205,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 					// check if the productcard does not constrain the element in its physical dimensions.
 					if (canProductBeUsedForElement(prod, orientation)) {
-						// if we found a matching totaal product we can stop our search and return the prod.
-						if (prod.getIsTotaalProduct()) {
-							return Arrays.asList(prod);
-						}
 						productOptions.add(card);
 					}
 				}
 			}
 			
-			// determine which product card should be returned based on a input filter function and add this one to the results list
+			// determine which product card should be returned based on an input filter function and add this one to the results list
 			// ToDo: currently this is a set Function, but this can be replaced with any user defined selection method.
 			Function<List<NmdProductCard>, NmdProductCard> selectCard = (list) -> { 
 				list.sort((pc1, pc2) -> pc1.getProfileSetsCoeficientSum().compareTo(pc2.getProfileSetsCoeficientSum()));

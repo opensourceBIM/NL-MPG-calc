@@ -2,9 +2,7 @@ package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
 

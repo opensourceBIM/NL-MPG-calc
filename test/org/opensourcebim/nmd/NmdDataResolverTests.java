@@ -1,6 +1,7 @@
 package org.opensourcebim.nmd;
 
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +13,6 @@ import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
-import org.opensourcebim.ifccollection.MpgSpaceImpl;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class NmdDataResolverTests {
 
