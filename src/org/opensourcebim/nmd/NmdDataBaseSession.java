@@ -484,7 +484,6 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		prod.setParentProductId(TryParseJsonNode(prodNode.get("OuderProductID"), -1));
 
 		prod.setIsTotaalProduct(TryParseJsonNode(prodNode.get("IsElementDekkend"), false));
-		prod.setIsMandatory(TryParseJsonNode(prodNode.get("ElementIsVerplicht"), false));
 		prod.setDescription(TryParseJsonNode(prodNode.get("ProductNaam"), ""));
 		prod.setCategory(TryParseJsonNode(prodNode.get("CategorieID"), 3));
 		prod.setIsScalable(TryParseJsonNode(prodNode.get("IsSchaalbaar"), false));

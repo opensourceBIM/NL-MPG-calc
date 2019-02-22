@@ -25,6 +25,7 @@ public class MpgElement {
 	private MpgObjectStore store;
 
 	private NmdMapping mappingMethod;
+	private boolean coveredFlag;
 
 	public MpgElement(String name, MpgObjectStore store) {
 		ifcName = name;
@@ -111,7 +112,10 @@ public class MpgElement {
 	}
 
 	public boolean getIsFullyCovered() {
-		// ToDO: check with NMD interface whether all mandatory elements are present
-		return false;
+		return coveredFlag;
+	}
+
+	public void setIsFullyCovered(boolean flag) {
+		this.coveredFlag = flag;
 	}
 }

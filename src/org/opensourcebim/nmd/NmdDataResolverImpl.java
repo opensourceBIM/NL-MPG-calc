@@ -115,7 +115,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return;
 		}
 
-		// find any relevant NLsfb codes
+		// STEP 1: find any relevant NLsfb codes
 		Set<String> alternatives = mpgElement.getMpgObject().getNLsfbAlternatives();
 		if (alternatives.size() == 0 || alternatives.stream().allMatch(c -> c == null)) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
@@ -123,9 +123,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return;
 		}
 
-		// find all the product cards that match with any of the mapped NLsfb codes.
+		// STEP 2: find all the elements that we **could** include based on NLsfb match..
 		NmdDataService service = services.get(0);
-
 		List<NmdElement> allMatchedElements = service.getElementsForNLsfbCodes(alternatives);
 
 		if (allMatchedElements.size() == 0) {
@@ -134,18 +133,22 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return;
 		}
 
-		// select the elements we want to include
+		// STEP3: select the elements we want to include
 		List<NmdElement> candidateElements = selectCandidateElements(mpgElement, allMatchedElements);
 		if (candidateElements.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"None of the candidate NmdElements matching the selection criteria.");
 		}
 
-		// determine which candidate productCards should be added to the element
+		// STEP4: from every candidate element we should pick 0:1 productcards and add the results to mapping object
 		List<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements, service);
 		if (selectedProducts.size() > 0) {
 			selectedProducts.forEach(c -> mpgElement.addProductCard(c));
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
+			if (selectedProducts.size() == candidateElements.size() || selectedProducts.stream().anyMatch(pc -> pc.getIsTotaalProduct())) {
+				mpgElement.setIsFullyCovered(true);
+			}
+			
 		} else {
 			mpgElement.setMappingMethod(NmdMapping.None);
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
