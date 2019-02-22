@@ -299,18 +299,34 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 		return products;
 	}
 	
+	/**
+	 * Quick lookup for preloaded product cards
+	 */
 	@Override
 	public List<NmdProductCard> getProductsForNLsfbCodes(Set<String> codes) {
 		if (getData().size() == 0) {
 			preLoadData();
 		}
 				
-		List<NmdProductCard> res = getData().stream()
-				.filter(el -> codes.stream()
-						.anyMatch(code -> code == null ? false : code.equals(el.getNLsfbCode())))
+		List<NmdProductCard> res = getElementsForNLsfbCodes(codes).stream()
 				.flatMap(el -> el.getProducts().stream()).collect(Collectors.toList());
 		
 		return res;
+	}
+	
+	/**
+	 * Quick lookup for preloaded elements
+	 */
+	@Override
+	public List<NmdElement> getElementsForNLsfbCodes(Set<String> codes) {
+		if (getData().size() == 0) {
+			preLoadData();
+		}
+				
+		return getData().stream()
+				.filter(el -> codes.stream()
+						.anyMatch(code -> code == null ? false : code.equals(el.getNLsfbCode())))
+				.collect(Collectors.toList());
 	}
 
 	@Override

@@ -74,6 +74,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			}
 
 			// get data per material
+			// ToDo: group the elements that are equal for sake of the mapping process (geometry, type, ..) to avoid a lot of duplication
 			for (MpgElement element : getStore().getElements()) {
 				// element could already have a mapping through a decomposes relation
 				// in that case skip to the next one.
@@ -103,6 +104,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 	}
 
+	public void clearServices() {
+		this.services.clear();
+	}
+
 	private void resolveNmdMappingForElement(MpgElement mpgElement) {
 
 		// resolve which product card to retrieve based on the input MpgElement
@@ -120,64 +125,95 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// find all the product cards that match with any of the mapped NLsfb codes.
 		NmdDataService service = services.get(0);
-		List<NmdProductCard> candidates = service
-				.getProductsForNLsfbCodes(alternatives);
 
-		if (candidates.size() == 0) {
+		List<NmdElement> allMatchedElements = service.getElementsForNLsfbCodes(alternatives);
+
+		if (allMatchedElements.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
-					"No NMD product card matching any of the NLsfb codes");
+					"No NMD element match for any of the listed NLsfb codes");
 			return;
 		}
 
+		// select the elements we want to include
+		List<NmdElement> candidateElements = selectCandidateElements(mpgElement, allMatchedElements);
+		if (candidateElements.size() == 0) {
+			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
+					"None of the candidate NmdElements matching the selection criteria.");
+		}
+
 		// determine which candidate productCards should be added to the element
-		mapNmdProductToMpgElement(mpgElement, candidates, service);
+		List<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements, service);
+		if (selectedProducts.size() > 0) {
+			selectedProducts.forEach(c -> mpgElement.addProductCard(c));
+			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
+		} else {
+			mpgElement.setMappingMethod(NmdMapping.None);
+			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
+					"No NMD productCard matching the selection criteria.");
+		}
 	}
 
 	/**
-	 * Find out wich candiate product should be mapped the the mpgElement.
+	 * Determine which elements should be included based on restrictions and ifc
+	 * object properties
+	 * 
+	 * @param mpgElement object containing non mapped ifc product properties
+	 * @param candidates possible nmd elements to choose from
+	 * @return a list of elements of which at least one product should be selected
+	 *         for the mapping
+	 */
+	private List<NmdElement> selectCandidateElements(MpgElement mpgElement, List<NmdElement> candidates) {
+		// due to lack of test data now only apply a simple filter..
+		// ToDo: improve selection with most likely material match etc.
+		return candidates.stream(
+				).filter(ce -> (ce.getIsMandatory() && ce.getProducts().size() > 0) 
+						|| ce.getProducts().stream().anyMatch(pc -> pc.getIsTotaalProduct()))
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Find out wich candiate product should be mapped to the mpgElement.
 	 * 
 	 * @param mpgElement mpgElement to add product cards to
 	 * @param candidates possible nmProductCard matches for the mpgElement
 	 */
-	private void mapNmdProductToMpgElement(MpgElement mpgElement, List<NmdProductCard> candidates,
+	private List<NmdProductCard> selectProductsForElements(MpgElement mpgElement, List<NmdElement> candidates,
 			NmdDataService service) {
-		// find the most suitable candidate out of the earlier made selection
 		NmdProductCard prod = null;
 		List<NmdProductCard> viableCandidates = new ArrayList<NmdProductCard>();
-		for (NmdProductCard card : candidates) {
-			// create a copy
-			prod = new NmdProductCardImpl(card);
-			int dims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
-			if (service.getAdditionalProfileDataForCard(prod)) {
-				// determine scaling dimension 
-				MpgScalingOrientation orientation = mpgElement.getMpgObject().getGeometry().getScalerOrientation(dims);
+		for (NmdElement el : candidates) {
 
-				// check if the item falss within possible scaling range dimensions
-				if(canProductBeUsedForElement(prod, orientation)) {
-					// if there is a viable totaal product remove all other products and end the search
-					if(prod.getIsTotaalProduct()) {
-						mpgElement.addProductCard(prod);
-						mpgElement.setMappingMethod(NmdMapping.DirectTotaalProduct);
-						return;
+			for (NmdProductCard card : el.getProducts()) {
+				// per found element we should try to select a fitting productCard
+				prod = new NmdProductCardImpl(card);
+				int dims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
+				if (service.getAdditionalProfileDataForCard(prod)) {
+					// determine scaling dimension
+					MpgScalingOrientation orientation = mpgElement.getMpgObject().getGeometry()
+							.getScalerOrientation(dims);
+
+					// check if the productcard does not constrain the element in its physical dimensions.
+					if (canProductBeUsedForElement(prod, orientation)) {
+						// if we found a matching totaal product we can stop our search and return the prod.
+						if (prod.getIsTotaalProduct()) {
+							viableCandidates.clear();
+							return Arrays.asList(prod);
+						}
+						viableCandidates.add(card);
 					}
-					if (prod.getIsMandatory()) {
-						viableCandidates.add(prod);
-					}
-				} 
+				}
 			}
+			// ToDo: add selection of worst/best candidate (sum coefficientSum of profilesets?
 		}
 		
-		if (viableCandidates.size() > 0) {
-			viableCandidates.forEach(c -> mpgElement.addProductCard(c));
-			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
-		} else {
-			mpgElement.setMappingMethod(NmdMapping.None);
-		}
+		return viableCandidates;
 	}
 
 	/**
-	 * Check if the product card can be mapped on the element based on scaling restrictions
-	 * @param prod the canidate NmdProductCard 
+	 * Check if the product card can be mapped on the element based on scaling
+	 * restrictions
+	 * 
+	 * @param prod       the canidate NmdProductCard
 	 * @param mpgElement mpgElement that we want to add the productCard to
 	 * @return a boolean to indicate whether the ProductCard is a viable option
 	 */
@@ -186,7 +222,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		int numDims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
 		for (NmdProfileSet profielSet : prod.getProfileSets()) {
 
-			// if there is no scaler defined, but the item is marked as scalable return true by default.
+			// if there is no scaler defined, but the item is marked as scalable return true
+			// by default.
 			if (profielSet.getIsScalable() && profielSet.getScaler() != null) {
 				NmdScaler scaler = profielSet.getScaler();
 
@@ -194,8 +231,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				if (numDims < 3) {
 
 					Double[] dims = orientation.getScaleDims();
-					Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit,
-							dims.length, this.getStore());
+					Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit, dims.length,
+							this.getStore());
 					if (!scaler.areDimsWithinBounds(dims, convFactor)) {
 						res = false;
 					}
@@ -204,7 +241,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				return false;
 			}
 		}
-		
+
 		return res;
 	}
 
@@ -294,7 +331,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			}
 		});
 	}
-	
+
 	/**
 	 * Get the scalers matching a referenceProperty value by looking for scalers in
 	 * all objects with an equal property value
@@ -321,10 +358,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 	private HashMap<String, String[]> getProductTypeToNmdElementMap() {
 		HashMap<String, String[]> elementMap = new HashMap<String, String[]>();
-		elementMap.put("BuildingElementProxy", new String[] { "11." , "32.35", "32.36", "32.37", "32.38", "32.39"});
+		elementMap.put("BuildingElementProxy", new String[] { "11.", "32.35", "32.36", "32.37", "32.38", "32.39" });
 		elementMap.put("Footing", new String[] { "16." });
-		elementMap.put("Slab", new String[] { "13." , "23.", "28.2", "28.3", "33.21"});
-		elementMap.put("Pile", new String[] { "17."});
+		elementMap.put("Slab", new String[] { "13.", "23.", "28.2", "28.3", "33.21" });
+		elementMap.put("Pile", new String[] { "17." });
 		elementMap.put("Column", new String[] { "17.", "28.1" });
 		elementMap.put("Wall", new String[] { "21.", "22." });
 		elementMap.put("CurtainWall", new String[] { "21.24", "32.4" });
@@ -333,11 +370,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		elementMap.put("Beam", new String[] { "28." });
 		elementMap.put("Window", new String[] { "31.2", "32.12", "32.2", "37.2" });
 		elementMap.put("Door", new String[] { "31.3", "32.11", "32.3" });
-		elementMap.put("Railing", new String[] { "34."});
-		elementMap.put("Covering", new String[] { "41.","42.","43.", "44.", "45.", "47.", "48."});
-		elementMap.put("FlowSegment", new String[] { "52.", "53.", "55.", "56.", "57."}); // many more
-		elementMap.put("FlowTerminal", new String[] { "74.1", "74.2"}); // many more
-		
+		elementMap.put("Railing", new String[] { "34." });
+		elementMap.put("Covering", new String[] { "41.", "42.", "43.", "44.", "45.", "47.", "48." });
+		elementMap.put("FlowSegment", new String[] { "52.", "53.", "55.", "56.", "57." }); // many more
+		elementMap.put("FlowTerminal", new String[] { "74.1", "74.2" }); // many more
+
 		return elementMap;
 	}
 
