@@ -74,16 +74,15 @@ public class MpgCalculator {
 						if (element.requiresScaling() && profielSet.getIsScalable() && profielSet.getScaler() != null) {
 
 							NmdScaler scaler = profielSet.getScaler();
-							String unit = scaler.getUnit();
 							int numDims = NmdScalingUnitConverter.getUnitDimension(product.getUnit());
 							if (numDims < 3) {
 
 								MpgScalingOrientation or = element.getMpgObject().getGeometry().getScalerOrientation(numDims);
 								Double[] dims = or.getScaleDims();
 								Double unitConversionFactor = NmdScalingUnitConverter
-										.getScalingUnitConversionFactor(unit, dims.length, this.getObjectStore());
+										.getScalingUnitConversionFactor(scaler.getUnit(), this.getObjectStore());
 
-								scaleFactor = profielSet.getScaler().scaleWithConversion(dims, unitConversionFactor);
+								scaleFactor = scaler.scaleWithConversion(dims, unitConversionFactor);
 							}
 						}
 

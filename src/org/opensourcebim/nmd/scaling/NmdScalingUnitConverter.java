@@ -6,14 +6,16 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
 
 /**
  * Static functions to support dimension chekcs and unit conversion
+ * 
  * @author vijj
  *
  */
 public final class NmdScalingUnitConverter {
 
-	private NmdScalingUnitConverter() {	}
-	
-	public static int getUnitDimension(String unit) {	
+	private NmdScalingUnitConverter() {
+	}
+
+	public static int getUnitDimension(String unit) {
 		switch (unit.toLowerCase()) {
 		case "mm":
 		case "cm":
@@ -43,7 +45,7 @@ public final class NmdScalingUnitConverter {
 			return -1;
 		}
 	}
-	
+
 	/**
 	 * Converts the This might be slightly counter intuititve, but when scaling over
 	 * a single dimension we need a 2D conversionfactor while when we are scaling
@@ -51,39 +53,26 @@ public final class NmdScalingUnitConverter {
 	 * is 1 D first figure out the quantity of the input unit and get the right
 	 * store unit
 	 * 
-	 * @param unit working unit of the nmd scaler
-	 * @param dims dimensionality of the object scaling dimensions (1 or 2)
-	 * @return conversion factor to convert from scaling unit mpgObject geometry
+	 * @param unit - working unit of the nmd scaler
+	 * @return conversion factor to convert from mpgObject dimensions to NMD scaler dimensions
 	 *         unit.
 	 */
-	public static Double getScalingUnitConversionFactor(String unit, int dims, MpgObjectStore store) {
+	public static Double getScalingUnitConversionFactor(String unit, MpgObjectStore store) {	
 		Double factor = 1.0;
-		if (dims == 2) {
-			switch (unit.toLowerCase()) {
-			case "mm":
-			case "millimiter":
-				factor = store.getLengthUnit().convert(1.0, LengthUnit.MILLI_METER);
-				break;
-			case "m":
-			case "meter":
-				factor = store.getLengthUnit().convert(1.0, LengthUnit.METER);
-			default:
-				break;
-			}
-		} else if (dims == 1) {
-			switch (unit.toLowerCase()) {
-			case "mm":
-			case "millimiter":
-				factor = store.getAreaUnit().convert(1.0, AreaUnit.SQUARED_MILLI_METER);
-				break;
-			case "m":
-			case "meter":
-				factor = store.getAreaUnit().convert(1.0, AreaUnit.SQUARED_METER);
-			default:
-				break;
-			}
+
+		switch (unit.toLowerCase()) {
+		case "mm":
+		case "millimeter":
+			factor = LengthUnit.MILLI_METER.convert(1.0, store.getLengthUnit());
+			break;
+		case "m":
+		case "meter":
+			factor = LengthUnit.METER.convert(1.0, store.getLengthUnit());
+		default:
+			break;
 		}
+
 		return factor;
 	}
-	
+
 }

@@ -230,7 +230,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return a boolean to indicate whether the ProductCard is a viable option
 	 */
 	private boolean canProductBeUsedForElement(NmdProductCard prod, MpgScalingOrientation orientation) {
-		boolean res = true;
 		int numDims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
 		for (NmdProfileSet profielSet : prod.getProfileSets()) {
 
@@ -243,18 +242,17 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				if (numDims < 3) {
 
 					Double[] dims = orientation.getScaleDims();
-					Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit, dims.length,
-							this.getStore());
-					if (!scaler.areDimsWithinBounds(dims, convFactor)) {
-						res = false;
-					}
+					if (scaler.getNumberOfDimensions() > dims.length) {return false;}
+					
+					Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit,this.getStore());
+					if (!scaler.areDimsWithinBounds(dims, convFactor)) {return false;}
 				}
 			} else if (!profielSet.getIsScalable()) {
 				return false;
 			}
 		}
 
-		return res;
+		return true;
 	}
 
 	/**
