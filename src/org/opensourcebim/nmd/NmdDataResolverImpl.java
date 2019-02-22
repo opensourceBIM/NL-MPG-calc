@@ -32,11 +32,13 @@ import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 public class NmdDataResolverImpl implements NmdDataResolver {
 
 	private NmdDataService service;
+	private NmdMappingService mappingService;
 	private MpgObjectStore store;
 
 	public NmdDataResolverImpl() {
 		NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
 		setService(new NmdDataBaseSession(config));
+		setMappingService(new NmdUserMappingService());
 	}
 
 	public MpgObjectStore getStore() {
@@ -105,6 +107,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		if (mpgElement.getMpgObject() == null) {
 			return;
 		}
+		// first try to find any user defined mappings
+		NmdUserMap map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject());
+		if (map != null) {
+			// apply map and exit
+		}
 
 		// STEP 1: find any relevant NLsfb codes
 		Set<String> alternatives = mpgElement.getMpgObject().getNLsfbAlternatives();
@@ -172,7 +179,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 */
 	private List<NmdProductCard> selectProductsForElements(MpgElement mpgElement, List<NmdElement> candidates) {
 		NmdProductCard prod = null;
-		List<NmdProductCard> results = new ArrayList<NmdProductCard>();
+		List<NmdProductCard> viableCandidates = new ArrayList<NmdProductCard>();
 		for (NmdElement el : candidates) {
 
 			List<NmdProductCard> productOptions = new ArrayList<NmdProductCard>();
@@ -202,9 +209,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				list.sort((pc1, pc2) -> pc1.getProfileSetsCoeficientSum().compareTo(pc2.getProfileSetsCoeficientSum()));
 				return list.get(0);
 			};
-			results.add(selectCard.apply(productOptions));
+			viableCandidates.add(selectCard.apply(productOptions));
 		}		
-		return results;
+		return viableCandidates;
 	}
 
 	/**
@@ -374,6 +381,14 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		elementMap.put("FlowTerminal", new String[] { "74.1", "74.2" }); // many more
 
 		return elementMap;
+	}
+
+	public NmdMappingService getMappingService() {
+		return mappingService;
+	}
+
+	public void setMappingService(NmdMappingService mappingService) {
+		this.mappingService = mappingService;
 	}
 
 }
