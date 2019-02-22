@@ -1,8 +1,11 @@
 package org.opensourcebim.nmd;
 
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import org.opensourcebim.nmd.scaling.NmdScaler;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class NmdProfileSetImpl implements NmdProfileSet {
 	private String name;
@@ -101,5 +104,12 @@ public class NmdProfileSetImpl implements NmdProfileSet {
 	@Override
 	public NmdScaler getScaler() {
 		return this.scaler;
+	}
+
+	@JsonIgnore
+	@Override
+	public Double getCoefficientSum() {
+		return this.getAllFaseProfielen().values().stream()
+			.collect(Collectors.summingDouble(fp -> fp.getCoefficientSum()));
 	}
 }

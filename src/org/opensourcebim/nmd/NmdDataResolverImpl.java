@@ -31,13 +31,12 @@ import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
  */
 public class NmdDataResolverImpl implements NmdDataResolver {
 
-	private List<NmdDataService> services;
+	private NmdDataService service;
 	private MpgObjectStore store;
 
 	public NmdDataResolverImpl() {
-		services = new ArrayList<NmdDataService>();
 		NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
-		this.addService(new NmdDataBaseSession(config));
+		setService(new NmdDataBaseSession(config));
 	}
 
 	public MpgObjectStore getStore() {
@@ -67,11 +66,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		this.resolveUnknownGeometries();
 
 		try {
-			// start any subscribed services
-			for (NmdDataService nmdDataService : services) {
-				nmdDataService.login();
-				nmdDataService.preLoadData();
-			}
+			// start subscribed services
+			getService().login();
+			getService().preLoadData();
 
 			// get data per material
 			// ToDo: group the elements that are equal for sake of the mapping process (geometry, type, ..) to avoid a lot of duplication
@@ -88,24 +85,18 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 
 		finally {
-			for (NmdDataService nmdDataService : services) {
-				nmdDataService.logout();
-			}
+			getService().logout();
 		}
 	}
 
 	@Override
-	public void addService(NmdDataService nmdDataService) {
+	public void setService(NmdDataService nmdDataService) {
 		// check if same service is not already present?
-		services.add(nmdDataService);
-
-		if (nmdDataService instanceof EditableDataService) {
-			// mark it as the editor of choice. only 1 editor should be available.
-		}
+		this.service = nmdDataService;
 	}
 
-	public void clearServices() {
-		this.services.clear();
+	public NmdDataService getService() {
+		return this.service;
 	}
 
 	private void resolveNmdMappingForElement(MpgElement mpgElement) {
@@ -124,8 +115,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 
 		// STEP 2: find all the elements that we **could** include based on NLsfb match..
-		NmdDataService service = services.get(0);
-		List<NmdElement> allMatchedElements = service.getElementsForNLsfbCodes(alternatives);
+		List<NmdElement> allMatchedElements = getService().getElementsForNLsfbCodes(alternatives);
 
 		if (allMatchedElements.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
@@ -141,7 +131,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 
 		// STEP4: from every candidate element we should pick 0:1 productcards and add the results to mapping object
-		List<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements, service);
+		List<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
 		if (selectedProducts.size() > 0) {
 			selectedProducts.forEach(c -> mpgElement.addProductCard(c));
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
@@ -180,17 +170,17 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param mpgElement mpgElement to add product cards to
 	 * @param candidates possible nmProductCard matches for the mpgElement
 	 */
-	private List<NmdProductCard> selectProductsForElements(MpgElement mpgElement, List<NmdElement> candidates,
-			NmdDataService service) {
+	private List<NmdProductCard> selectProductsForElements(MpgElement mpgElement, List<NmdElement> candidates) {
 		NmdProductCard prod = null;
-		List<NmdProductCard> viableCandidates = new ArrayList<NmdProductCard>();
+		List<NmdProductCard> results = new ArrayList<NmdProductCard>();
 		for (NmdElement el : candidates) {
 
+			List<NmdProductCard> productOptions = new ArrayList<NmdProductCard>();
 			for (NmdProductCard card : el.getProducts()) {
 				// per found element we should try to select a fitting productCard
 				prod = new NmdProductCardImpl(card);
 				int dims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
-				if (service.getAdditionalProfileDataForCard(prod)) {
+				if (getService().getAdditionalProfileDataForCard(prod)) {
 					// determine scaling dimension
 					MpgScalingOrientation orientation = mpgElement.getMpgObject().getGeometry()
 							.getScalerOrientation(dims);
@@ -199,17 +189,22 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					if (canProductBeUsedForElement(prod, orientation)) {
 						// if we found a matching totaal product we can stop our search and return the prod.
 						if (prod.getIsTotaalProduct()) {
-							viableCandidates.clear();
 							return Arrays.asList(prod);
 						}
-						viableCandidates.add(card);
+						productOptions.add(card);
 					}
 				}
 			}
-			// ToDo: add selection of worst/best candidate (sum coefficientSum of profilesets?
-		}
-		
-		return viableCandidates;
+			
+			// determine which product card should be returned based on a input filter function and add this one to the results list
+			// ToDo: currently this is a set Function, but this can be replaced with any user defined selection method.
+			Function<List<NmdProductCard>, NmdProductCard> selectCard = (list) -> { 
+				list.sort((pc1, pc2) -> pc1.getProfileSetsCoeficientSum().compareTo(pc2.getProfileSetsCoeficientSum()));
+				return list.get(0);
+			};
+			results.add(selectCard.apply(productOptions));
+		}		
+		return results;
 	}
 
 	/**

@@ -3,6 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgObject;
@@ -165,5 +166,11 @@ public class NmdProductCardImpl implements NmdProductCard {
 		
 		return Double.NaN;
 		
+	}
+
+	@Override
+	public Double getProfileSetsCoeficientSum() {
+		return this.getProfileSets().stream()
+		.collect(Collectors.summingDouble(ps -> ps.getCoefficientSum()));
 	}
 }

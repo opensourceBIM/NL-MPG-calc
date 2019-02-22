@@ -31,4 +31,6 @@ public interface NmdProfileSet {
 	Boolean getIsScalable();
 
 	NmdScaler getScaler();
+	
+	Double getCoefficientSum();
 }
