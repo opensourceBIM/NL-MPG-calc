@@ -51,11 +51,8 @@ public class MpgCalculator {
 
 				for (NmdProductCard product : element.getNmdProductCards()) {
 
-					// Determine replacements required.
+					// Determine replacements required based on lifetime of productcard
 					// this is usually 1 for regular materials and > 1 for cyclic maintenance
-					// For a product card with composed profielsets (not a single totaalproduct) the
-					// replacement of the
-					// first encountered Construction (Cuas code 1) profielset will be used.
 					double replacements = this.calculateReplacements(designLife, product);
 
 					// category 3 data requires a 30% penalty
@@ -63,39 +60,43 @@ public class MpgCalculator {
 
 					// get number of product units based on geometry of ifcproduct and unit of
 					// productcard
-					// TODO: currently there is a very basic method implemented. should be improved.
-					// This should include density conversions and/or energy water use conversion
+					// TODO: handle density conversions and/or energy water use conversion
 					double unitsRequired = product.getRequiredNumberOfUnits(element.getMpgObject());
 
 					for (NmdProfileSet profielSet : product.getProfileSets()) {
-						double scaleFactor = 1.0;
-						// determine scale factor based on scaler. if no scaler is present the
-						// unitsRequired is sufficient (and no scaling is applied)
-						if (element.requiresScaling() && profielSet.getIsScalable() && profielSet.getScaler() != null) {
+						if (profielSet.getQuantity() > 0.0) {
+							double scaleFactor = 1.0;
+							// determine scale factor based on scaler. if no scaler is present the
+							// unitsRequired is sufficient (and no scaling is applied)
+							if (element.requiresScaling() && profielSet.getIsScalable()
+									&& profielSet.getScaler() != null) {
 
-							NmdScaler scaler = profielSet.getScaler();
-							int numDims = NmdScalingUnitConverter.getUnitDimension(product.getUnit());
-							if (numDims < 3) {
+								NmdScaler scaler = profielSet.getScaler();
+								int numDims = NmdScalingUnitConverter.getUnitDimension(product.getUnit());
+								if (numDims < 3) {
 
-								MpgScalingOrientation or = element.getMpgObject().getGeometry().getScalerOrientation(numDims);
-								Double[] dims = or.getScaleDims();
-								Double unitConversionFactor = NmdScalingUnitConverter
-										.getScalingUnitConversionFactor(scaler.getUnit(), this.getObjectStore());
+									MpgScalingOrientation or = element.getMpgObject().getGeometry()
+											.getScalerOrientation(numDims);
+									Double[] dims = or.getScaleDims();
+									Double unitConversionFactor = NmdScalingUnitConverter
+											.getScalingUnitConversionFactor(scaler.getUnit(), this.getObjectStore());
 
-								scaleFactor = scaler.scaleWithConversion(dims, unitConversionFactor);
+									scaleFactor = scaler.scaleWithConversion(dims, unitConversionFactor);
+								}
 							}
+
+							// calculate total units required taking into account category modifiers.
+							// replacements, # of profielSet items per productCard and scaling
+							double lifeTimeUnitsPerProfiel = replacements * profielSet.getQuantity() * unitsRequired
+									* categoryMultiplier * scaleFactor;
+
+							// example for production
+							profielSet.getAllFaseProfielen().values().forEach(fp -> {
+								Set<MpgCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfiel);
+								results.incrementCostFactors(factors, product.getDescription(), profielSet.getName());
+							});
 						}
 
-						// calculate total units required taking into account category modifiers.
-						// replacements, # of profielSet items per productCard and scaling
-						double lifeTimeUnitsPerProfiel = replacements * profielSet.getQuantity() * unitsRequired
-								* categoryMultiplier * scaleFactor;
-
-						// example for production
-						profielSet.getAllFaseProfielen().values().forEach(fp -> {
-							Set<MpgCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfiel);
-							results.incrementCostFactors(factors, product.getDescription(), profielSet.getName());
-						});
 					}
 				}
 			}
@@ -123,7 +124,7 @@ public class MpgCalculator {
 	 * https://www.milieudatabase.nl/imgcms/20141125_SBK_BepMeth_vs_2_0_inclusief_Wijzigingsblad_1_juni_2017_&_1_augustus_2017.pdf
 	 * 
 	 * @param designLife total duration that building should be usable in years
-	 * @param card     productcard with product lifetime
+	 * @param card       productcard with product lifetime
 	 * @return number of replacements. number is alsways larger or equal to 1
 	 */
 	private Double calculateReplacements(double designLife, NmdProductCard card) {
