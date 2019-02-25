@@ -216,7 +216,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				list.sort((pc1, pc2) -> pc1.getProfileSetsCoeficientSum().compareTo(pc2.getProfileSetsCoeficientSum()));
 				return list.get(0);
 			};
-			viableCandidates.add(selectCard.apply(productOptions));
+			if (productOptions.size() > 0) {
+				viableCandidates.add(selectCard.apply(productOptions));
+			}
 		}		
 		return viableCandidates;
 	}
