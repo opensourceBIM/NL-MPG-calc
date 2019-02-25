@@ -136,7 +136,7 @@ public class NmdInterfaceTests {
 		Entry<Integer, NmdProfileSet> set = profileSets.entrySet().iterator().next();
 		assertTrue(set.getValue().getIsScalable());
 		NmdScaler scaler = set.getValue().getScaler();
-		Double factor = scaler.scale(400);
+		Double factor = scaler.scaleWithConversion(new Double[] {400.0}, 1.0);
 
 		assertTrue(0.0 < factor);
 	}

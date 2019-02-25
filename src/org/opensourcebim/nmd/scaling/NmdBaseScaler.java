@@ -1,6 +1,8 @@
-package org.opensourcebim.nmd;
+package org.opensourcebim.nmd.scaling;
 
-import org.opensourcebim.nmd.scaling.NmdScaler;
+import java.util.Arrays;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 public abstract class NmdBaseScaler implements NmdScaler {
 
@@ -27,30 +29,43 @@ public abstract class NmdBaseScaler implements NmdScaler {
 		this.currentValues = currentValues;
 	}
 
-	@Override
-	public Double scale(double dim1Val, double dim2Val) {
+	private Double scale(double dim1Val, double dim2Val) {
 		if (areDimsWithinBounds(dim1Val,  dim2Val)) {
-			return this.getNumberOfDimensions() == 1 ? scale(dim1Val)
+			return this.getNumberOfDimensions() == 1 ? scale(dim1Val) * scale(dim2Val)
 					: scale(dim1Val) * getScaleFactor(dim2Val, currentValues[1]);
 		} else {
 			return Double.NaN;
 		}
 	}
-	
-	@Override
-	public Double scale(double dim1Val) {
+
+	private Double scale(double dim1Val) {
 		return getScaleFactor(dim1Val, currentValues[0]);
 	}
 	
 	@Override
 	public Double scaleWithConversion(Double[] dims, double conversionFactor) {
-		if (dims.length == 1) {
-			return this.scale(dims[0] * conversionFactor);
-		} else if (dims.length == 2) {
-			return this.scale(dims[0] * conversionFactor, dims[1] * conversionFactor);
+		// determine how to match input dimension on scaler dimensions
+		Double[] sortedDims =this.matchInputDimensionsOnCurrentDimensions(dims);
+		
+		if (sortedDims.length == 1) {
+			return this.scale(sortedDims[0] * conversionFactor);
+		} else if (sortedDims.length == 2) {
+			return this.scale(sortedDims[0] * conversionFactor, sortedDims[1] * conversionFactor);
 		} else {
 			return Double.NaN;
 		}
+	}
+
+	private Double[] matchInputDimensionsOnCurrentDimensions(Double[] dims) {
+		// check if we need to order at all
+		if (this.currentValues.length > 1 && dims.length > 1) {
+			Arrays.sort(dims);
+			// array is sorted ascending. check if we need to reverse that
+			if (currentValues[1] <= currentValues[0]) {
+				ArrayUtils.reverse(dims);
+			}
+		}
+		return dims;
 	}
 
 	/**
@@ -62,8 +77,7 @@ public abstract class NmdBaseScaler implements NmdScaler {
 	 * @return Boolean that inidicates that the desired dims are within the scaling
 	 *         bounds
 	 */
-	@Override
-	public Boolean areDimsWithinBounds(Double x, Double y) {
+	private Boolean areDimsWithinBounds(Double x, Double y) {
 		// check whether to check the bounds for 1 or 2 dimensions
 		if (getNumberOfDimensions() == 1) {
 			return isWithinBounds(x, bounds[0], bounds[1]) && isWithinBounds(y, bounds[0], bounds[1]);
@@ -119,6 +133,10 @@ public abstract class NmdBaseScaler implements NmdScaler {
 	protected double getScaleFactor(double x_desired, Double x_current) {
 		return calculate(x_desired) / calculate(x_current);
 	}
+	
+	public String getUnit() {
+		return this.unit;
+	}
 
 	/**
 	 * abstract method to override by derived classes. will define the type of scaler
@@ -127,8 +145,4 @@ public abstract class NmdBaseScaler implements NmdScaler {
 	 * @return y value from implemented method.
 	 */
 	protected abstract Double calculate(Double x);
-	
-	public String getUnit() {
-		return this.unit;
-	}
 }
