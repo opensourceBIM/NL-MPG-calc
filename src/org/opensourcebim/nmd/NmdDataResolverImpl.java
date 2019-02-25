@@ -36,7 +36,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 	public NmdDataResolverImpl() {
 		NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
-		setService(new NmdDataBaseSession(config));
+		setService(new Nmd3DataService(config));
 		setMappingService(new NmdUserMappingService());
 	}
 

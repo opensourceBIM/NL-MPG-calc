@@ -17,7 +17,7 @@ import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 public class NmdDataResolverTests {
 
 	private ObjectStoreBuilder builder;
-	private NmdDataBaseSession db;
+	private Nmd3DataService db;
 	private NmdDataResolverImpl resolver;
 	private List<NmdElement> testElements;
 
@@ -50,12 +50,12 @@ public class NmdDataResolverTests {
 		this.resolver.NmdToMpg();
 	}
 
-	private NmdDataBaseSession getMockNmdDb() {
+	private Nmd3DataService getMockNmdDb() {
 
 		this.testElements = new ArrayList<NmdElement> ();
 		this.testElements.add(builder.createDummyElement());
 		
-		NmdDataBaseSession db = mock(NmdDataBaseSession.class);
+		Nmd3DataService db = mock(Nmd3DataService.class);
 		when(db.getIsConnected()).thenReturn(true);
 		when(db.getData()).thenReturn(this.testElements);
 		return db;

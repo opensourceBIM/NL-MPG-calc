@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  * @author vijj
  *
  */
-public class NmdDataBaseSession extends AuthorizedDatabaseSession implements NmdDataService {
+public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDataService {
 
 	private static final DateFormat dbDateFormat = new SimpleDateFormat("yyyyMMdd");
 	private String apiPath;
@@ -43,7 +43,7 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 
 	private List<NmdElement> data;
 
-	public NmdDataBaseSession(NmdDatabaseConfig config) {
+	public Nmd3DataService(NmdDatabaseConfig config) {
 		this.setHost("www.Milieudatabase-datainvoer.nl");
 		this.apiPath = "/NMD_30_API_v0.2/api/NMD30_Web_API/";
 		this.config = config;
@@ -329,7 +329,6 @@ public class NmdDataBaseSession extends AuthorizedDatabaseSession implements Nmd
 				.collect(Collectors.toList());
 	}
 
-	@Override
 	public HashMap<Integer, Double> getQuantitiesOfProfileSetsForProduct(Integer productId) {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));

@@ -18,12 +18,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class NmdInterfaceTests {
+public class Nmd3DataServiceTests {
 
-	private NmdDataBaseSession db;
+	private Nmd3DataService db;
 	private NmdDatabaseConfig config;
 
-	public NmdInterfaceTests() {
+	public Nmd3DataServiceTests() {
 	}
 
 	@Before
@@ -38,7 +38,7 @@ public class NmdInterfaceTests {
 
 	public void connect() {
 		config = new NmdDatabaseConfigImpl();
-		db = new NmdDataBaseSession(config);
+		db = new Nmd3DataService(config);
 		db.login();
 	}
 
@@ -54,7 +54,7 @@ public class NmdInterfaceTests {
 	@Test
 	public void testDbIsInitiallyNotLoggedIn() {
 		config = new NmdDatabaseConfigImpl();
-		db = new NmdDataBaseSession(config);
+		db = new Nmd3DataService(config);
 		assertFalse(db.getIsConnected());
 	}
 
@@ -64,7 +64,7 @@ public class NmdInterfaceTests {
 		NmdDatabaseConfigImpl wrong = new NmdDatabaseConfigImpl();
 		wrong.setToken("wrong token");
 
-		db = new NmdDataBaseSession(wrong);
+		db = new Nmd3DataService(wrong);
 		assertFalse(db.getIsConnected());
 	}
 
@@ -74,7 +74,7 @@ public class NmdInterfaceTests {
 		NmdDatabaseConfigImpl wrong = new NmdDatabaseConfigImpl();
 		wrong.setClientId(42);
 
-		db = new NmdDataBaseSession(wrong);
+		db = new Nmd3DataService(wrong);
 		assertFalse(db.getIsConnected());
 	}
 
@@ -187,15 +187,6 @@ public class NmdInterfaceTests {
 		assertTrue(0 < mappings.getScalingFormula().size());
 	}
 	
-	@Test
-	public void getFullProductCardById() {
-		connect();
-		Integer id = 9;
-		HashMap<Integer, Double> maps = db.getQuantitiesOfProfileSetsForProduct(id);
-		assertTrue(maps.size() > 0);
-		assertTrue(maps.values().stream().allMatch(v -> v > 0.0));
-	}
-
 	@Test
 	public void getCompleteDataSet() {
 		connect();

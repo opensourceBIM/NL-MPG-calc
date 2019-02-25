@@ -36,8 +36,4 @@ public interface NmdDataService {
 	List<NmdElement> getElementsForNLsfbCodes(Set<String> codes); 
 
 	Boolean getAdditionalProfileDataForCard(NmdProductCard c);
-
-	HashMap<Integer, Double> getQuantitiesOfProfileSetsForProduct(Integer productId);
-
-
 }
