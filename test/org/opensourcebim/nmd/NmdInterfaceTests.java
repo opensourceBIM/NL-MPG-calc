@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -205,7 +206,9 @@ public class NmdInterfaceTests {
 	
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode node = mapper.valueToTree(db.getData());
-		System.out.println("test");
+		try {
+			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node));
+		} catch (JsonProcessingException e1) {}
 		assertTrue(db.getData().stream()
 				.flatMap(e -> e.getProducts().stream()
 						.flatMap(pc -> pc.getProfileSets().stream())).count() > 0);
