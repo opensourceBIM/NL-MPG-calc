@@ -68,21 +68,23 @@ public class MpgCalculator {
 							double scaleFactor = 1.0;
 							// determine scale factor based on scaler. if no scaler is present the
 							// unitsRequired is sufficient (and no scaling is applied)
-							if (element.requiresScaling() && profielSet.getIsScalable()
-									&& profielSet.getScaler() != null) {
+							if (element.requiresScaling() && profielSet.getIsScalable()) {
 
-								NmdScaler scaler = profielSet.getScaler();
-								int numDims = NmdScalingUnitConverter.getUnitDimension(product.getUnit());
-								if (numDims < 3) {
+								if (profielSet.getScaler() != null) {
+									NmdScaler scaler = profielSet.getScaler();
+									int numDims = NmdScalingUnitConverter.getUnitDimension(product.getUnit());
+									if (numDims < 3) {
 
-									MpgScalingOrientation or = element.getMpgObject().getGeometry()
-											.getScalerOrientation(numDims);
-									Double[] dims = or.getScaleDims();
-									Double unitConversionFactor = NmdScalingUnitConverter
-											.getScalingUnitConversionFactor(scaler.getUnit(), this.getObjectStore());
+										MpgScalingOrientation or = element.getMpgObject().getGeometry()
+												.getScalerOrientation(numDims);
+										Double[] dims = or.getScaleDims();
+										Double unitConversionFactor = NmdScalingUnitConverter
+												.getScalingUnitConversionFactor(scaler.getUnit(), this.getObjectStore());
 
-									scaleFactor = scaler.scaleWithConversion(dims, unitConversionFactor);
+										scaleFactor = scaler.scaleWithConversion(dims, unitConversionFactor);
+									}
 								}
+
 							}
 
 							// calculate total units required taking into account category modifiers.
