@@ -6,6 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.opensourcebim.ifccollection.NlsfbCode;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -14,7 +19,8 @@ import java.sql.Statement;
 
 public class Nmd2DataService implements NmdDataService {
 	private Connection connection;
-	private String userDir = System.getProperty("user.dir");
+	Path userDir = Paths.get(System.getProperty("user.dir")).getParent().getParent()
+			.resolve("BouwBesluitMaterials");
 	private String dbPath = "\\src\\data\\";
 	private String dbName = "NMD_2.2_OPLEVERING_20180626_AANGEPAST.db";
 	private List<NmdElement> data;
@@ -26,7 +32,7 @@ public class Nmd2DataService implements NmdDataService {
 	@Override
 	public void login() {
 		try {
-			connection = DriverManager.getConnection("jdbc:sqlite:" + userDir + dbPath + dbName);
+			connection = DriverManager.getConnection("jdbc:sqlite:" + userDir.toAbsolutePath() + dbPath + dbName);
 		} catch (SQLException e) {
 			// if the error message is "out of memory",
 			// it probably means no database file is found
