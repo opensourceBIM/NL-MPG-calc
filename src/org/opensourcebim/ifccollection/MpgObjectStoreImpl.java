@@ -342,7 +342,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		List<MpgElement> elements = new ArrayList<MpgElement>();
 		Optional<String> parentId = this.decomposedRelations.stream()
 				.filter(v -> v.getValue().getGlobalId().equals(globalId)).map(v -> v.getKey()).findFirst();
-		if (parentId.isPresent()) {
+		if (parentId.isPresent() && !parentId.get().isEmpty()) {
 			MpgElement parent = this.getElementByObjectGuid(parentId.get());
 			elements.add(parent);
 			elements.addAll(allParentElementsByGuid(parent.getMpgObject().getGlobalId()));
