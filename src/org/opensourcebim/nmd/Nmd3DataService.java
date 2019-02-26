@@ -287,7 +287,7 @@ public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDat
 		}
 
 		JsonNode producten = resp_node.get("results");
-		List<NmdProductCard> products = new ArrayList<NmdProductCard>();
+		List<NmdProductCardImpl> products = new ArrayList<NmdProductCardImpl>();
 
 		if (producten != null) {
 			producten.forEach(p -> {
@@ -363,7 +363,9 @@ public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDat
 	 */
 	@Override
 	public Boolean getAdditionalProfileDataForCard(NmdProductCard c) {
-
+		// check if data has already been loaded
+		if (c.getProfileSets().size() > 0) {return true;}
+		
 		try {
 			HashMap<Integer, NmdProfileSet> setData = getProfileSetsByIds(Arrays.asList(c.getProductId()));
 
