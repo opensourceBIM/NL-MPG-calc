@@ -24,6 +24,7 @@ public class Nmd2DataService implements NmdDataService {
 	private String dbPath = "\\src\\data\\";
 	private String dbName = "NMD_2.2_OPLEVERING_20180626_AANGEPAST.db";
 	private List<NmdElement> data;
+	private NmdReferenceResources resources;
 
 	public Nmd2DataService() {
 		this.data = new ArrayList<NmdElement>();
@@ -38,6 +39,39 @@ public class Nmd2DataService implements NmdDataService {
 			// it probably means no database file is found
 			System.err.println(e.getMessage());
 		}
+		
+		loadResources();
+	}
+
+	private void loadResources() {
+		if (resources == null) {
+			resources = new NmdReferenceResources();
+			resources.setMilieuCategorieMapping(getMilieuWaardeMapping());
+		}
+		
+	}
+
+	private HashMap<Integer, NmdMilieuCategorie> getMilieuWaardeMapping() {
+		HashMap<Integer, NmdMilieuCategorie> map = new HashMap<Integer, NmdMilieuCategorie>();
+		
+		try {
+			Statement statement = connection.createStatement();
+			statement.setQueryTimeout(30); // set timeout to 30 sec.
+
+			ResultSet rs = statement.executeQuery("select * from Milieucategorie");
+			while (rs.next()) {
+				Integer id = rs.getInt("id");
+				String description = rs.getString("milieueffect");
+				String unit = rs.getString("eenheid");
+				Double weight = 1.0;
+				
+				map.put(id, new NmdMilieuCategorie(description, unit, weight));
+			}
+		} catch (SQLException e) {
+			System.err.println(e.getMessage());
+		}
+		return map;
+
 	}
 
 	@Override
@@ -93,17 +127,17 @@ public class Nmd2DataService implements NmdDataService {
 				el.setElementName(rs.getString("elementnaam"));
 				el.setIsMandatory(true);
 				el.setParentId(0);
-				el.setNlsfbCode(rs.getString("code").trim());
+				el.setNlsfbCode(new NlsfbCode(rs.getString("code").trim()));
 				elements.add(el);
 			}
 		} catch (SQLException e) {
 			System.err.println(e.getMessage());
 		}
-		
+
 		for (NmdElement el : elements) {
 			el.addProductCards(this.getProductsForElement(el));
 		}
-		
+
 		return elements;
 	}
 
@@ -137,33 +171,42 @@ public class Nmd2DataService implements NmdDataService {
 				prod.setIsTotaalProduct(false);
 				prod.setLifetime(rs.getInt("productlevensduur"));
 				prod.setUnit(rs.getString("functionele_eenheid"));
+				prod.setNlsfbCode(new NlsfbCode(rs.getString("productcode")));
 				products.add(prod);
 			}
 		} catch (SQLException e) {
 			System.err.println(e.getMessage());
 		}
-		
+
 		return products;
 	}
 
 	@Override
-	public List<NmdProductCard> getProductsForNLsfbCodes(Set<String> codes) {
+	public List<NmdProductCard> getProductsForNLsfbCodes(Set<NlsfbCode> codes) {
 		return getElementsForNLsfbCodes(codes).stream().flatMap(el -> el.getProducts().stream())
 				.collect(Collectors.toList());
 	}
 
 	@Override
-	public List<NmdElement> getElementsForNLsfbCodes(Set<String> codes) {
-		return data.stream().filter(el -> codes.contains(el.getNLsfbCode())).collect(Collectors.toList());
+	public List<NmdElement> getElementsForNLsfbCodes(Set<NlsfbCode> codes) {
+		return data.stream().filter(el -> codes.stream()
+				.anyMatch(code -> el.getNlsfbCode().isSubCategoryOf(code)))
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public Boolean getAdditionalProfileDataForCard(NmdProductCard c) {
+
+		// check if data has already been loaded
+		if (c.getProfileSets().size() > 0) {
+			return true;
+		}
+
 		try {
 			Statement statement = connection.createStatement();
 			statement.setQueryTimeout(30); // set timeout to 30 sec.
 
-			// first get all product ids that fall under the element
+			// retrieve profielSets that belong to the product
 			ResultSet rs = statement.executeQuery(
 					"select * from Productonderdeel " + "where product_id = " + c.getProductId().toString());
 			while (rs.next()) {
@@ -173,6 +216,7 @@ public class Nmd2DataService implements NmdDataService {
 				pset.setProfileLifetime(rs.getInt("levensduur"));
 				pset.setQuantity(rs.getDouble("hoeveelheid"));
 				pset.setUnit(rs.getString("eenheid"));
+				pset.setIsScalable(true);
 				pset.setScaler(null);
 				c.addProfileSet(pset);
 			}
@@ -185,19 +229,21 @@ public class Nmd2DataService implements NmdDataService {
 			Statement statement = connection.createStatement();
 			statement.setQueryTimeout(30); // set timeout to 30 sec.
 			for (NmdProfileSet ps : c.getProfileSets()) {
-				// get the milieuwaarde categorie data
-				NmdFaseProfielImpl fp = new NmdFaseProfielImpl("Construction", new NmdReferenceResources());
+				// get the milieuwaarde categorie data per profielset.
+				// ToDo: load transport, application and disposal profielen separately.
 				ResultSet rsMC = statement.executeQuery("select * from Profielmilieueffect as pme "
 						+ "inner join Milieucategorie as mc on pme.milieucategorie_id = mc.id " + "where profiel_id = "
 						+ ps.getProfielId().toString());
-
+				
+				NmdFaseProfielImpl fp = new NmdFaseProfielImpl("Construction", this.resources);
 				while (rsMC.next()) {
+					
 					String name = rsMC.getString("milieueffect");
 					Double value = rsMC.getDouble("waarde");
 					fp.setProfielCoefficient(name, value);
 				}
-
 				ps.addFaseProfiel("Construction", fp);
+
 			}
 		} catch (SQLException e) {
 			System.err.println(e.getMessage());
