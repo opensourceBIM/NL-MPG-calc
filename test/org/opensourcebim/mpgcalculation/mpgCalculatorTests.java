@@ -17,7 +17,7 @@ import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.nmd.NmdFaseProfiel;
 import org.opensourcebim.nmd.NmdFaseProfielImpl;
-import org.opensourcebim.nmd.NmdMileuCategorie;
+import org.opensourcebim.nmd.NmdMilieuCategorie;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProductCardImpl;
 import org.opensourcebim.nmd.NmdProfileSet;

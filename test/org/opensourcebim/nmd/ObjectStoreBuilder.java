@@ -129,22 +129,22 @@ public class ObjectStoreBuilder {
 
 	public NmdReferenceResources getDummyReferences() {
 		NmdReferenceResources resources = new NmdReferenceResources();
-		HashMap<Integer, NmdMileuCategorie> milieuCats = new HashMap<Integer, NmdMileuCategorie>();
-		milieuCats.put(1, new NmdMileuCategorie("AbioticDepletionNonFuel", "kg antimoon", 1.0));
-		milieuCats.put(2, new NmdMileuCategorie("AbioticDepletionFuel", "kg antimoon", 1.0));
-		milieuCats.put(3, new NmdMileuCategorie("GWP100", "kg CO2", 1.0));
-		milieuCats.put(4, new NmdMileuCategorie("ODP", "kg CFC11", 1.0));
-		milieuCats.put(5, new NmdMileuCategorie("PhotoChemicalOxidation", "kg etheen", 1.0));
-		milieuCats.put(6, new NmdMileuCategorie("Acidifcation", "kg SO2", 1.0));
-		milieuCats.put(7, new NmdMileuCategorie("Eutrophication", "kg (PO4)^3-", 1.0));
-		milieuCats.put(8, new NmdMileuCategorie("HumanToxicity", "kg 1,4 dichloor benzeen", 1.0));
-		milieuCats.put(9, new NmdMileuCategorie("FreshWaterAquaticEcoToxicity", "kg 1,4 dichloor benzeen", 1.0));
-		milieuCats.put(10, new NmdMileuCategorie("MarineAquaticEcoToxicity", "kg 1,4 dichloor benzeen", 1.0));
-		milieuCats.put(11, new NmdMileuCategorie("TerrestrialEcoToxocity", "kg 1,4 dichloor benzeen", 1.0));
-		milieuCats.put(12, new NmdMileuCategorie("TotalRenewableEnergy", "MJ", 1.0));
-		milieuCats.put(13, new NmdMileuCategorie("TotalNonRenewableEnergy", "MJ", 1.0));
-		milieuCats.put(14, new NmdMileuCategorie("TotalEnergy", "MJ", 1.0));
-		milieuCats.put(15, new NmdMileuCategorie("FreshWaterUse", "m3", 1.0));
+		HashMap<Integer, NmdMilieuCategorie> milieuCats = new HashMap<Integer, NmdMilieuCategorie>();
+		milieuCats.put(1, new NmdMilieuCategorie("AbioticDepletionNonFuel", "kg antimoon", 1.0));
+		milieuCats.put(2, new NmdMilieuCategorie("AbioticDepletionFuel", "kg antimoon", 1.0));
+		milieuCats.put(3, new NmdMilieuCategorie("GWP100", "kg CO2", 1.0));
+		milieuCats.put(4, new NmdMilieuCategorie("ODP", "kg CFC11", 1.0));
+		milieuCats.put(5, new NmdMilieuCategorie("PhotoChemicalOxidation", "kg etheen", 1.0));
+		milieuCats.put(6, new NmdMilieuCategorie("Acidifcation", "kg SO2", 1.0));
+		milieuCats.put(7, new NmdMilieuCategorie("Eutrophication", "kg (PO4)^3-", 1.0));
+		milieuCats.put(8, new NmdMilieuCategorie("HumanToxicity", "kg 1,4 dichloor benzeen", 1.0));
+		milieuCats.put(9, new NmdMilieuCategorie("FreshWaterAquaticEcoToxicity", "kg 1,4 dichloor benzeen", 1.0));
+		milieuCats.put(10, new NmdMilieuCategorie("MarineAquaticEcoToxicity", "kg 1,4 dichloor benzeen", 1.0));
+		milieuCats.put(11, new NmdMilieuCategorie("TerrestrialEcoToxocity", "kg 1,4 dichloor benzeen", 1.0));
+		milieuCats.put(12, new NmdMilieuCategorie("TotalRenewableEnergy", "MJ", 1.0));
+		milieuCats.put(13, new NmdMilieuCategorie("TotalNonRenewableEnergy", "MJ", 1.0));
+		milieuCats.put(14, new NmdMilieuCategorie("TotalEnergy", "MJ", 1.0));
+		milieuCats.put(15, new NmdMilieuCategorie("FreshWaterUse", "m3", 1.0));
 		resources.setMilieuCategorieMapping(milieuCats);
 
 		HashMap<Integer, String> fasen = new HashMap<Integer, String>();
