@@ -203,9 +203,9 @@ public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDat
 		// milieucategorien reference data
 		HttpResponse categorieResponse = this.performGetRequestWithParams(this.apiPath + "MilieuCategorien", params);
 		JsonNode categorie_node = this.responseToJson(categorieResponse).get("results");
-		HashMap<Integer, NmdMileuCategorie> categorien = new HashMap<Integer, NmdMileuCategorie>();
+		HashMap<Integer, NmdMilieuCategorie> categorien = new HashMap<Integer, NmdMilieuCategorie>();
 		categorie_node.forEach(categorie -> {
-			NmdMileuCategorie factor = new NmdMileuCategorie(categorie.get("Milieueffect").asText(),
+			NmdMilieuCategorie factor = new NmdMilieuCategorie(categorie.get("Milieueffect").asText(),
 					categorie.get("Eenheid").asText(),
 					categorie.get("Wegingsfactor") != null ? categorie.get("Wegingsfactor").asDouble() : 0.0);
 			categorien.putIfAbsent(Integer.parseInt(categorie.get("MilieuCategorieID").asText()), factor);
