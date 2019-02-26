@@ -2,6 +2,7 @@ package org.opensourcebim.nmd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opensourcebim.ifccollection.MaterialSource;
@@ -37,7 +39,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 	public NmdDataResolverImpl() {
 		NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
-		setService(new Nmd3DataService(config));
+		setService(new Nmd2DataService());
 		setMappingService(new NmdUserMappingService());
 	}
 
@@ -73,7 +75,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			getService().preLoadData();
 
 			// get data per material
-			// ToDo: group the elements that are equal for sake of the mapping process (geometry, type, ..) to avoid a lot of duplication
+			// ToDo: group the elements that are equal for sake of the mapping process
+			// (geometry, type, ..) to avoid a lot of duplication
 			for (MpgElement element : getStore().getElements()) {
 				// element could already have a mapping through a decomposes relation
 				// in that case skip to the next one.
@@ -138,15 +141,17 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					"None of the candidate NmdElements matching the selection criteria.");
 		}
 
-		// STEP4: from every candidate element we should pick 0:1 productcards and add the results to mapping object
+		// STEP4: from every candidate element we should pick 0:1 productcards and add
+		// the results to mapping object
 		List<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
 		if (selectedProducts.size() > 0) {
 			selectedProducts.forEach(c -> mpgElement.addProductCard(c));
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
-			if (selectedProducts.size() == candidateElements.size() || selectedProducts.stream().anyMatch(pc -> pc.getIsTotaalProduct())) {
+			if (selectedProducts.size() == candidateElements.size()
+					|| selectedProducts.stream().anyMatch(pc -> pc.getIsTotaalProduct())) {
 				mpgElement.setIsFullyCovered(true);
 			}
-			
+
 		} else {
 			mpgElement.setMappingMethod(NmdMapping.None);
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
@@ -164,24 +169,14 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 *         for the mapping
 	 */
 	private List<NmdElement> selectCandidateElements(MpgElement mpgElement, List<NmdElement> candidates) {
-		// due to lack of test data now only apply a simple filter..
-		// ToDo: improve selection with most likely material match etc.
 		List<MaterialSource> listedMaterials = mpgElement.getMpgObject().getListedMaterials();
-		
-		List<NmdElement> filteredCandidates = candidates.stream(
-				).filter(ce -> (ce.getIsMandatory() && ce.getProducts().size() > 0) 
-						|| ce.getProducts().stream().anyMatch(pc -> pc.getIsTotaalProduct())
-						)
+
+		List<NmdElement> filteredCandidates = candidates.stream()
+				.filter(ce -> (ce.getIsMandatory() && ce.getProducts().size() > 0)
+						|| ce.getProducts().stream().anyMatch(pc -> pc.getIsTotaalProduct()))
 				.collect(Collectors.toList());
-		
-		List<NmdElement> res = new ArrayList<NmdElement>();
-		listedMaterials.forEach(matName -> {
-			filteredCandidates.sort((el1, el2) ->  Integer.compare(
-					StringUtils.getLevenshteinDistance((CharSequence) matName, el1.getElementName()),
-					StringUtils.getLevenshteinDistance((CharSequence) matName, el2.getElementName())));
-			res.add(filteredCandidates.get(0));
-		});
-		return res;
+
+		return filteredCandidates;
 	}
 
 	/**
@@ -192,37 +187,74 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 */
 	private List<NmdProductCard> selectProductsForElements(MpgElement mpgElement, List<NmdElement> candidates) {
 		NmdProductCard prod = null;
-		List<NmdProductCard> viableCandidates = new ArrayList<NmdProductCard>();
-		for (NmdElement el : candidates) {
 
-			List<NmdProductCard> productOptions = new ArrayList<NmdProductCard>();
-			for (NmdProductCard card : el.getProducts()) {
+		List<NmdProductCard> res = new ArrayList<NmdProductCard>();
+		List<NmdProductCard> allProducts = candidates.stream().flatMap(e -> e.getProducts().stream())
+				.collect(Collectors.toList());
+		List<MaterialSource> mats = mpgElement.getMpgObject().getListedMaterials();
+		List<NmdProductCard> viableCandidates = new ArrayList<NmdProductCard>();
+
+		Function<List<NmdProductCard>, NmdProductCard> selectCard = (list) -> {
+			list.sort((pc1, pc2) -> pc1.getProfileSetsCoeficientSum().compareTo(pc2.getProfileSetsCoeficientSum()));
+			return list.get(0);
+		};
+
+		// Find per material the most likely candidates that fall within the
+		// specifications
+		mats.forEach(mat -> {
+			List<NmdProductCard> productOptions = sortProductsBasedOnStringSimilarity(mat.getName(), allProducts, 3);
+			
+			for (NmdProductCard card : productOptions) {
 				// per found element we should try to select a fitting productCard
-				prod = new NmdProductCardImpl(card);
-				int dims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
-				if (getService().getAdditionalProfileDataForCard(prod)) {
+				int dims = NmdScalingUnitConverter.getUnitDimension(card.getUnit());
+				if (getService().getAdditionalProfileDataForCard(card)) {
 					// determine scaling dimension
 					MpgScalingOrientation orientation = mpgElement.getMpgObject().getGeometry()
 							.getScalerOrientation(dims);
 
-					// check if the productcard does not constrain the element in its physical dimensions.
-					if (canProductBeUsedForElement(prod, orientation)) {
-						productOptions.add(card);
+					// check if the productcard does not constrain the element in its physical
+					// dimensions.
+					if (!canProductBeUsedForElement(card, orientation)) {
+						productOptions.remove(card);
 					}
 				}
 			}
-			
-			// determine which product card should be returned based on an input filter function and add this one to the results list
-			// ToDo: currently this is a set Function, but this can be replaced with any user defined selection method.
-			Function<List<NmdProductCard>, NmdProductCard> selectCard = (list) -> { 
-				list.sort((pc1, pc2) -> pc1.getProfileSetsCoeficientSum().compareTo(pc2.getProfileSetsCoeficientSum()));
-				return list.get(0);
-			};
+
+			// determine which product card should be returned based on an input filter
+			// function and add this one to the results list
+			// ToDo: currently this is a set Function, but this can be replaced with any
+			// user defined selection method.
 			if (productOptions.size() > 0) {
 				viableCandidates.add(selectCard.apply(productOptions));
 			}
-		}		
+
+		});
+
 		return viableCandidates;
+	}
+
+	private List<NmdProductCard> sortProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts, Integer cutOff) {
+		// sort the found products for every entry in the material list
+		List<NmdProductCard> selectedProducts = new ArrayList<NmdProductCard>();
+		allProducts.sort((p1, p2) -> Integer.compare(getMinLevenshteinDistance(name, p2.getDescription()),
+				getMinLevenshteinDistance(name, p1.getDescription())));
+		
+		for(int i = allProducts.size() - 1; i >= 0; i--) {
+			// ToDo cutoff items that have nothing to do with the actul naming rather than a hard coded cutoff
+			if (i < cutOff) {
+				selectedProducts.add(new NmdProductCardImpl(allProducts.get(i)));
+			}
+		}
+		return selectedProducts;
+	}
+
+	private Integer getMinLevenshteinDistance(String name, String description) {
+		List<String> words = Arrays.asList(description.split(" "));
+		words.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
+		words.sort((w1, w2) -> Integer.compare(
+				StringUtils.getLevenshteinDistance((CharSequence) name, w1),
+				StringUtils.getLevenshteinDistance((CharSequence) name, w2)));
+		return StringUtils.getLevenshteinDistance((CharSequence) name, words.get(0));
 	}
 
 	/**
@@ -239,17 +271,26 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 			// if there is no scaler defined, but the item is marked as scalable return true
 			// by default.
-			if (profielSet.getIsScalable() && profielSet.getScaler() != null) {
+			if (profielSet.getIsScalable()) {
+				// should there be no scaler defined, we can assume linear scaling
+				if (profielSet.getScaler() == null) {
+					return true;
+				}
+
 				NmdScaler scaler = profielSet.getScaler();
 
 				String unit = scaler.getUnit();
 				if (numDims < 3) {
 
 					Double[] dims = orientation.getScaleDims();
-					if (scaler.getNumberOfDimensions() > dims.length) {return false;}
-					
-					Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit,this.getStore());
-					if (!scaler.areDimsWithinBounds(dims, convFactor)) {return false;}
+					if (scaler.getNumberOfDimensions() > dims.length) {
+						return false;
+					}
+
+					Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit, this.getStore());
+					if (!scaler.areDimsWithinBounds(dims, convFactor)) {
+						return false;
+					}
 				}
 			} else if (!profielSet.getIsScalable()) {
 				return false;
