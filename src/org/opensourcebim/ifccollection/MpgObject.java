@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public interface MpgObject {
 	
 	long getObjectId();
@@ -16,7 +18,8 @@ public interface MpgObject {
 	String getNLsfbCode();	
 	void setNLsfbCode(String code);
 	boolean hasNlsfbCode();
-	Set<String> getNLsfbAlternatives();
+	@JsonIgnore
+	Set<NlsfbCode> getNLsfbAlternatives();
 	void addNlsfbAlternatives(Set<String> alternatives);
 	
 	MpgGeometry getGeometry();
