@@ -201,7 +201,6 @@ public class Nmd3DataServiceTests {
 			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node));
 		} catch (JsonProcessingException e1) {}
 		assertTrue(db.getData().stream()
-				.flatMap(e -> e.getProducts().stream()
-						.flatMap(pc -> pc.getProfileSets().stream())).count() > 0);
+				.flatMap(e -> e.getProducts().stream().flatMap(pc -> pc.getProfileSets().stream())).count() > 0);
 	}
 }
