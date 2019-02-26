@@ -20,7 +20,7 @@ public class MpgObjectImpl implements MpgObject {
 	private List<MpgLayer> mpgLayers;
 	private String objectType;
 	private String parentId;
-	
+
 	@JsonIgnore
 	private Map<String, Object> properties;
 	private List<MaterialSource> listedMaterials;
@@ -48,7 +48,7 @@ public class MpgObjectImpl implements MpgObject {
 		this.listedMaterials = new BasicEList<MaterialSource>();
 		this.nlsfbAlternatives = new HashSet<String>();
 	}
-	
+
 	@Override
 	public void addLayer(MpgLayer mpgLayer) {
 		mpgLayers.add(mpgLayer);
@@ -90,41 +90,45 @@ public class MpgObjectImpl implements MpgObject {
 	public void setGlobalId(String globalId) {
 		this.globalId = globalId;
 	}
-	
+
 	@Override
 	public MpgGeometry getGeometry() {
 		return this.geometry;
 	}
-	
+
 	public void setGeometry(MpgGeometry geom) {
 		this.geometry = geom;
 	}
-	
+
 	@Override
 	public String getNLsfbCode() {
 		return this.nlsfb;
 	}
-	
+
 	@Override
 	public void setNLsfbCode(String code) {
-		this.nlsfb = code;
-		nlsfbAlternatives.add(code);
+		if (NlsfbCode.isNlsfbCode(code)) {
+			this.nlsfb = code;
+			nlsfbAlternatives.add(code);
+		}
 	}
-	
+
 	@Override
 	public boolean hasNlsfbCode() {
 		return !(getNLsfbCode() == "" || getNLsfbCode() == null);
 	}
-	
+
 	@Override
-	public Set<String> getNLsfbAlternatives() {
+	public Set<NlsfbCode> getNLsfbAlternatives() {
 		Set<String> allCodes = new HashSet<String>();
-		allCodes.add(getNLsfbCode());
+		if (getNLsfbCode() != null) {
+			allCodes.add(getNLsfbCode());
+		}
 		allCodes.addAll(nlsfbAlternatives);
-		
-		return allCodes;
+
+		return allCodes.stream().map(c -> new NlsfbCode(c)).collect(Collectors.toSet());
 	}
-	
+
 	@Override
 	public void addNlsfbAlternatives(Set<String> alternatives) {
 		this.nlsfbAlternatives.addAll(alternatives);
@@ -140,27 +144,27 @@ public class MpgObjectImpl implements MpgObject {
 		this.parentId = value;
 
 	}
-	
+
 	@JsonIgnore
 	@Override
 	public Map<String, Object> getProperties() {
 		return this.properties;
 	}
-	
+
 	public void addProperty(String name, Object value) {
 		this.properties.put(name, value);
 	}
-	
+
 	@Override
 	public List<MpgInfoTag> getAllTags() {
 		return this.tags;
 	}
-	
+
 	@Override
-	public  List<MpgInfoTag> getTagsByType(MpgInfoTagType type) {
+	public List<MpgInfoTag> getTagsByType(MpgInfoTagType type) {
 		return tags.stream().filter(t -> t.getType().equals(type)).collect(Collectors.toList());
 	}
-	
+
 	@Override
 	public void addTag(MpgInfoTagType tagType, String message) {
 		this.tags.add(new MpgInfoTag(tagType, message));
@@ -170,24 +174,21 @@ public class MpgObjectImpl implements MpgObject {
 	public void addMaterialSource(String materialName, String materialGuid, String source) {
 		this.getListedMaterials().add(new MaterialSource(materialGuid, materialName, source));
 	}
-	
 
 	@Override
 	public List<MaterialSource> getListedMaterials() {
 		return listedMaterials;
 	}
-	
+
 	@Override
 	public List<String> getMaterialNamesBySource(String source) {
-		return this.getListedMaterials().stream()
-				.filter(m -> source == null ? true : m.getSource() == source)
-				.map(m -> m.getName())
-				.collect(Collectors.toList());
+		return this.getListedMaterials().stream().filter(m -> source == null ? true : m.getSource() == source)
+				.map(m -> m.getName()).collect(Collectors.toList());
 	}
 
 	@Override
 	public boolean hasDuplicateMaterialNames() {
-		return this.getListedMaterials().stream().distinct().collect(Collectors.toSet())
-				.size() < this.getListedMaterials().size();
+		return this.getListedMaterials().stream().distinct().collect(Collectors.toSet()).size() < this
+				.getListedMaterials().size();
 	}
 }

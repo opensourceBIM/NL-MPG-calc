@@ -11,6 +11,7 @@ import org.opensourcebim.ifccollection.MpgLayerImpl;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
+import org.opensourcebim.ifccollection.NlsfbCode;
 import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
 public class ObjectStoreBuilder {
@@ -104,7 +105,7 @@ public class ObjectStoreBuilder {
 	
 	public NmdElement createDummyElement() {
 		NmdElementImpl el = new NmdElementImpl();
-		el.setNlsfbCode("11.11");
+		el.setNlsfbCode(new NlsfbCode("11.11"));
 		el.setElementId(11);
 		el.setParentId(10);
 		el.setElementName("heipalen");

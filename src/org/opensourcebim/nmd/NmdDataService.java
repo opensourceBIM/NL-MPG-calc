@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import org.opensourcebim.ifccollection.NlsfbCode;
+
 /**
  * Standard interface to provide material data from the source to the user.
  * 
@@ -32,8 +34,8 @@ public interface NmdDataService {
 	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<Integer> ids);
 
 	List<NmdProductCard> getProductsForElement(NmdElement element);
-	List<NmdProductCard> getProductsForNLsfbCodes(Set<String> codes);
-	List<NmdElement> getElementsForNLsfbCodes(Set<String> codes); 
+	List<NmdProductCard> getProductsForNLsfbCodes(Set<NlsfbCode> codes);
+	List<NmdElement> getElementsForNLsfbCodes(Set<NlsfbCode> codes); 
 
 	Boolean getAdditionalProfileDataForCard(NmdProductCard c);
 }

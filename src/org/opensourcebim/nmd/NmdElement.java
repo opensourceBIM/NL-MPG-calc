@@ -3,9 +3,11 @@ package org.opensourcebim.nmd;
 import java.util.Collection;
 import java.util.List;
 
+import org.opensourcebim.ifccollection.NlsfbCode;
+
 public interface NmdElement {
 
-	String getNLsfbCode();
+	NlsfbCode getNlsfbCode();
 
 	Integer getElementId();
 

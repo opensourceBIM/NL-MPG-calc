@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 import org.bimserver.shared.reflector.KeyValuePair;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
+import org.opensourcebim.ifccollection.NlsfbCode;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalerFactory;
 
@@ -296,14 +297,16 @@ public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDat
 				}
 			});
 		}
-		return products;
+		products.forEach(p -> p.setNlsfbCode(element.getNlsfbCode()));
+		
+		return products.stream().map(p -> (NmdProductCard)p).collect(Collectors.toList());
 	}
 	
 	/**
 	 * Quick lookup for preloaded product cards
 	 */
 	@Override
-	public List<NmdProductCard> getProductsForNLsfbCodes(Set<String> codes) {
+	public List<NmdProductCard> getProductsForNLsfbCodes(Set<NlsfbCode> codes) {
 		if (getData().size() == 0) {
 			preLoadData();
 		}
@@ -318,14 +321,14 @@ public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDat
 	 * Quick lookup for preloaded elements
 	 */
 	@Override
-	public List<NmdElement> getElementsForNLsfbCodes(Set<String> codes) {
+	public List<NmdElement> getElementsForNLsfbCodes(Set<NlsfbCode> codes) {
 		if (getData().size() == 0) {
 			preLoadData();
 		}
 				
 		return getData().stream()
 				.filter(el -> codes.stream()
-						.anyMatch(code -> code == null ? false : code.equals(el.getNLsfbCode())))
+						.anyMatch(code -> code == null ? false : code.isSubCategoryOf(el.getNlsfbCode()) ))
 				.collect(Collectors.toList());
 	}
 
@@ -499,7 +502,7 @@ public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDat
 	private NmdElement getElementDataFromJson(JsonNode elementInfo) {
 		NmdElementImpl newElement = new NmdElementImpl();
 		newElement.setElementId(TryParseJsonNode(elementInfo.get("ElementID"), -1));
-		newElement.setNlsfbCode(TryParseJsonNode(elementInfo.get("ElementCode"), ""));
+		newElement.setNlsfbCode(new NlsfbCode(TryParseJsonNode(elementInfo.get("ElementCode"), "")));
 		newElement.setElementName(TryParseJsonNode(elementInfo.get("ElementNaam"), ""));
 		newElement.setParentId(TryParseJsonNode(elementInfo.get("OuderID"), -1));
 		newElement.setIsMandatory(TryParseJsonNode(elementInfo.get("Verplicht"), false));

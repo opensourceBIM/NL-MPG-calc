@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgObject;
+import org.opensourcebim.ifccollection.NlsfbCode;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class NmdProductCardImpl implements NmdProductCard {
 	
@@ -19,6 +22,7 @@ public class NmdProductCardImpl implements NmdProductCard {
 	private Integer productLifetime;
 	private Integer parentId;
 	private Integer id;
+	private NlsfbCode nlsfbCode;
 
 	public NmdProductCardImpl() {
 		this.specifications = new HashSet<NmdProfileSet>();
@@ -42,6 +46,7 @@ public class NmdProductCardImpl implements NmdProductCard {
 		this.parentId = p.getParentProductId();
 		this.specifications = new HashSet<NmdProfileSet>();
 		this.specifications.addAll(p.getProfileSets());
+		this.setNlsfbCode(p.getNlsfbCode());
 		this.setUnit(p.getUnit());
 		this.setDescription(p.getDescription());
 		this.setIsTotaalProduct(p.getIsTotaalProduct());
@@ -54,6 +59,16 @@ public class NmdProductCardImpl implements NmdProductCard {
 	
 	public void setDescription(String description) {
 		this.description = description;
+	}
+	
+	@JsonIgnore
+	@Override
+	public NlsfbCode getNlsfbCode() {
+		return this.nlsfbCode;
+	}
+	
+	public void setNlsfbCode(NlsfbCode code) {
+		this.nlsfbCode = code;
 	}
 
 

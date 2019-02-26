@@ -18,6 +18,7 @@ import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
+import org.opensourcebim.ifccollection.NlsfbCode;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
@@ -113,14 +114,15 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 
 		// STEP 1: find any relevant NLsfb codes
-		Set<String> alternatives = mpgElement.getMpgObject().getNLsfbAlternatives();
+		Set<NlsfbCode> alternatives = mpgElement.getMpgObject().getNLsfbAlternatives();
 		if (alternatives.size() == 0 || alternatives.stream().allMatch(c -> c == null)) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NLsfbcodes linked to the product");
 			return;
 		}
 
-		// STEP 2: find all the elements that we **could** include based on NLsfb match..
+		// STEP 2: find all the elements that we **could** include based on NLsfb
+		// match..
 		List<NmdElement> allMatchedElements = getService().getElementsForNLsfbCodes(alternatives);
 
 		if (allMatchedElements.size() == 0) {

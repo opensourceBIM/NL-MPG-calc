@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.opensourcebim.ifccollection.NlsfbCode;
+
 public class NmdElementImpl implements NmdElement {
 
-	private String nlsfbCode;
+	private NlsfbCode nlsfbCode;
 	private Integer elementId;
 	private String elementName;
 	private Collection<NmdProductCard> products;
@@ -14,18 +16,18 @@ public class NmdElementImpl implements NmdElement {
 	private Boolean isMandatory;
 	
 	public NmdElementImpl() {
-		this.nlsfbCode = "";
+		this.nlsfbCode = null;
 		this.elementId = -1;
 		this.elementName = "";
 		this.products = new ArrayList<NmdProductCard>();
 	}
 	
 	@Override
-	public String getNLsfbCode() {
+	public NlsfbCode getNlsfbCode() {
 		return this.nlsfbCode;
 	}
 	
-	public void setNlsfbCode(String nlsfbCode) {
+	public void setNlsfbCode(NlsfbCode nlsfbCode) {
 		this.nlsfbCode = nlsfbCode;
 	}
 
