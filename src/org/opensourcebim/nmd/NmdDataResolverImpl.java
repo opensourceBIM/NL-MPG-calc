@@ -141,7 +141,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// STEP4: from every candidate element we should pick 0:1 productcards and add
 		// the results to mapping object
-		List<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
+		Set<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
 
 		if (selectedProducts.size() > 0) {
 			selectedProducts.forEach(c -> mpgElement.addProductCard(c));
@@ -183,12 +183,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param mpgElement mpgElement to add product cards to
 	 * @param candidates possible nmProductCard matches for the mpgElement
 	 */
-	private List<NmdProductCard> selectProductsForElements(MpgElement mpgElement, List<NmdElement> candidates) {
+	private Set<NmdProductCard> selectProductsForElements(MpgElement mpgElement, List<NmdElement> candidates) {
 
 		List<NmdProductCard> allProducts = candidates.stream().flatMap(e -> e.getProducts().stream())
 				.collect(Collectors.toList());
 		List<MaterialSource> mats = mpgElement.getMpgObject().getListedMaterials();
-		List<NmdProductCard> viableCandidates = new ArrayList<NmdProductCard>();
+		Set<NmdProductCard> viableCandidates = new HashSet<NmdProductCard>();
 
 		// currently: select most favorable card
 		Function<List<NmdProductCard>, NmdProductCard> selectCard = (list) -> {
@@ -198,13 +198,15 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// Find per material the most likely candidates that fall within the
 		// specifications
+		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
+		
 		mats.forEach(mat -> {
 			List<NmdProductCard> productOptions = sortProductsBasedOnStringSimilarity(mat.getName(), allProducts, 3);
 
 			for (NmdProductCard card : productOptions) {
 				// per found element we should try to select a fitting productCard
 				int dims = NmdScalingUnitConverter.getUnitDimension(card.getUnit());
-				if (getService().getAdditionalProfileDataForCard(card)) {
+				if (card.getProfileSets().size() > 0) {
 					// determine scaling dimension
 					MpgScalingOrientation orientation = mpgElement.getMpgObject().getGeometry()
 							.getScalerOrientation(dims);
@@ -234,8 +236,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			Integer cutOff) {
 		// sort the found products for every entry in the material list
 		List<NmdProductCard> selectedProducts = new ArrayList<NmdProductCard>();
-		allProducts.sort((p1, p2) -> Integer.compare(getMinLevenshteinDistance(name, p1.getDescription()),
-				getMinLevenshteinDistance(name, p2.getDescription())));
+		allProducts.sort((p1, p2) -> Integer.compare(getMinLevenshteinDistance(name, p1),
+				getMinLevenshteinDistance(name, p2)));
 
 		for (int i = allProducts.size() - 1; i >= 0; i--) {
 			// ToDo cutoff items that have nothing to do with the actul naming rather than a
@@ -247,12 +249,20 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		return selectedProducts;
 	}
 
-	private Integer getMinLevenshteinDistance(String name, String description) {
-		List<String> words = Arrays.asList(description.split(" "));
-		words.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
-		words.sort((w1, w2) -> Integer.compare(StringUtils.getLevenshteinDistance((CharSequence) name, w1),
-				StringUtils.getLevenshteinDistance((CharSequence) name, w2)));
-		return StringUtils.getLevenshteinDistance((CharSequence) name, words.get(0));
+	/**
+	 * Determine the minimum levenshstein distance with respect to the profiel set descriptions of the product card
+	 * @param refWord reference word to search for within the product card
+	 * @param card NmdProductCard object with > 0 profileSets
+	 * @return the minimum levensthein distance of the reference word wrt any of the profileSet names
+	 */
+	private Integer getMinLevenshteinDistance(String refWord, NmdProductCard card) {
+		List<String> keyWords = card.getProfileSets().stream()
+				.flatMap(ps -> Arrays.asList(ps.getName().split(" ")).stream())
+				.filter(w -> !w.isEmpty()).collect(Collectors.toList());
+		keyWords.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
+		keyWords.sort((w1, w2) -> Integer.compare(StringUtils.getLevenshteinDistance((CharSequence) refWord, w1),
+				StringUtils.getLevenshteinDistance((CharSequence) refWord, w2)));
+		return StringUtils.getLevenshteinDistance((CharSequence) refWord, keyWords.get(0));
 	}
 
 	/**
