@@ -48,6 +48,10 @@ public class MpgObjectImpl implements MpgObject {
 		this.listedMaterials = new BasicEList<MaterialSource>();
 		this.nlsfbAlternatives = new HashSet<String>();
 	}
+	
+	public MpgObjectImpl() {
+		// TODO Auto-generated constructor stub
+	}
 
 	@Override
 	public void addLayer(MpgLayer mpgLayer) {
@@ -190,5 +194,10 @@ public class MpgObjectImpl implements MpgObject {
 	public boolean hasDuplicateMaterialNames() {
 		return this.getListedMaterials().stream().distinct().collect(Collectors.toSet()).size() < this
 				.getListedMaterials().size();
+	}
+
+	@Override
+	public void addMaterialSource(MaterialSource source) {
+		this.listedMaterials.add(source);
 	}
 }

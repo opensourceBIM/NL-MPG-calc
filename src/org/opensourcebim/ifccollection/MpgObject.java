@@ -26,6 +26,7 @@ public interface MpgObject {
 	
 	List<MpgLayer> getLayers();
 	void addMaterialSource(String name, String guid, String source);
+	void addMaterialSource(MaterialSource source);
 	List<MaterialSource> getListedMaterials();
 	List<String> getMaterialNamesBySource(String source);
 
