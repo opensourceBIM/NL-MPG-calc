@@ -2,7 +2,6 @@ package org.opensourcebim.nmd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -10,8 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.StringUtils;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
@@ -38,7 +35,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private MpgObjectStore store;
 
 	public NmdDataResolverImpl() {
-		NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
+		// NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
 		setService(new Nmd2DataService());
 		setMappingService(new NmdUserMappingService());
 	}
@@ -144,6 +141,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// STEP4: from every candidate element we should pick 0:1 productcards and add
 		// the results to mapping object
 		List<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
+
 		if (selectedProducts.size() > 0) {
 			selectedProducts.forEach(c -> mpgElement.addProductCard(c));
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
@@ -169,7 +167,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 *         for the mapping
 	 */
 	private List<NmdElement> selectCandidateElements(MpgElement mpgElement, List<NmdElement> candidates) {
-		List<MaterialSource> listedMaterials = mpgElement.getMpgObject().getListedMaterials();
 
 		List<NmdElement> filteredCandidates = candidates.stream()
 				.filter(ce -> (ce.getIsMandatory() && ce.getProducts().size() > 0)
@@ -180,20 +177,19 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * Find out wich candiate product should be mapped to the mpgElement.
+	 * Find out wich candidate product should be mapped to the mpgElement.
 	 * 
 	 * @param mpgElement mpgElement to add product cards to
 	 * @param candidates possible nmProductCard matches for the mpgElement
 	 */
 	private List<NmdProductCard> selectProductsForElements(MpgElement mpgElement, List<NmdElement> candidates) {
-		NmdProductCard prod = null;
 
-		List<NmdProductCard> res = new ArrayList<NmdProductCard>();
 		List<NmdProductCard> allProducts = candidates.stream().flatMap(e -> e.getProducts().stream())
 				.collect(Collectors.toList());
 		List<MaterialSource> mats = mpgElement.getMpgObject().getListedMaterials();
 		List<NmdProductCard> viableCandidates = new ArrayList<NmdProductCard>();
 
+		// currently: select most favorable card
 		Function<List<NmdProductCard>, NmdProductCard> selectCard = (list) -> {
 			list.sort((pc1, pc2) -> pc1.getProfileSetsCoeficientSum().compareTo(pc2.getProfileSetsCoeficientSum()));
 			return list.get(0);
@@ -203,7 +199,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// specifications
 		mats.forEach(mat -> {
 			List<NmdProductCard> productOptions = sortProductsBasedOnStringSimilarity(mat.getName(), allProducts, 3);
-			
+
 			for (NmdProductCard card : productOptions) {
 				// per found element we should try to select a fitting productCard
 				int dims = NmdScalingUnitConverter.getUnitDimension(card.getUnit());
@@ -233,14 +229,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		return viableCandidates;
 	}
 
-	private List<NmdProductCard> sortProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts, Integer cutOff) {
+	private List<NmdProductCard> sortProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts,
+			Integer cutOff) {
 		// sort the found products for every entry in the material list
 		List<NmdProductCard> selectedProducts = new ArrayList<NmdProductCard>();
-		allProducts.sort((p1, p2) -> Integer.compare(getMinLevenshteinDistance(name, p2.getDescription()),
-				getMinLevenshteinDistance(name, p1.getDescription())));
-		
-		for(int i = allProducts.size() - 1; i >= 0; i--) {
-			// ToDo cutoff items that have nothing to do with the actul naming rather than a hard coded cutoff
+		allProducts.sort((p1, p2) -> Integer.compare(getMinLevenshteinDistance(name, p1.getDescription()),
+				getMinLevenshteinDistance(name, p2.getDescription())));
+
+		for (int i = allProducts.size() - 1; i >= 0; i--) {
+			// ToDo cutoff items that have nothing to do with the actul naming rather than a
+			// hard coded cutoff
 			if (i < cutOff) {
 				selectedProducts.add(new NmdProductCardImpl(allProducts.get(i)));
 			}
@@ -251,8 +249,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private Integer getMinLevenshteinDistance(String name, String description) {
 		List<String> words = Arrays.asList(description.split(" "));
 		words.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
-		words.sort((w1, w2) -> Integer.compare(
-				StringUtils.getLevenshteinDistance((CharSequence) name, w1),
+		words.sort((w1, w2) -> Integer.compare(StringUtils.getLevenshteinDistance((CharSequence) name, w1),
 				StringUtils.getLevenshteinDistance((CharSequence) name, w2)));
 		return StringUtils.getLevenshteinDistance((CharSequence) name, words.get(0));
 	}
@@ -419,6 +416,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		elementMap.put("Pile", new String[] { "17." });
 		elementMap.put("Column", new String[] { "17.", "28.1" });
 		elementMap.put("Wall", new String[] { "21.", "22." });
+		elementMap.put("WallStandardCase", new String[] { "21.", "22." });
 		elementMap.put("CurtainWall", new String[] { "21.24", "32.4" });
 		elementMap.put("Stair", new String[] { "24." });
 		elementMap.put("Roof", new String[] { "27." });
