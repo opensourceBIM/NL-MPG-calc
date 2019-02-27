@@ -15,6 +15,7 @@ import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
+import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.ifccollection.NlsfbCode;
@@ -307,28 +308,34 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		HashMap<String, String[]> map = getProductTypeToNmdElementMap();
 		String[] emptyMap = null;
-
+		
 		this.getStore().getElements().forEach(el -> {
-
-			// find NLsfb codes for child objects that have no cde themselves.
+			
+			// find NLsfb codes for child objects that have no code themselves.
 			MpgObject o = el.getMpgObject();
-			if (!o.hasNlsfbCode()) {
-				if (!o.getParentId().isEmpty()) {
-					MpgObject p = this.getStore().getObjectByGuid(o.getParentId()).get();
+			String[] foundMap = map.getOrDefault(o.getObjectType(), emptyMap);
+			
+			boolean hasParent = o.getParentId() != null && !o.getParentId().isEmpty();
+			MpgObject p = new MpgObjectImpl();
+			if (hasParent) {
+				p = this.getStore().getObjectByGuid(o.getParentId()).get();
+				
+				if (!o.hasNlsfbCode()) {
+					
 					String parentCode = p.getNLsfbCode();
 					if (parentCode != null && !parentCode.isEmpty()) {
 						o.setNLsfbCode(parentCode);
 						o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "resolved from: " + p.getGlobalId());
 					}
 				}
+				
+				// Now add all aternatives to fall back on should the first mapping give no or
+				if (foundMap == null) {
+					foundMap = map.getOrDefault(p.getObjectType(), emptyMap);
+				} 
 			}
-
-			// Now add all aternatives to fall back on should the first mapping give no or
-			// non feasible results
-			String[] foundMap = map.getOrDefault(o.getObjectType(), emptyMap);
-			if (foundMap == null) {
-				return;
-			} else {
+			
+			if(foundMap != null && foundMap.length > 0) {
 				o.addNlsfbAlternatives(new HashSet<String>(Arrays.asList(foundMap)));
 			}
 		});
