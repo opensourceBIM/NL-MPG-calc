@@ -153,7 +153,7 @@ public class MpgIfcObjectCollector {
 
 		Map<String, String> childToParentMap = new HashMap<String, String>();
 
-		// loop through IfcProduct that constitute the physical building.
+		// loop through IfcProducts that constitute the physical building.
 		for (IfcProduct product : ifcModel.getAllWithSubTypes(IfcProduct.class)) {
 
 			// ignore any elements that are irrelevant for the mpg calculations
@@ -217,7 +217,7 @@ public class MpgIfcObjectCollector {
 		}
 
 		// set all parent child relations for elements
-		objectStore.recreateParentChildMap(childToParentMap);
+		objectStore.reloadParentChildRelationShips(childToParentMap);
 
 		return objectStore;
 	}

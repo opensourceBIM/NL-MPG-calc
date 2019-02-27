@@ -230,7 +230,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 * @param isDecomposedByrelationMap hashMap containing the guids of decomposed
 	 *                                  and decomposing objects.
 	 */
-	public void recreateParentChildMap(Map<String, String> isDecomposedByrelationMap) {
+	public void reloadParentChildRelationShips(Map<String, String> isDecomposedByrelationMap) {
 
 		this.getObjects().forEach(o -> {
 			if (isDecomposedByrelationMap.containsKey(o.getGlobalId())) {
@@ -239,7 +239,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		});
 
 		// create a list with parent ids linked to child objects
-		this.decomposedRelations = this.getObjects().stream().filter(o -> StringUtils.isBlank(o.getParentId()))
+		this.decomposedRelations = this.getObjects().stream().filter(o -> !StringUtils.isBlank(o.getParentId()))
 				.map(o -> new ImmutablePair<String, MpgObject>(o.getParentId(), o)).collect(Collectors.toList());
 	}
 
