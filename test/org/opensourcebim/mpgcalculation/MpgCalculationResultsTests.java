@@ -35,44 +35,44 @@ public class MpgCalculationResultsTests {
 
 	@Test
 	public void testCanAddSingleFactorToResults() {
-		results.incrementCostFactor(
+		results.addCostFactor(
 				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
-				"concrete", "");
+				"concrete", "", Long.MAX_VALUE);
 		assertEquals(1.0, results.getTotalCost(), 1e-8);
 	}
 
 	@Test
 	public void testGetResultsByStageReturnsZeroOnNoFactorsFound() {
-		results.incrementCostFactor(
+		results.addCostFactor(
 				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
-				"concrete", "");
+				"concrete", "", Long.MAX_VALUE);
 		assertEquals(0.0, results.getCostPerLifeCycle("ConstructionAndReplacements"), 1e-8);
 	}
 
 	@Test
 	public void testGetResultsByImpcatFactorReturnsZeroOnNoFactorsFound() {
-		results.incrementCostFactor(
+		results.addCostFactor(
 				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
-				"concrete", "");
+				"concrete", "", Long.MAX_VALUE);
 		assertEquals(0.0, results.getCostPerImpactFactor("Acidifcation"), 1e-8);
 	}
 
 	@Test
 	public void testGetResultsByNameReturnsZeroOnNoFactorsFound() {
-		results.incrementCostFactor(
+		results.addCostFactor(
 				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
-				"concrete", "");
+				"concrete", "", Long.MAX_VALUE);
 		assertEquals(0.0, results.getCostPerProductName("no concrete"), 1e-8);
 	}
 
 	@Test
 	public void testCostFactorsAddToOriginalOnDuplicateKey() {
-		results.incrementCostFactor(
+		results.addCostFactor(
 				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
-				"concrete", "");
-		results.incrementCostFactor(
+				"concrete", "", Long.MAX_VALUE);
+		results.addCostFactor(
 				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 1.0),
-				"concrete", "");
+				"concrete", "", Long.MAX_VALUE);
 		assertEquals(2.0, results.getTotalCost(), 1e-8);
 	}
 
@@ -95,16 +95,16 @@ public class MpgCalculationResultsTests {
 	}
 
 	private void addFactorsTestSet() {
-		results.incrementCostFactor(
+		results.addCostFactor(
 				new MpgCostFactor("TransportToSite", "Acidifcation", 1.0), "concrete",
-				"");
-		results.incrementCostFactor(
+				"", Long.MAX_VALUE);
+		results.addCostFactor(
 				new MpgCostFactor("TransportToSite", "AbioticDepletionFuel", 2.0),
-				"brick", "");
-		results.incrementCostFactor(
-				new MpgCostFactor("Disposal", "AbioticDepletionFuel", 4.0), "steel", "");
-		results.incrementCostFactor(new MpgCostFactor("Recycling", "Eutrophication", 8.0),
-				"steel", "");
+				"brick", "", Long.MAX_VALUE);
+		results.addCostFactor(
+				new MpgCostFactor("Disposal", "AbioticDepletionFuel", 4.0), "steel", "", Long.MAX_VALUE);
+		results.addCostFactor(new MpgCostFactor("Recycling", "Eutrophication", 8.0),
+				"steel", "", Long.MAX_VALUE);
 	}
 
 }

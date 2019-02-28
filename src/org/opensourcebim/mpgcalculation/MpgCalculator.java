@@ -21,7 +21,6 @@ public class MpgCalculator {
 
 	private MpgObjectStore objectStore = null;
 	private MpgCalculationResults results;
-	private NmdScalingUnitConverter converter;
 
 	public MpgCalculator() {
 		reset();
@@ -60,7 +59,6 @@ public class MpgCalculator {
 
 					// get number of product units based on geometry of ifcproduct and unit of
 					// productcard
-					// TODO: handle density conversions and/or energy water use conversion
 					double unitsRequired = product.getRequiredNumberOfUnits(element.getMpgObject());
 
 					for (NmdProfileSet profielSet : product.getProfileSets()) {
@@ -84,7 +82,6 @@ public class MpgCalculator {
 										scaleFactor = scaler.scaleWithConversion(dims, unitConversionFactor);
 									}
 								}
-
 							}
 
 							// calculate total units required taking into account category modifiers.
@@ -95,10 +92,10 @@ public class MpgCalculator {
 							// example for production
 							profielSet.getAllFaseProfielen().values().forEach(fp -> {
 								Set<MpgCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfiel);
-								results.incrementCostFactors(factors, product.getDescription(), profielSet.getName());
+								Long objectId = element.getMpgObject().getObjectId();
+								results.addCostFactors(factors, product.getDescription(), profielSet.getName(), objectId);
 							});
 						}
-
 					}
 				}
 			}
