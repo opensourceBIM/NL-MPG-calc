@@ -1,6 +1,7 @@
-package org.opensourcebim.nmd;
+package org.opensourcebim.mapping;
 
 import org.opensourcebim.ifccollection.MpgObjectStore;
+import org.opensourcebim.nmd.NmdDataService;
 
 /**
  * Interface to combine different data sources and help the user seelct the right

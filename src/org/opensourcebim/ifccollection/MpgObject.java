@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.opensourcebim.mapping.NlsfbCode;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public interface MpgObject {

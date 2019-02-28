@@ -1,4 +1,4 @@
-package org.opensourcebim.nmd;
+package org.opensourcebim.mapping;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +18,16 @@ import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
-import org.opensourcebim.ifccollection.NlsfbCode;
+import org.opensourcebim.nmd.Nmd2DataService;
+import org.opensourcebim.nmd.NmdDataService;
+import org.opensourcebim.nmd.NmdUserDataConfig;
+import org.opensourcebim.nmd.NmdUserDataConfigImpl;
+import org.opensourcebim.nmd.NmdElement;
+import org.opensourcebim.nmd.NmdMapping;
+import org.opensourcebim.nmd.NmdMappingDataService;
+import org.opensourcebim.nmd.NmdProductCard;
+import org.opensourcebim.nmd.NmdProductCardImpl;
+import org.opensourcebim.nmd.NmdProfileSet;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
@@ -32,13 +41,13 @@ import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 public class NmdDataResolverImpl implements NmdDataResolver {
 
 	private NmdDataService service;
-	private NmdMappingService mappingService;
+	private NmdMappingDataService mappingService;
 	private MpgObjectStore store;
 
 	public NmdDataResolverImpl() {
-		NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
+		NmdUserDataConfig config = new NmdUserDataConfigImpl();
 		setService(new Nmd2DataService(config));
-		setMappingService(new NmdUserMappingService());
+		setMappingService(new NmdMappingDataServiceImpl(config));
 	}
 
 	public MpgObjectStore getStore() {
@@ -325,7 +334,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 */
 	public void resolveNlsfbCodes() {
 
-		HashMap<String, String[]> map = getProductTypeToNmdElementMap();
+		HashMap<String, String[]> map = getMappingService().getNlsfbMappings();
 		String[] emptyMap = null;
 
 		this.getStore().getElements().forEach(el -> {
@@ -437,34 +446,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 	}
 
-	private HashMap<String, String[]> getProductTypeToNmdElementMap() {
-		HashMap<String, String[]> elementMap = new HashMap<String, String[]>();
-		elementMap.put("BuildingElementProxy", new String[] { "11.", "32.35", "32.36", "32.37", "32.38", "32.39" });
-		elementMap.put("Footing", new String[] { "16." });
-		elementMap.put("Slab", new String[] { "13.", "23.", "28.2", "28.3", "33.21" });
-		elementMap.put("Pile", new String[] { "17." });
-		elementMap.put("Column", new String[] { "17.", "28.1" });
-		elementMap.put("Wall", new String[] { "21.", "22." });
-		elementMap.put("WallStandardCase", new String[] { "21.", "22." });
-		elementMap.put("CurtainWall", new String[] { "21.24", "32.4" });
-		elementMap.put("Stair", new String[] { "24." });
-		elementMap.put("Roof", new String[] { "27." });
-		elementMap.put("Beam", new String[] { "28." });
-		elementMap.put("Window", new String[] { "31.2", "32.12", "32.2", "37.2" });
-		elementMap.put("Door", new String[] { "31.3", "32.11", "32.3" });
-		elementMap.put("Railing", new String[] { "34." });
-		elementMap.put("Covering", new String[] { "41.", "42.", "43.", "44.", "45.", "47.", "48." });
-		elementMap.put("FlowSegment", new String[] { "52.", "53.", "55.", "56.", "57." }); // many more
-		elementMap.put("FlowTerminal", new String[] { "74.1", "74.2" }); // many more
-
-		return elementMap;
-	}
-
-	public NmdMappingService getMappingService() {
+	public NmdMappingDataService getMappingService() {
 		return mappingService;
 	}
 
-	public void setMappingService(NmdMappingService mappingService) {
+	public void setMappingService(NmdMappingDataService mappingService) {
 		this.mappingService = mappingService;
 	}
 

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import org.opensourcebim.ifccollection.NlsfbCode;
+import org.opensourcebim.mapping.NlsfbCode;
 
 /**
  * Standard interface to provide material data from the source to the user.

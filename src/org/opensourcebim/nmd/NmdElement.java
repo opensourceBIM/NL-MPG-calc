@@ -3,7 +3,7 @@ package org.opensourcebim.nmd;
 import java.util.Collection;
 import java.util.List;
 
-import org.opensourcebim.ifccollection.NlsfbCode;
+import org.opensourcebim.mapping.NlsfbCode;
 
 public interface NmdElement {
 

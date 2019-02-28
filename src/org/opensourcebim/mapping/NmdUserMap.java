@@ -1,4 +1,4 @@
-package org.opensourcebim.nmd;
+package org.opensourcebim.mapping;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -8,8 +8,8 @@ import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.plugins.PluginConfiguration;
 import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.nmd.NmdDataResolver;
-import org.opensourcebim.nmd.NmdDataResolverImpl;
+import org.opensourcebim.mapping.NmdDataResolver;
+import org.opensourcebim.mapping.NmdDataResolverImpl;
 
 public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 

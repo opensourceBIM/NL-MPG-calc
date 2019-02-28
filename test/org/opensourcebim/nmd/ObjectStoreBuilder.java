@@ -11,7 +11,7 @@ import org.opensourcebim.ifccollection.MpgLayerImpl;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
-import org.opensourcebim.ifccollection.NlsfbCode;
+import org.opensourcebim.mapping.NlsfbCode;
 import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
 public class ObjectStoreBuilder {

@@ -1,4 +1,4 @@
-package org.opensourcebim.ifccollection;
+package org.opensourcebim.mapping;
 
 import java.util.Arrays;
 import java.util.List;

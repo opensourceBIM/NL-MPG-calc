@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Nmd3DataServiceTests {
 
 	private Nmd3DataService db;
-	private NmdDatabaseConfig config;
+	private NmdUserDataConfig config;
 
 	public Nmd3DataServiceTests() {
 	}
@@ -37,7 +37,7 @@ public class Nmd3DataServiceTests {
 	}
 
 	public void connect() {
-		config = new NmdDatabaseConfigImpl();
+		config = new NmdUserDataConfigImpl();
 		db = new Nmd3DataService(config);
 		db.login();
 	}
@@ -53,7 +53,7 @@ public class Nmd3DataServiceTests {
 
 	@Test
 	public void testDbIsInitiallyNotLoggedIn() {
-		config = new NmdDatabaseConfigImpl();
+		config = new NmdUserDataConfigImpl();
 		db = new Nmd3DataService(config);
 		assertFalse(db.getIsConnected());
 	}
@@ -61,7 +61,7 @@ public class Nmd3DataServiceTests {
 	@Test
 	public void testDatabaseCannotConnectWithoutCorrectRefreshToken() {
 		// recreate the connection and check that the login failed
-		NmdDatabaseConfigImpl wrong = new NmdDatabaseConfigImpl();
+		NmdUserDataConfigImpl wrong = new NmdUserDataConfigImpl();
 		wrong.setToken("wrong token");
 
 		db = new Nmd3DataService(wrong);
@@ -71,7 +71,7 @@ public class Nmd3DataServiceTests {
 	@Test
 	public void testDatabaseCannotConnectWithoutCorrectClientId() {
 		// recreate the connection and check that the login failed
-		NmdDatabaseConfigImpl wrong = new NmdDatabaseConfigImpl();
+		NmdUserDataConfigImpl wrong = new NmdUserDataConfigImpl();
 		wrong.setClientId(42);
 
 		db = new Nmd3DataService(wrong);

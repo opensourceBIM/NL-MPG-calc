@@ -13,6 +13,7 @@ import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
+import org.opensourcebim.mapping.NmdDataResolverImpl;
 
 public class NmdDataResolverTests {
 

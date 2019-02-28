@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.emf.common.util.BasicEList;
+import org.opensourcebim.mapping.NlsfbCode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
