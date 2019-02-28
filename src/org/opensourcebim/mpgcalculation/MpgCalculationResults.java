@@ -81,8 +81,9 @@ public class MpgCalculationResults {
 		mpgCostFactor.setProductName(product);
 		mpgCostFactor.setProfielSetName(specName);
 		mpgCostFactor.setObjectId(objectId);
-
-		costFactors.add(mpgCostFactor);
+		if (!mpgCostFactor.getValue().isNaN()) {
+			costFactors.add(mpgCostFactor);
+		}
 	}
 
 	@JsonIgnore

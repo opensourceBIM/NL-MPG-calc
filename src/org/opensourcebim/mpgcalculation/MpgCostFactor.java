@@ -30,7 +30,7 @@ public class MpgCostFactor {
 		this.productName = product;
 	}
 
-	public double getValue() {
+	public Double getValue() {
 		return value;
 	}
 	public void setValue(double val) {
