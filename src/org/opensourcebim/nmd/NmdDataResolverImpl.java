@@ -347,7 +347,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					String parentCode = p.getNLsfbCode();
 					if (parentCode != null && !parentCode.isEmpty()) {
 						o.setNLsfbCode(parentCode);
-						o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "resolved from: " + p.getGlobalId());
+						o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "Resolved from: " + p.getGlobalId());
 					}
 				}
 
@@ -393,7 +393,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			if (geom != null) {
 				o.getGeometry().setDimensionsByVolumeRatio(geom);
 				o.getGeometry().setIsComplete(true);
-				o.addTag(MpgInfoTagType.geometryFromResolvedType, "dimensions resolved by NLsfb match");
+				o.addTag(MpgInfoTagType.geometryFromResolvedType, "Dimensions resolved by NLsfb match");
 			} else {
 				// fallback option is to look at similar IfcProducts
 				String prodTypeKey = o.getObjectType();
@@ -407,7 +407,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				if (geom != null) {
 					o.getGeometry().setDimensionsByVolumeRatio(geom);
 					o.getGeometry().setIsComplete(true);
-					o.addTag(MpgInfoTagType.geometryFromResolvedType, "dimensions resolved by IfcProduct type match");
+					o.addTag(MpgInfoTagType.geometryFromResolvedType, "Dimensions resolved by IfcProduct type match");
 				}
 			}
 		});

@@ -13,7 +13,7 @@ public class MpgInfoTag {
 		return this.type;
 	}
 	
-	public String getMesssage() {
+	public String getMessage() {
 		return this.message;
 	}
 }

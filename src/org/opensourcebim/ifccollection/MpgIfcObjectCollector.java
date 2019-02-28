@@ -188,10 +188,10 @@ public class MpgIfcObjectCollector {
 				MpgGeometry geom = getGeometryFromProduct(product);
 				if (geom.getVolume().isNaN()) {
 					// if the geomServer does not return a volume we have to try it through properties.
-					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "geometry from properties");
+					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "Geometry from properties");
 					mpgObject.setGeometry(this.getGeometryFromPropertySet(product, mpgObject));
 				} else {
-					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "geometry from ifcopenShell");
+					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "Geometry from ifcopenShell");
 					mpgObject.setGeometry(geom);
 				}
 
