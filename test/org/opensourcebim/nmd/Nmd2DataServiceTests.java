@@ -1,6 +1,5 @@
 package org.opensourcebim.nmd;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
@@ -19,7 +18,6 @@ public class Nmd2DataServiceTests {
 
 	@Before
 	public void setUp() throws Exception {
-		this.db = new Nmd2DataService();
 		this.connect();
 	}
 
@@ -29,7 +27,7 @@ public class Nmd2DataServiceTests {
 	}
 
 	public void connect() {
-		db = new Nmd2DataService();
+		db = new Nmd2DataService(new NmdDatabaseConfigImpl());
 		db.login();
 		db.preLoadData();
 	}

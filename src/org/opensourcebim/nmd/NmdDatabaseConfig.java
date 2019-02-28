@@ -16,4 +16,6 @@ public interface NmdDatabaseConfig {
 	 * Company specific client id for authorization
 	 */
 	Integer getClientId();
+
+	public String getNmd2DbPath();
 }

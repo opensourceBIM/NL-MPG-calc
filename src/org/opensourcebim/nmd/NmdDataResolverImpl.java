@@ -36,8 +36,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private MpgObjectStore store;
 
 	public NmdDataResolverImpl() {
-		// NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
-		setService(new Nmd2DataService());
+		NmdDatabaseConfig config = new NmdDatabaseConfigImpl();
+		setService(new Nmd2DataService(config));
 		setMappingService(new NmdUserMappingService());
 	}
 
@@ -199,7 +199,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// Find per material the most likely candidates that fall within the
 		// specifications
 		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
-		
+
 		mats.forEach(mat -> {
 			List<NmdProductCard> productOptions = sortProductsBasedOnStringSimilarity(mat.getName(), allProducts, 3);
 
@@ -236,8 +236,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			Integer cutOff) {
 		// sort the found products for every entry in the material list
 		List<NmdProductCard> selectedProducts = new ArrayList<NmdProductCard>();
-		allProducts.sort((p1, p2) -> Integer.compare(getMinLevenshteinDistance(name, p1),
-				getMinLevenshteinDistance(name, p2)));
+		allProducts.sort((p1, p2) -> Integer.compare(getMinLevenshteinDistanceForProduct(name, p1),
+				getMinLevenshteinDistanceForProduct(name, p2)));
 
 		for (int i = allProducts.size() - 1; i >= 0; i--) {
 			// ToDo cutoff items that have nothing to do with the actul naming rather than a
@@ -250,16 +250,25 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * Determine the minimum levenshstein distance with respect to the profiel set descriptions of the product card
+	 * Determine the minimum levenshstein distance with respect to the various
+	 * descriptions within the productCard
+	 * 
 	 * @param refWord reference word to search for within the product card
-	 * @param card NmdProductCard object with > 0 profileSets
-	 * @return the minimum levensthein distance of the reference word wrt any of the profileSet names
+	 * @param card    NmdProductCard object with > 0 profileSets
+	 * @return the minimum levensthein distance of the reference word wrt any of the
+	 *         profileSet names
 	 */
-	private Integer getMinLevenshteinDistance(String refWord, NmdProductCard card) {
+	private Integer getMinLevenshteinDistanceForProduct(String refWord, NmdProductCard card) {
+		// get all words in the profileSet names and clean them
 		List<String> keyWords = card.getProfileSets().stream()
-				.flatMap(ps -> Arrays.asList(ps.getName().split(" ")).stream())
-				.filter(w -> !w.isEmpty()).collect(Collectors.toList());
+				.flatMap(ps -> Arrays.asList(ps.getName().split(" ")).stream()).filter(w -> !w.isEmpty())
+				.collect(Collectors.toList());
+		keyWords.addAll(Arrays.asList(card.getDescription().split(" ")));
 		keyWords.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
+
+		// ToDo: compare with pre generated keyword dictionary to make a pre-selection
+
+		// sort the remaining keyWords based on levenshtein distance.
 		keyWords.sort((w1, w2) -> Integer.compare(StringUtils.getLevenshteinDistance((CharSequence) refWord, w1),
 				StringUtils.getLevenshteinDistance((CharSequence) refWord, w2)));
 		return StringUtils.getLevenshteinDistance((CharSequence) refWord, keyWords.get(0));
@@ -318,34 +327,37 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		HashMap<String, String[]> map = getProductTypeToNmdElementMap();
 		String[] emptyMap = null;
-		
+
 		this.getStore().getElements().forEach(el -> {
-			
+
 			// find NLsfb codes for child objects that have no code themselves.
 			MpgObject o = el.getMpgObject();
 			String[] foundMap = map.getOrDefault(o.getObjectType(), emptyMap);
-			
-			boolean hasParent = o.getParentId() != null && !o.getParentId().isEmpty();
+
+			boolean hasParent = (o.getParentId() != null) && !o.getParentId().isEmpty();
 			MpgObject p = new MpgObjectImpl();
 			if (hasParent) {
-				p = this.getStore().getObjectByGuid(o.getParentId()).get();
-				
+				try {
+					p = this.getStore().getObjectByGuid(o.getParentId()).get();
+				} catch (Exception e) {
+					System.out.println("should not happen?");
+				}
 				if (!o.hasNlsfbCode()) {
-					
+
 					String parentCode = p.getNLsfbCode();
 					if (parentCode != null && !parentCode.isEmpty()) {
 						o.setNLsfbCode(parentCode);
 						o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "resolved from: " + p.getGlobalId());
 					}
 				}
-				
+
 				// Now add all aternatives to fall back on should the first mapping give no or
 				if (foundMap == null) {
 					foundMap = map.getOrDefault(p.getObjectType(), emptyMap);
-				} 
+				}
 			}
-			
-			if(foundMap != null && foundMap.length > 0) {
+
+			if (foundMap != null && foundMap.length > 0) {
 				o.addNlsfbAlternatives(new HashSet<String>(Arrays.asList(foundMap)));
 			}
 		});

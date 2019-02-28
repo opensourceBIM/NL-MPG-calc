@@ -19,21 +19,21 @@ import java.sql.Statement;
 
 public class Nmd2DataService implements NmdDataService {
 	private Connection connection;
-	Path userDir = Paths.get(System.getProperty("user.dir")).getParent().getParent()
-			.resolve("BouwBesluitMaterials");
-	private String dbPath = "\\src\\data\\";
-	private String dbName = "NMD_2.2_OPLEVERING_20180626_AANGEPAST.db";
+	
+	private String dbName = "//NMD_2.2_OPLEVERING_20180626_AANGEPAST.db";
+	private NmdDatabaseConfig config;
 	private List<NmdElement> data;
 	private NmdReferenceResources resources;
 
-	public Nmd2DataService() {
+	public Nmd2DataService(NmdDatabaseConfig config) {
+		this.config = config;
 		this.data = new ArrayList<NmdElement>();
 	}
 
 	@Override
 	public void login() {
 		try {
-			connection = DriverManager.getConnection("jdbc:sqlite:" + userDir.toAbsolutePath() + dbPath + dbName);
+			connection = DriverManager.getConnection("jdbc:sqlite:" + config.getNmd2DbPath() + dbName);
 		} catch (SQLException e) {
 			// if the error message is "out of memory",
 			// it probably means no database file is found
