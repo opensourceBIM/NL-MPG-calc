@@ -18,5 +18,5 @@ public interface NmdMappingDataService {
 	
 	Map<String, List<String>> getNlsfbMappings();
 	
-	Map<String, Long> getKeyWordMappings();
+	Map<String, Long> getKeyWordMappings(Integer minOccurence);
 }

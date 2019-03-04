@@ -24,4 +24,6 @@ public interface NmdUserDataConfig {
 	String getNlsfbAlternativesFilePath();
 
 	String getMappingDbPath();
+
+	public String getCommonWordDutchFilePath();
 }

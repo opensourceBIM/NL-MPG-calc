@@ -38,6 +38,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 
 	private String mat_keyword_table = "ifc_material_keywords";
 	private String ifc_to_nlsfb_table = "ifc_to_nlsfb_map";
+	private String common_word_dutch_table = "common_words_dutch_table";
 
 	public NmdMappingDataServiceImpl(NmdUserDataConfig config) {
 		super(config);
@@ -81,13 +82,15 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 	}
 	
 	@Override
-	public Map<String, Long> getKeyWordMappings() {
+	public Map<String, Long> getKeyWordMappings(Integer minOccurence) {
 		HashMap<String, Long> keyWordMap = new HashMap<String, Long>();
 		try {
 			Statement statement = connection.createStatement();
 			statement.setQueryTimeout(30);
 
-			ResultSet rs = statement.executeQuery("Select * from " + this.mat_keyword_table);
+			ResultSet rs = statement.executeQuery(
+					"Select * from " + this.mat_keyword_table + " "
+					+ "where count >= " + minOccurence.toString());
 			System.out.println("");
 			while (rs.next()) {
 				String keyWord = rs.getString("keyword").trim();
@@ -103,8 +106,39 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 	}
 
 	public void regenerateMappingData() {
-		regenerateIfcToNlsfbMappings();
+		createCommonWordsTable();
 		regenerateMaterialKeyWords();
+		regenerateIfcToNlsfbMappings();
+	}
+
+	/**
+	 * load common word files into the database. These can be used to remove often used words from keyword selection
+	 */
+	private void createCommonWordsTable() {
+		try {
+			String tableName = this.common_word_dutch_table ;
+			CSVReader reader = new CSVReader(new FileReader(config.getCommonWordDutchFilePath()));
+			List<String[]> myEntries = reader.readAll();
+			reader.close();
+
+			String[] headers = myEntries.get(0);
+			List<String[]> values = myEntries.subList(1, myEntries.size());
+			if (headers.length == 1) {
+				deleteTable(tableName);
+
+				String createTableSql = "CREATE TABLE IF NOT EXISTS " + tableName + " (\n"
+						+ "	id integer PRIMARY KEY AUTOINCREMENT,\n"
+						+ "	word text NOT NULL\n" + ");";
+				this.executeAndCommitCommand(createTableSql);
+				this.executeAndCommitCommand(createSqlInsertStatement(tableName, headers, values));
+
+			} else {
+				// our import file does not seem to be in the assumed structure.
+				System.out.println("incorrect input data encountered.");
+			}
+		} catch (SQLException|IOException e) {
+			System.err.println("error occured with creating common word table " + e.getMessage());
+		}
 	}
 
 	/**
@@ -122,8 +156,8 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 			Files.walk(Paths.get(config.getIFcFilesForKeyWordMapRootPath()))
 					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc"))
 					.filter(p -> {
-						// filter on max file size (50 MB) limit on 5e7
-						return (new File(p.toAbsolutePath().toString())).length() < 5e7; 
+						// filter on max file size. example: 50 MB limit on 5e7
+						return (new File(p.toAbsolutePath().toString())).length() < 1e8; 
 					})
 					.forEach(p -> {
 						foundFiles.add(p);
@@ -140,7 +174,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 						if (matRes != null) {
 							for (int i = 0; i < matRes.length; i++) {
 								if (matRes[i] != null) {
-									List<String> words = Arrays.asList(matRes[i].split(" |-|,|_")).stream()
+									List<String> words = Arrays.asList(matRes[i].split(" |-|,|_|\\|(|)|<|>|:|;")).stream()
 											.filter(w -> w != null && !w.isEmpty()).map(w -> w.toLowerCase())
 											.collect(Collectors.toList());
 									fileMaterials.addAll(words);
@@ -155,21 +189,48 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
-
+		
+		List<String> common_words = getCommonWordsDutch();
 		Map<String, Long> wordCount = allMaterials.stream()
 				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 		List<Entry<String, Long>> filteredWordCount = wordCount.entrySet().stream()
 				.filter(w -> w.getKey().toCharArray().length > 2) // remove items that are simply too short
-				.filter(w -> w.getKey().replaceAll("[^a-zA-Z]", "").length() != 0) // remove purely numerical content
+				.filter(w -> 2 * w.getKey().replaceAll("[^a-zA-Z]", "").length() >= w.getKey().length() ) // remove items with too large ratio of non-text content
+				.filter(w -> !common_words.contains(w.getKey()))
 				.sorted((w1, w2) -> {
 					return w1.getValue().compareTo(w2.getValue());
 				}).collect(Collectors.toList());
+		
+
+		
+		
 		writeKeyWordsToDB(filteredWordCount);
+	}
+
+	private List<String> getCommonWordsDutch() {
+		List<String> commonWords = new ArrayList<String>();
+		try {
+			Statement statement = connection.createStatement();
+			statement.setQueryTimeout(30);
+
+			ResultSet rs = statement.executeQuery("Select * from " + this.common_word_dutch_table);
+			System.out.println("");
+			while (rs.next()) {
+				String word = rs.getString("word").trim();
+				commonWords.add(word);
+			}
+
+			statement.close();
+		} catch (SQLException e) {
+			System.err.println("error querying keyword map : " + e.getMessage());
+		}
+		return commonWords;
 	}
 
 	private Boolean writeKeyWordsToDB(List<Entry<String, Long>> words) {
 		String tableName = this.mat_keyword_table;
 		String[] headers = new String[] { "keyword", "count" };
+		
 		List<String[]> values = words.stream()
 				.map(w -> new String[] { w.getKey(), w.getValue().toString() })
 				.collect(Collectors.toList());
