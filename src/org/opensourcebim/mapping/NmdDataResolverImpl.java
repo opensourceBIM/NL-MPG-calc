@@ -208,9 +208,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// Find per material the most likely candidates that fall within the
 		// specifications
 		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
-
 		mats.forEach(mat -> {
-			List<NmdProductCard> productOptions = sortProductsBasedOnStringSimilarity(mat.getName(), allProducts, 3);
+			List<NmdProductCard> productOptions = sortProductsBasedOnStringSimilarity(mat.getName(), allProducts, .10);
 
 			for (NmdProductCard card : productOptions) {
 				// per found element we should try to select a fitting productCard
@@ -235,26 +234,28 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			if (productOptions.size() > 0) {
 				viableCandidates.add(selectCard.apply(productOptions));
 			}
-
 		});
 
 		return viableCandidates;
 	}
 
 	private List<NmdProductCard> sortProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts,
-			Integer cutOff) {
+			Double cutOff) {
 		// sort the found products for every entry in the material list
 		List<NmdProductCard> selectedProducts = new ArrayList<NmdProductCard>();
-		allProducts.sort((p1, p2) -> Integer.compare(getMinLevenshteinDistanceForProduct(name, p1),
-				getMinLevenshteinDistanceForProduct(name, p2)));
 
-		for (int i = allProducts.size() - 1; i >= 0; i--) {
-			// ToDo cutoff items that have nothing to do with the actul naming rather than a
-			// hard coded cutoff
-			if (i < cutOff) {
-				selectedProducts.add(new NmdProductCardImpl(allProducts.get(i)));
+		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();
+		allProducts.forEach(p -> prods.add(new ImmutablePair(p, getMinLevenshteinScoreForProduct(name, p))));
+		prods.sort((p1, p2) -> Double.compare(p1.getValue(), p2.getValue()));
+
+		Double benchMark = prods.get(0).getValue() / name.toCharArray().length;
+		System.out.println("");
+		for (Pair<NmdProductCard, Double> pv : prods) {
+			if (pv.getValue() / name.toCharArray().length <= benchMark * (1 + cutOff)) {
+				selectedProducts.add(pv.getKey());
 			}
 		}
+		;
 		return selectedProducts;
 	}
 
@@ -267,20 +268,40 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return the minimum levensthein distance of the reference word wrt any of the
 	 *         profileSet names
 	 */
-	private Integer getMinLevenshteinDistanceForProduct(String refWord, NmdProductCard card) {
+	private Double getMinLevenshteinScoreForProduct(String refWord, NmdProductCard card) {
 		// get all words in the profileSet names and clean them
+		String splitChars = " |-|,";
 		List<String> keyWords = card.getProfileSets().stream()
-				.flatMap(ps -> Arrays.asList(ps.getName().split(" ")).stream()).filter(w -> !w.isEmpty())
-				.collect(Collectors.toList());
-		keyWords.addAll(Arrays.asList(card.getDescription().split(" ")));
+				.flatMap(ps -> Arrays.asList(ps.getName().split(splitChars)).stream())
+				.filter(w -> !w.isEmpty() && w.length() > 2).collect(Collectors.toList());
+		keyWords.addAll(Arrays.asList(card.getDescription().split(splitChars)));
 		keyWords.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
 
-		// ToDo: compare with pre generated keyword dictionary to make a pre-selection
+		// ToDo: compare refWords with pre generated keyword dictionary to make a
+		// pre-selection of what is relevant and what not.
 
-		// sort the remaining keyWords based on levenshtein distance.
-		keyWords.sort((w1, w2) -> Integer.compare(StringUtils.getLevenshteinDistance((CharSequence) refWord, w1),
-				StringUtils.getLevenshteinDistance((CharSequence) refWord, w2)));
-		return StringUtils.getLevenshteinDistance((CharSequence) refWord, keyWords.get(0));
+		// get min levenshtein distance for each ref word and penalize for the
+		// superfluous data
+		List<String> refs = Arrays.asList(refWord.split(splitChars)).stream().filter(r -> r.length() >= 2)
+				.collect(Collectors.toList());
+
+		return calculateLevenshteinScore(refs, keyWords);
+	}
+
+	@SuppressWarnings("deprecation")
+	private Double calculateLevenshteinScore(List<String> refs, List<String> keyWords) {
+
+		Double sum = 0.0;
+		for (String ref : refs) {
+			keyWords.sort(
+					(w1, w2) -> Double.compare((double) StringUtils.getLevenshteinDistance((CharSequence) ref, w1),
+							(double) StringUtils.getLevenshteinDistance((CharSequence) ref, w2)));
+			sum += (double) StringUtils.getLevenshteinDistance((CharSequence) ref, keyWords.get(0));
+		}
+
+		// penalize on word count difference
+		sum += 0.5 * Math.abs(keyWords.size() - refs.size());
+		return sum;
 	}
 
 	/**
