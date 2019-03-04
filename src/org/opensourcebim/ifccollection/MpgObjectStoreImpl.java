@@ -368,6 +368,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
+	@JsonIgnore
 	public Stream<String> getAllMaterialNames() {
 		return this.getElements().stream().flatMap(e -> e.getMpgObject().getListedMaterials().stream())
 				.map(s -> s.getName()).filter(n -> {

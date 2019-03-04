@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
@@ -69,7 +71,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return;
 		}
 
-		// try to find all possible nlsfb codes for a mpgObject
+		// try to find nlsfb codes that match with the object type
 		this.resolveNlsfbCodes();
 
 		// try to find the correct dimensions for objects that could not have
@@ -117,6 +119,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		if (mpgElement.getMpgObject() == null) {
 			return;
 		}
+
+		// ToDo: implement correct user mapping....
 		// first try to find any user defined mappings
 		NmdUserMap map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject());
 		if (map != null) {
@@ -151,7 +155,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// STEP4: from every candidate element we should pick 0:1 productcards and add
 		// the results to mapping object
 		Set<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
-
 		if (selectedProducts.size() > 0) {
 			selectedProducts.forEach(c -> mpgElement.addProductCard(c));
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
@@ -355,14 +358,13 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 */
 	public void resolveNlsfbCodes() {
 
-		HashMap<String, String[]> map = getMappingService().getNlsfbMappings();
-		String[] emptyMap = null;
+		HashMap<String, List<String>> map = getMappingService().getNlsfbMappings();
 
 		this.getStore().getElements().forEach(el -> {
 
 			// find NLsfb codes for child objects that have no code themselves.
 			MpgObject o = el.getMpgObject();
-			String[] foundMap = map.getOrDefault(o.getObjectType(), emptyMap);
+			List<String> foundMap = map.getOrDefault(o.getObjectType(), null);
 
 			boolean hasParent = (o.getParentId() != null) && !o.getParentId().isEmpty();
 			MpgObject p = new MpgObjectImpl();
@@ -383,12 +385,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 				// Now add all aternatives to fall back on should the first mapping give no or
 				if (foundMap == null) {
-					foundMap = map.getOrDefault(p.getObjectType(), emptyMap);
+					foundMap = map.getOrDefault(p.getObjectType(), null);
 				}
 			}
 
-			if (foundMap != null && foundMap.length > 0) {
-				o.addNlsfbAlternatives(new HashSet<String>(Arrays.asList(foundMap)));
+			if (foundMap != null && foundMap.size() > 0) {
+				o.addNlsfbAlternatives(new HashSet<String>(foundMap));
 			}
 		});
 	}
