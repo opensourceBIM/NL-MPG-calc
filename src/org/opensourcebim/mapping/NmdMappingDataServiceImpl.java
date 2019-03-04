@@ -80,12 +80,12 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 
 	@Override
 	public HashMap<String, List<String>> getNlsfbMappings() {
-		
-		HashMap<String,List<String>> elementMap = new HashMap<String, List<String>>();
+
+		HashMap<String, List<String>> elementMap = new HashMap<String, List<String>>();
 		try {
 			Statement statement = connection.createStatement();
 			statement.setQueryTimeout(30);
-			
+
 			ResultSet rs = statement.executeQuery("Select * from ifc_to_nlsfb_map");
 			System.out.println("");
 			while (rs.next()) {
