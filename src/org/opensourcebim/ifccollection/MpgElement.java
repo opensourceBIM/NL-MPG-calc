@@ -58,7 +58,7 @@ public class MpgElement {
 		if (mapping != this.mappingMethod) {
 			this.mappingMethod = mapping;
 			if (mapping == NmdMapping.None) {
-				// remove any mappngs that were added through hierarchical constraints
+				// remove any mappings that were added through hierarchical constraints
 				store.toggleMappingDependencies(this.getMpgObject().getGlobalId(), false);
 			} else if (!(mapping == NmdMapping.IndirectThroughChildren
 					|| mapping == NmdMapping.IndirectThroughParent)) {
