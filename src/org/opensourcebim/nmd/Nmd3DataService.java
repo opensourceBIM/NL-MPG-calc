@@ -328,7 +328,7 @@ public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDat
 				
 		return getData().stream()
 				.filter(el -> codes.stream()
-						.anyMatch(code -> code == null ? false : code.isSubCategoryOf(el.getNlsfbCode()) ))
+						.anyMatch(code -> code == null ? false : el.getNlsfbCode().isSubCategoryOf(code) ))
 				.collect(Collectors.toList());
 	}
 

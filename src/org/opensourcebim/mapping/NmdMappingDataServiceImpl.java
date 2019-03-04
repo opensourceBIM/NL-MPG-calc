@@ -12,9 +12,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -75,26 +79,26 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 	}
 
 	@Override
-	public HashMap<String, String[]> getNlsfbMappings() {
-
-		HashMap<String, String[]> elementMap = new HashMap<String, String[]>();
-		elementMap.put("BuildingElementProxy", new String[] { "11.", "32.35", "32.36", "32.37", "32.38", "32.39" });
-		elementMap.put("Footing", new String[] { "16." });
-		elementMap.put("Slab", new String[] { "13.", "23.", "28.2", "28.3", "33.21" });
-		elementMap.put("Pile", new String[] { "17." });
-		elementMap.put("Column", new String[] { "17.", "28.1" });
-		elementMap.put("Wall", new String[] { "21.", "22." });
-		elementMap.put("WallStandardCase", new String[] { "21.", "22." });
-		elementMap.put("CurtainWall", new String[] { "21.24", "32.4" });
-		elementMap.put("Stair", new String[] { "24." });
-		elementMap.put("Roof", new String[] { "27." });
-		elementMap.put("Beam", new String[] { "28." });
-		elementMap.put("Window", new String[] { "31.2", "32.12", "32.2", "37.2" });
-		elementMap.put("Door", new String[] { "31.3", "32.11", "32.3" });
-		elementMap.put("Railing", new String[] { "34." });
-		elementMap.put("Covering", new String[] { "41.", "42.", "43.", "44.", "45.", "47.", "48." });
-		elementMap.put("FlowSegment", new String[] { "52.", "53.", "55.", "56.", "57." }); // many more
-		elementMap.put("FlowTerminal", new String[] { "74.1", "74.2" }); // many more
+	public HashMap<String, List<String>> getNlsfbMappings() {
+		
+		HashMap<String,List<String>> elementMap = new HashMap<String, List<String>>();
+		try {
+			Statement statement = connection.createStatement();
+			statement.setQueryTimeout(30);
+			
+			ResultSet rs = statement.executeQuery("Select * from ifc_to_nlsfb_map");
+			System.out.println("");
+			while (rs.next()) {
+				String prodName = rs.getString("ifcproducttype").trim();
+				String nlsfbCode = rs.getString("code").trim();
+				elementMap.putIfAbsent(prodName, new ArrayList<String>());
+				elementMap.get(prodName).add(nlsfbCode);
+			}
+			
+			statement.close();
+		} catch (SQLException e) {
+			System.err.println("error querying nlsfb map : " + e.getMessage());
+		}
 
 		return elementMap;
 	}
@@ -155,8 +159,7 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 				deleteTable(tableName);
 
 				String createTableSql = "CREATE TABLE IF NOT EXISTS " + tableName + " (\n"
-						+ "	id integer PRIMARY KEY AUTOINCREMENT,\n" 
-						+ " code text NOT NULL,\n"
+						+ "	id integer PRIMARY KEY AUTOINCREMENT,\n" + " code text NOT NULL,\n"
 						+ "	ifcproducttype text NOT NULL\n" + ");";
 				this.executeAndCommitCommand(createTableSql);
 				this.executeAndCommitCommand(createSqlInsertStatement(tableName, headers, values));
@@ -176,8 +179,8 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 
 	private String createSqlInsertStatement(String table, String[] headers, List<String[]> values) {
 
-		String valueString = StringUtils
-				.join(values.stream().map(ar -> "('" + StringUtils.join(ar, "','") + "')").collect(Collectors.toList()), ",");
+		String valueString = StringUtils.join(
+				values.stream().map(ar -> "('" + StringUtils.join(ar, "','") + "')").collect(Collectors.toList()), ",");
 		return "INSERT INTO " + table + " (" + StringUtils.join(headers, ",") + ") VALUES " + valueString;
 	}
 
