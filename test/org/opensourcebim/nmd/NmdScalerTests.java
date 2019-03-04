@@ -35,25 +35,36 @@ public class NmdScalerTests {
 	
 	
 	@Test
-	public void testScalerDimCheckReturnsFalseWhenRequestedXDimOutOfRange() {
+	public void testBoundCheckReturnsFalseWhenFirstDimsIsOutsideSingleBound() {
 		NmdLinearScaler scaler = factory.createLinScaler("mm", 
 				new Double[] {1.0, 0.0, 0.0}, 
 				new Double[] {0.0, Double.POSITIVE_INFINITY, Double.NaN, Double.NaN}, 
 				new Double[] {1.0, Double.NaN});
 		
 		// only x bounds are defined
-		assertFalse(scaler.areDimsWithinBounds(-1.0, Double.NaN));
+		assertFalse(scaler.areDimsWithinBounds(new Double[] {-1.0, Double.NaN}, 1.0));
 	}
 	
 	@Test
-	public void testScalerDimCheckReturnsTrueOnIrrelevantYDim() {
+	public void testBoundCheckReturnsFalseAnyOfInputDimsIsOutsideSingleBound() {
 		NmdLinearScaler scaler = factory.createLinScaler("mm", 
 				new Double[] {1.0, 0.0, 0.0}, 
 				new Double[] {0.0, Double.POSITIVE_INFINITY, Double.NaN, Double.NaN}, 
 				new Double[] {1.0, Double.NaN});
 		
 		// only x bounds are defined and as such we do not chekc on the y dim within bounds
-		assertTrue(scaler.areDimsWithinBounds(1.0, Double.NEGATIVE_INFINITY));
+		assertFalse(scaler.areDimsWithinBounds(new Double[] {1.0, -1.0}, 1.0));
+	}
+	
+	@Test
+	public void testBoundCheckReturnsTrueInBothInputsWithinSingleBound() {
+		NmdLinearScaler scaler = factory.createLinScaler("mm", 
+				new Double[] {1.0, 0.0, 0.0}, 
+				new Double[] {0.0, Double.POSITIVE_INFINITY, Double.NaN, Double.NaN}, 
+				new Double[] {1.0, Double.NaN});
+		
+		// only x bounds are defined and as such we do not chekc on the y dim within bounds
+		assertTrue(scaler.areDimsWithinBounds(new Double[] {1.0, 1e12}, 1.0));
 	}
 	
 	@Test
@@ -64,7 +75,7 @@ public class NmdScalerTests {
 				new Double[] {1.0, 0.0});
 		
 		// only x bounds are out of bounds
-		assertFalse(scaler.areDimsWithinBounds(-1.0, 1.0));
+		assertFalse(scaler.areDimsWithinBounds(new Double[] {-1.0, 1.0}, 1));
 	}
 	
 	@Test
@@ -74,8 +85,8 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, 10.0}, 
 				new Double[] {1.0, 1.0});
 		
-		// only x bounds are defined and as such we do not chekc on the y dim within bounds
-		assertTrue(scaler.areDimsWithinBounds(0.0, 1.0));
+		// only x bounds are defined and as such we do not check on the y dim within bounds
+		assertTrue(scaler.areDimsWithinBounds(new Double[] {0.0, 1.0}, 1));
 	}
 	
 	@Test
@@ -85,7 +96,7 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, 10.0}, 
 				new Double[] {1.0, 1.0});
 		
-		assertTrue(scaler.scale(-1, 1).isNaN());
+		assertTrue(scaler.scaleWithConversion(new Double[] {-1.0, 1.0},  1.0).isNaN());
 	}
 	
 	@Test
@@ -95,17 +106,38 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, 10.0}, 
 				new Double[] {1.0, 1.0});
 		
-		assertTrue(scaler.scale(1, -1).isNaN());
+		assertTrue(scaler.scaleWithConversion(new Double[] {1.0, -1.0},  1.0).isNaN());
 	}
 	
 	@Test
-	public void testScalerReturnsValueWhenRequestedYValueOutOfRangeButNotNecessary() {
+	public void testScalerReturnsNanWhenRequestedYValueOutOfRangeOnSingleBound() {
 		NmdLinearScaler scaler = factory.createLinScaler("mm", 
 				new Double[] {1.0, 0.0, 0.0}, 
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
 				new Double[] {1.0, Double.NaN});
 		
-		assertEquals(1.0 , scaler.scale(1.0, -1.0), 1e-8);
+		assertTrue(scaler.scaleWithConversion(new Double[] {1.0, -1.0},  1.0).isNaN());
+	}
+	
+	@Test
+	public void testScalerReturnsScaleFactorWhenBothInputsWithinSingleBoundRange() {
+		NmdLinearScaler scaler = factory.createLinScaler("mm", 
+				new Double[] {1.0, 0.0, 0.0}, 
+				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
+				new Double[] {1.0, Double.NaN});
+		
+		assertEquals(12.0 , scaler.scaleWithConversion(new Double[] {1.0, 12.0},  1.0), 1e-8);
+	}
+	
+	@Test
+	public void testScalerFlipsInputsBasedOnBounds() {
+		NmdLinearScaler scaler = factory.createLinScaler("mm", 
+				new Double[] {1.0, 0.0, 0.0}, 
+				new Double[] {0.0, 5.0, 10.0, 20.0}, 
+				new Double[] {1.0, 11.0});
+		
+		// the inputs will be flipped such that 12 falls within the 2nd bound range and the 4.0 value within the first bound
+		assertEquals(4.0 * (12.0/11.0),  scaler.scaleWithConversion(new Double[] {12.0, 4.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -115,7 +147,7 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
 				new Double[] {1.0, 1.0});
 		
-		assertEquals(1.0 , scaler.scale(1.0, 1.0), 1e-8);
+		assertEquals(1.0 , scaler.scaleWithConversion(new Double[] {1.0, 1.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -125,7 +157,7 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
 				new Double[] {1.0, 1.0});
 		
-		assertEquals(0.0, scaler.scale(0.0, 1.0), 1e-8);
+		assertEquals(0.0, scaler.scaleWithConversion(new Double[] {0.0, 1.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -135,7 +167,7 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
 				new Double[] {1.0, 1.0});
 		
-		assertEquals(0.0, scaler.scale(1.0, 0.0), 1e-8);
+		assertEquals(0.0, scaler.scaleWithConversion(new Double[] {1.0, 0.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -145,7 +177,7 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
 				new Double[] {1.0, 1.0});
 		
-		assertEquals(1.0, scaler.scale(1.0, 1.0), 1e-8);
+		assertEquals(1.0, scaler.scaleWithConversion(new Double[] {1.0, 1.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -155,7 +187,7 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
 				new Double[] {1.0, 1.0});
 		
-		assertEquals(2.0, scaler.scale(2.0, 1.0), 1e-8);
+		assertEquals(2.0, scaler.scaleWithConversion(new Double[] {2.0, 1.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -166,7 +198,7 @@ public class NmdScalerTests {
 				new Double[] {1.0, Double.NaN});
 		
 		// scale factor will be (2+ 10)/(1+10)
-		assertEquals(12.0/11.0, scaler.scale(2.0), 1e-8);
+		assertEquals(12.0/11.0, scaler.scaleWithConversion(new Double[] {2.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -179,7 +211,8 @@ public class NmdScalerTests {
 		NmdLinearScaler powerScaler = factory.createLinScaler("mm", coeffs, bounds, initVals);
 		
 		// scale factor will be (2+ 10)/(1+10)
-		assertEquals(linScaler.scale(45, 8), powerScaler.scale(45, 8), 1e-8);
+		assertEquals(linScaler.scaleWithConversion(new Double[] {45.0, 8.0},  1.0),
+				powerScaler.scaleWithConversion(new Double[] {45.0, 8.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -189,7 +222,7 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
 				new Double[] {1.0, 1.0});
 		
-		assertEquals(4.0, scaler.scale(2.0, 1.0), 1e-8);
+		assertEquals(4.0, scaler.scaleWithConversion(new Double[] {2.0, 1.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -199,7 +232,7 @@ public class NmdScalerTests {
 				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
 				new Double[] {2.0, 2.0});
 		
-		assertTrue(scaler.scale(0.0, 1.0).isNaN());
+		assertTrue(scaler.scaleWithConversion(new Double[] {0.0, 1.0},  1.0).isNaN());
 	}
 	
 	
@@ -226,7 +259,7 @@ public class NmdScalerTests {
 				new Double[] {2.0, 2.0});
 		
 		// the requested scaling dimension is 1.0 which would return a 0.0 value from the log scaler
-		assertEquals(0.0, scaler.scale(12.0, 1.0), 1e-8);
+		assertEquals(0.0, scaler.scaleWithConversion(new Double[] {12.0, 1.0},  1.0), 1e-8);
 	}
 	
 	@Test
@@ -237,6 +270,6 @@ public class NmdScalerTests {
 				new Double[] {1.0, 1.0});
 		
 		// e^3 / e
-		assertEquals(Math.pow(Math.E, 2.0), scaler.scale(3.0, 1.0), 1e-8);
+		assertEquals(Math.pow(Math.E, 2.0), scaler.scaleWithConversion(new Double[] {3.0, 1.0},  1.0), 1e-8);
 	}
 }

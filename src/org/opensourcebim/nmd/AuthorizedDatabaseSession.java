@@ -18,6 +18,11 @@ import org.bimserver.shared.reflector.KeyValuePair;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Class to handle authorization to a rest API for the NMD connectionn
+ * @author vijj
+ * ToDo: there are currently a lot of methods in here that should be in a lower level class. move these.
+ */
 public class AuthorizedDatabaseSession {
 	protected String scheme = "https";
 	private String host;

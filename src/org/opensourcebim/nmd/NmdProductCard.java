@@ -3,6 +3,9 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.opensourcebim.ifccollection.MpgObject;
+import org.opensourcebim.mapping.NlsfbCode;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Storage container to contain the lifecycle coefficients to do the MPG
@@ -26,6 +29,8 @@ public interface NmdProductCard{
 	void addProfileSet(NmdProfileSet spec);
 	void addProfileSets(Collection<NmdProfileSet> specs);
 
+	NlsfbCode getNlsfbCode();
+	
 	String getUnit();
 
 	Integer getCategory();
@@ -39,4 +44,7 @@ public interface NmdProductCard{
 	Integer getProductId();
 
 	double getRequiredNumberOfUnits(MpgObject mpgObject);
+	
+	@JsonIgnore
+	Double getProfileSetsCoeficientSum();
 }

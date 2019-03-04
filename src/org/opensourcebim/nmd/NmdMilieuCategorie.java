@@ -8,12 +8,12 @@ package org.opensourcebim.nmd;
  * @author vijj
  *
 */
-public class NmdMileuCategorie {
+public class NmdMilieuCategorie {
 	private String description;
 	private String unit;
 	private Double weight;
 	
-	public NmdMileuCategorie(String description, String unit, Double weight) {
+	public NmdMilieuCategorie(String description, String unit, Double weight) {
 		setDescription(description);
 		setUnit(unit);
 		setWeight(weight);

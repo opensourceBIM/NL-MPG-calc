@@ -1,6 +1,7 @@
 package org.opensourcebim.mpgcalculation;
 
 public class MpgCostFactor {
+	private Long objectId;
 	private String fase;
 	private String milieuCategorie;
 	private String productName; // name of productCard
@@ -29,7 +30,7 @@ public class MpgCostFactor {
 		this.productName = product;
 	}
 
-	public double getValue() {
+	public Double getValue() {
 		return value;
 	}
 	public void setValue(double val) {
@@ -43,6 +44,15 @@ public class MpgCostFactor {
 	public void setProfielSetName(String specName) {
 		this.profielSetName = specName;
 	}
+	
+
+	public Long getObjectId() {
+		return this.objectId;
+	}
+	
+	public void setObjectId(Long id) {
+		this.objectId = id;
+	}
 
 	/**
 	 * override the equals method to avoid checking for value
@@ -54,7 +64,8 @@ public class MpgCostFactor {
 		}
 		MpgCostFactor testFactor = (MpgCostFactor) otherFactor;
 
-		return testFactor.getMilieuCategorie() == this.getMilieuCategorie() 
+		return testFactor.getObjectId() == this.getObjectId()
+				&& testFactor.getMilieuCategorie() == this.getMilieuCategorie() 
 				&& testFactor.getFase() == this.getFase()
 				&& testFactor.getProductName() == this.getProductName() 
 				&& testFactor.getProfielSetName() == this.getProfielSetName();

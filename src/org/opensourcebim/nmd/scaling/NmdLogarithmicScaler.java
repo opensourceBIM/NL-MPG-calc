@@ -1,7 +1,6 @@
 package org.opensourcebim.nmd.scaling;
 
 import org.eclipse.jdt.core.compiler.InvalidInputException;
-import org.opensourcebim.nmd.NmdBaseScaler;
 
 public class NmdLogarithmicScaler extends NmdBaseScaler implements NmdScaler {
 

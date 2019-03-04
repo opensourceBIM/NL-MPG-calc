@@ -5,7 +5,10 @@ package org.opensourcebim.nmd;
  */
 public enum NmdMapping {
 	None,
-	Direct,
-	Partial,
-	Estimated
+	DirectTotaalProduct,
+	DirectDeelProduct,
+	IndirectThroughParent,
+	IndirectThroughChildren,
+	Estimated,
+	UserMapping,
 }

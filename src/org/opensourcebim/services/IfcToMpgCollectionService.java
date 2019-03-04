@@ -8,8 +8,8 @@ import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.plugins.PluginConfiguration;
 import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.nmd.NmdDataResolver;
-import org.opensourcebim.nmd.NmdDataResolverImpl;
+import org.opensourcebim.mapping.NmdDataResolver;
+import org.opensourcebim.mapping.NmdDataResolverImpl;
 
 public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 
@@ -25,9 +25,10 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 		
 		// resolve any ifc to nmd coupling
 		NmdDataResolver resolver = new NmdDataResolverImpl();
-		MpgObjectStore resolvedData = resolver.NmdToMpg(ifcResults);
+		resolver.setStore(ifcResults);
+		resolver.NmdToMpg();
 				
-		return this.toBimBotsJsonOutput(resolvedData, "results object collection");
+		return this.toBimBotsJsonOutput(resolver.getStore(), "results object collection");
 	}
 
 	@Override

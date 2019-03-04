@@ -1,7 +1,5 @@
 package org.opensourcebim.nmd.scaling;
 
-import org.opensourcebim.nmd.NmdBaseScaler;
-
 public class NmdPowerScaler extends NmdBaseScaler implements NmdScaler {
 
 	public NmdPowerScaler(String scaleUnit, Double[] coefficients, Double[] bounds, Double[] currentValues) {

@@ -3,19 +3,28 @@ package org.opensourcebim.nmd;
 import java.util.Collection;
 import java.util.List;
 
+import org.opensourcebim.mapping.NlsfbCode;
+
 public interface NmdElement {
 
-	String getNLsfbCode();
+	NlsfbCode getNlsfbCode();
 
-	String getRAWCode();
+	Integer getElementId();
+
+	Integer getParentId();
+	
+	Boolean getIsElementPart();
 
 	String getElementName();
 	
-	Integer getCUASId();
-
+	Boolean getIsMandatory();
+	
 	Collection<NmdProductCard> getProducts();
 
 	void addProductCards(List<NmdProductCard> products);
 
 	void addProductCard(NmdProductCard fullCard);
+
+
+
 }

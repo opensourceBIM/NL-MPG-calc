@@ -1,6 +1,7 @@
 package org.opensourcebim.nmd;
 
 import java.util.HashMap;
+
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
 /**
@@ -30,4 +31,6 @@ public interface NmdProfileSet {
 	Boolean getIsScalable();
 
 	NmdScaler getScaler();
+	
+	Double getCoefficientSum();
 }

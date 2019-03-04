@@ -22,7 +22,7 @@ public class NmdFaseProfielImpl implements NmdFaseProfiel {
 	}
 
 	public void setAll(double value) {
-		for (Entry<Integer, NmdMileuCategorie> factor : this.refData.getMilieuCategorieMapping().entrySet()) {
+		for (Entry<Integer, NmdMilieuCategorie> factor : this.refData.getMilieuCategorieMapping().entrySet()) {
 			setProfielCoefficient(factor.getValue().getDescription(), value);
 		}
 	}
@@ -45,7 +45,7 @@ public class NmdFaseProfielImpl implements NmdFaseProfiel {
 	@Override
 	public Set<MpgCostFactor> calculateFactors(double cost) {
 		Set<MpgCostFactor> results = new HashSet<MpgCostFactor>();
-		for (Entry<Integer, NmdMileuCategorie> entry : this.refData.getMilieuCategorieMapping().entrySet()) {
+		for (Entry<Integer, NmdMilieuCategorie> entry : this.refData.getMilieuCategorieMapping().entrySet()) {
 			String description = entry.getValue().getDescription();
 			Double profielValue = profielCoefficienten.getOrDefault(description, Double.NaN);
 			if (!profielValue.isNaN()) {

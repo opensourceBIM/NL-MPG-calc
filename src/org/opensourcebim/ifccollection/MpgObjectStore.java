@@ -25,7 +25,7 @@ public interface MpgObjectStore {
 	List<MpgObject> getObjects();
 	List<MpgSpace> getSpaces();
 	
-	void addProductCardToElement(String string, Integer cuasCode, NmdProductCard specs);
+	void addProductCardToElement(String string, NmdProductCard specs);
 	void setObjectForElement(String name, MpgObject mpgObject);
 	
 	Stream<String> getAllMaterialNames();
@@ -61,13 +61,14 @@ public interface MpgObjectStore {
 	void addSpace(MpgSpace space);
 	double getTotalFloorArea();
 	
-	
-	void validateIfcDataCollection();
 	boolean isIfcDataComplete();
 	
-	GuidCollection getGuidsWithoutMaterial();
-	GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials();
+	void toggleMappingDependencies(String globalId, boolean flag);
 	
+	@JsonIgnore
+	GuidCollection getGuidsWithoutMaterial();
+	@JsonIgnore
+	GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials();
 	@JsonIgnore
 	GuidCollection getGuidsWithoutVolume();
 	@JsonIgnore
@@ -77,5 +78,11 @@ public interface MpgObjectStore {
 	@JsonIgnore
 	GuidCollection getGuidsWithUndefinedLayerMats();
 	
-	void SummaryReport();
+	boolean hasUndefinedVolume(MpgObject obj, boolean includeChildren);
+
+	boolean hasRedundantMaterials(MpgObject obj, boolean includeChildren);
+
+	boolean hasUndefinedLayers(MpgObject obj, boolean includeChildren);
+
+	boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren);
 }

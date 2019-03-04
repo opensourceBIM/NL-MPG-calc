@@ -14,15 +14,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
-//import com.fasterxml.jackson.databind.JsonNode;
-//import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class NmdInterfaceTests {
+public class Nmd3DataServiceTests {
 
-	private NmdDataBaseSession db;
-	private NmdDatabaseConfig config;
+	private Nmd3DataService db;
+	private NmdUserDataConfig config;
 
-	public NmdInterfaceTests() {
+	public Nmd3DataServiceTests() {
 	}
 
 	@Before
@@ -36,8 +37,8 @@ public class NmdInterfaceTests {
 	}
 
 	public void connect() {
-		config = new NmdDatabaseConfigImpl();
-		db = new NmdDataBaseSession(config);
+		config = new NmdUserDataConfigImpl();
+		db = new Nmd3DataService(config);
 		db.login();
 	}
 
@@ -52,28 +53,28 @@ public class NmdInterfaceTests {
 
 	@Test
 	public void testDbIsInitiallyNotLoggedIn() {
-		config = new NmdDatabaseConfigImpl();
-		db = new NmdDataBaseSession(config);
+		config = new NmdUserDataConfigImpl();
+		db = new Nmd3DataService(config);
 		assertFalse(db.getIsConnected());
 	}
 
 	@Test
 	public void testDatabaseCannotConnectWithoutCorrectRefreshToken() {
 		// recreate the connection and check that the login failed
-		NmdDatabaseConfigImpl wrong = new NmdDatabaseConfigImpl();
+		NmdUserDataConfigImpl wrong = new NmdUserDataConfigImpl();
 		wrong.setToken("wrong token");
 
-		db = new NmdDataBaseSession(wrong);
+		db = new Nmd3DataService(wrong);
 		assertFalse(db.getIsConnected());
 	}
 
 	@Test
 	public void testDatabaseCannotConnectWithoutCorrectClientId() {
 		// recreate the connection and check that the login failed
-		NmdDatabaseConfigImpl wrong = new NmdDatabaseConfigImpl();
+		NmdUserDataConfigImpl wrong = new NmdUserDataConfigImpl();
 		wrong.setClientId(42);
 
-		db = new NmdDataBaseSession(wrong);
+		db = new Nmd3DataService(wrong);
 		assertFalse(db.getIsConnected());
 	}
 
@@ -95,7 +96,7 @@ public class NmdInterfaceTests {
 		connect();
 
 		NmdElementImpl el = new NmdElementImpl();
-		el.setRawCode("-42");
+		el.setElementId(-42);
 		assertTrue(0 == db.getProductsForElement(el).size());
 	}
 
@@ -104,14 +105,14 @@ public class NmdInterfaceTests {
 		connect();
 
 		NmdElementImpl el = new NmdElementImpl();
-		el.setRawCode("155");
+		el.setElementId(155);
 		assertTrue(0 < db.getProductsForElement(el).size());
 	}
 
 	@Test
 	public void testCanRetrieveProfileSetsBySingleId() {
 		connect();
-		List<String> ids = Arrays.asList("19");
+		List<Integer> ids = Arrays.asList(19);
 		HashMap<Integer, NmdProfileSet> profileSets = db.getProfileSetsByIds(ids);
 		assertTrue(0 < profileSets.size());
 	}
@@ -129,13 +130,13 @@ public class NmdInterfaceTests {
 	@Test
 	public void testCanRetrieveProfileSetsWithScalerInformation() {
 		connect();
-		List<String> ids = Arrays.asList("9", "19");
+		List<Integer> ids = Arrays.asList(9, 19);
 		HashMap<Integer, NmdProfileSet> profileSets = db.getProfileSetsByIds(ids);
 		assertTrue(2 == profileSets.size());
 		Entry<Integer, NmdProfileSet> set = profileSets.entrySet().iterator().next();
 		assertTrue(set.getValue().getIsScalable());
 		NmdScaler scaler = set.getValue().getScaler();
-		Double factor = scaler.scale(400);
+		Double factor = scaler.scaleWithConversion(new Double[] {400.0}, 1.0);
 
 		assertTrue(0.0 < factor);
 	}
@@ -143,7 +144,7 @@ public class NmdInterfaceTests {
 	@Test
 	public void testCanRetrieveFullProductByProductId() {
 		NmdElementImpl el = new NmdElementImpl();
-		el.setRawCode("204");
+		el.setElementId(204);
 
 		connect();
 		assertTrue(db.getProductsForElement(el).size() > 0);
@@ -185,7 +186,7 @@ public class NmdInterfaceTests {
 		// only 5 categories should be in there CUAST (T = Totaal)
 		assertTrue(0 < mappings.getScalingFormula().size());
 	}
-
+	
 	@Test
 	public void getCompleteDataSet() {
 		connect();
@@ -194,11 +195,12 @@ public class NmdInterfaceTests {
 			db.getAdditionalProfileDataForCard(pc);
 		}));
 	
-//		ObjectMapper mapper = new ObjectMapper();
-//		JsonNode node = mapper.valueToTree(db.getData());
-//		System.out.println("test");
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode node = mapper.valueToTree(db.getData());
+		try {
+			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node));
+		} catch (JsonProcessingException e1) {}
 		assertTrue(db.getData().stream()
-				.flatMap(e -> e.getProducts().stream()
-						.flatMap(pc -> pc.getProfileSets().stream())).count() > 0);
+				.flatMap(e -> e.getProducts().stream().flatMap(pc -> pc.getProfileSets().stream())).count() > 0);
 	}
 }

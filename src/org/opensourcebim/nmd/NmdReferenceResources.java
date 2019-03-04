@@ -9,14 +9,14 @@ public class NmdReferenceResources {
 
 	private HashMap<Integer, String> faseMapping;
 	private HashMap<Integer, String> unitMapping;
-	private HashMap<Integer, NmdMileuCategorie> milieuCategorieMapping;
+	private HashMap<Integer, NmdMilieuCategorie> milieuCategorieMapping;
 	private HashMap<Integer, String> cuasCategorieMapping;
 	private HashMap<Integer, String> scalingFormula;
 	
 	public NmdReferenceResources() {
 		setFaseMapping(new HashMap<Integer, String>());
 		setUnitMapping(new HashMap<Integer, String>());
-		setMilieuCategorieMapping(new HashMap<Integer, NmdMileuCategorie>());
+		setMilieuCategorieMapping(new HashMap<Integer, NmdMilieuCategorie>());
 	}
 
 	public HashMap<Integer, String> getFaseMapping() {
@@ -35,11 +35,11 @@ public class NmdReferenceResources {
 		this.unitMapping = unitMapping;
 	}
 
-	public HashMap<Integer, NmdMileuCategorie> getMilieuCategorieMapping() {
+	public HashMap<Integer, NmdMilieuCategorie> getMilieuCategorieMapping() {
 		return milieuCategorieMapping;
 	}
 
-	public void setMilieuCategorieMapping(HashMap<Integer, NmdMileuCategorie> milieuWaardeMapping) {
+	public void setMilieuCategorieMapping(HashMap<Integer, NmdMilieuCategorie> milieuWaardeMapping) {
 		this.milieuCategorieMapping = milieuWaardeMapping;
 	}
 

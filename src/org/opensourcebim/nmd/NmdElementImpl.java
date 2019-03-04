@@ -4,37 +4,54 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.opensourcebim.mapping.NlsfbCode;
+
 public class NmdElementImpl implements NmdElement {
 
-	private String nlsfbCode;
-	private String rawCode;
+	private NlsfbCode nlsfbCode;
+	private Integer elementId;
 	private String elementName;
 	private Collection<NmdProductCard> products;
-	private Integer cuasId;
+	private Integer parentId;
+	private Boolean isMandatory;
 	
 	public NmdElementImpl() {
-		this.nlsfbCode = "";
-		this.rawCode = "";
+		this.nlsfbCode = null;
+		this.elementId = -1;
 		this.elementName = "";
 		this.products = new ArrayList<NmdProductCard>();
 	}
 	
 	@Override
-	public String getNLsfbCode() {
+	public NlsfbCode getNlsfbCode() {
 		return this.nlsfbCode;
 	}
 	
-	public void setNlsfbCode(String nlsfbCode) {
+	public void setNlsfbCode(NlsfbCode nlsfbCode) {
 		this.nlsfbCode = nlsfbCode;
 	}
 
 	@Override
-	public String getRAWCode() {
-		return this.rawCode;
+	public Integer getElementId() {
+		return this.elementId;
 	}
 	
-	public void setRawCode(String rawCode) {
-		this.rawCode = rawCode;
+	public void setElementId(Integer id) {
+		this.elementId = id;
+	}
+
+	@Override
+	public Integer getParentId() {
+		return this.parentId;
+	}
+	
+	@Override
+	public Boolean getIsElementPart() {
+		return this.parentId > 0;
+	}
+	
+	public void setParentId(Integer id) {
+		this.parentId = id;
 	}
 
 	@Override
@@ -45,14 +62,14 @@ public class NmdElementImpl implements NmdElement {
 	public void setElementName(String name) {
 		this.elementName = name;
 	}
-	
+		
 	@Override
-	public Integer getCUASId() {
-		return cuasId;
+	public Boolean getIsMandatory() {
+		return this.isMandatory;
 	}
-
-	public void setCUASId(Integer val) {
-		this.cuasId = val;
+	
+	public void setIsMandatory(Boolean flag) {
+		this.isMandatory = flag;
 	}
 	
 	@Override

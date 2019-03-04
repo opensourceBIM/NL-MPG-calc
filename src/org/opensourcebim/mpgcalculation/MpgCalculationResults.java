@@ -1,9 +1,12 @@
 package org.opensourcebim.mpgcalculation;
 
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Class to store all the calculation results broken down by a series of
@@ -61,6 +64,66 @@ public class MpgCalculationResults {
 		return getTotalCost() / totalFloorArea / totalLifeTime;
 	}
 
+
+	/**
+	 * Increment the value fo a costfactor if it is present in the current set.
+	 * otherwise create a new factor
+	 * 
+	 * CostFactors should be unique per calculation according to it's equals (method)
+	 * 
+	 * @param mpgCostFactor the value to add
+	 * @param product       product card name of the factor
+	 * @param specName      material spec name of the factor
+	 */
+	public void addCostFactor(MpgCostFactor mpgCostFactor, String product, String specName, Long objectId) {
+
+		mpgCostFactor.setProductName(product);
+		mpgCostFactor.setProfielSetName(specName);
+		mpgCostFactor.setObjectId(objectId);
+		if (!mpgCostFactor.getValue().isNaN()) {
+			costFactors.add(mpgCostFactor);
+		}
+	}
+
+	@JsonIgnore
+	public Set<MpgCostFactor> getCostFactors() {
+		return this.costFactors;
+	}
+	
+	public HashMap<Long, Double> getCostPerObjectId() {
+		HashMap<Long, Double> grouping = new HashMap<Long, Double>();
+		this.costFactors.stream()
+			.collect(Collectors.groupingBy(MpgCostFactor::getObjectId))
+			.forEach((key, g) -> grouping.put(key, g.stream().collect(Collectors.summingDouble(cf -> cf.getValue()))));
+		return grouping;
+	}
+	
+	public HashMap<String, Double> getCostPerMilieuCategorie() {
+		return this.getCostPerCategory(MpgCostFactor::getMilieuCategorie);
+	}
+	
+	public HashMap<String, Double> getCostPerFase() {
+		return this.getCostPerCategory(MpgCostFactor::getFase);
+	}
+	
+	public HashMap<String, Double> getCostPerProduct() {
+		return this.getCostPerCategory(MpgCostFactor::getProductName);
+	}
+	
+
+	public HashMap<String, Double> getCostPerProfiel() {
+		return this.getCostPerCategory(MpgCostFactor::getProfielSetName);
+	}
+	
+
+	private HashMap<String, Double> getCostPerCategory(Function<? super MpgCostFactor, ? extends String> groupingFunc) {
+		HashMap<String, Double> grouping = new HashMap<String, Double>();
+		this.costFactors.stream()
+			.collect(Collectors.groupingBy(groupingFunc))
+			.forEach((key, g) -> grouping.put(key, g.stream().collect(Collectors.summingDouble(cf -> cf.getValue()))));
+		return grouping;
+	}
+	
 	public double getCostPerLifeCycle(String fase) {
 		return costFactors.stream().filter(f -> f.getFase().equals(fase))
 				.collect(Collectors.summingDouble(f -> f.getValue()));
@@ -81,36 +144,9 @@ public class MpgCalculationResults {
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
-	public void incrementCostFactors(Set<MpgCostFactor> factors, String product, String specName) {
+	public void addCostFactors(Set<MpgCostFactor> factors, String product, String specName, Long objectId) {
 		for (MpgCostFactor costFactor : factors) {
-			this.incrementCostFactor(costFactor, product, specName);
+			this.addCostFactor(costFactor, product, specName, objectId);
 		}
-	}
-
-	/**
-	 * Increment the value fo a costfactor if it is present in the current set.
-	 * otherwise create a new factor
-	 * 
-	 * CostFactors should be unique per calculation according to it's equals (method)
-	 * 
-	 * @param mpgCostFactor the value to add
-	 * @param product       product card name of the factor
-	 * @param specName      material spec name of the factor
-	 */
-	public void incrementCostFactor(MpgCostFactor mpgCostFactor, String product, String specName) {
-
-		mpgCostFactor.setProductName(product);
-		mpgCostFactor.setProfielSetName(specName);
-
-		Optional<MpgCostFactor> foundFactor = costFactors.stream().filter(f -> f.equals(mpgCostFactor)).findFirst();
-		if (foundFactor.isPresent()) {
-			foundFactor.get().setValue(foundFactor.get().getValue() + mpgCostFactor.getValue());
-		} else {
-			costFactors.add(mpgCostFactor);
-		}
-	}
-
-	public Set<MpgCostFactor> getCostFactors() {
-		return this.costFactors;
 	}
 }

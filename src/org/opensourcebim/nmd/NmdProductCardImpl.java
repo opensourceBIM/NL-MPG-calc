@@ -3,9 +3,13 @@ package org.opensourcebim.nmd;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgObject;
+import org.opensourcebim.mapping.NlsfbCode;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class NmdProductCardImpl implements NmdProductCard {
 	
@@ -18,6 +22,7 @@ public class NmdProductCardImpl implements NmdProductCard {
 	private Integer productLifetime;
 	private Integer parentId;
 	private Integer id;
+	private NlsfbCode nlsfbCode;
 
 	public NmdProductCardImpl() {
 		this.specifications = new HashSet<NmdProfileSet>();
@@ -36,8 +41,14 @@ public class NmdProductCardImpl implements NmdProductCard {
 			p = new NmdProductCardImpl();
 		}
 
+		this.id = p.getProductId();
+		this.isScalable = p.getIsScalable();
+		this.parentId = p.getParentProductId();
 		this.specifications = new HashSet<NmdProfileSet>();
 		this.specifications.addAll(p.getProfileSets());
+		this.setLifetime(p.getLifetime());
+		this.setCategory(p.getCategory());
+		this.setNlsfbCode(p.getNlsfbCode());
 		this.setUnit(p.getUnit());
 		this.setDescription(p.getDescription());
 		this.setIsTotaalProduct(p.getIsTotaalProduct());
@@ -47,6 +58,21 @@ public class NmdProductCardImpl implements NmdProductCard {
 	public String getDescription() {
 		return this.description;
 	}
+	
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	@JsonIgnore
+	@Override
+	public NlsfbCode getNlsfbCode() {
+		return this.nlsfbCode;
+	}
+	
+	public void setNlsfbCode(NlsfbCode code) {
+		this.nlsfbCode = code;
+	}
+
 
 	@Override
 	public String getUnit() {
@@ -64,27 +90,27 @@ public class NmdProductCardImpl implements NmdProductCard {
 
 	@Override
 	public void addProfileSet(NmdProfileSet spec) {
-		this.specifications.add(spec);
+		if (spec != null) {
+			this.specifications.add(spec);
+		}
 	}
 
 	@Override
 	public void addProfileSets(Collection<NmdProfileSet> specs) {
-		this.specifications.addAll(specs);
+		if (specs != null && specs.size() > 0) {
+			this.specifications.addAll(specs);
+		}
 	}
 
 	@Override
 	public Boolean getIsTotaalProduct() {
 		return this.isTotaalProduct;
 	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
+	
 	public void setIsTotaalProduct(boolean b) {
 		this.isTotaalProduct = b;
 	}
-
+	
 	@Override
 	public Integer getCategory() {
 		return this.category;
@@ -157,5 +183,11 @@ public class NmdProductCardImpl implements NmdProductCard {
 		
 		return Double.NaN;
 		
+	}
+
+	@Override
+	public Double getProfileSetsCoeficientSum() {
+		return this.getProfileSets().stream()
+		.collect(Collectors.summingDouble(ps -> ps.getCoefficientSum()));
 	}
 }

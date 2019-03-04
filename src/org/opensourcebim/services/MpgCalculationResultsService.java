@@ -8,10 +8,10 @@ import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.plugins.PluginConfiguration;
 import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
 import org.opensourcebim.ifccollection.MpgObjectStore;
+import org.opensourcebim.mapping.NmdDataResolver;
+import org.opensourcebim.mapping.NmdDataResolverImpl;
 import org.opensourcebim.mpgcalculation.MpgCalculationResults;
 import org.opensourcebim.mpgcalculation.MpgCalculator;
-import org.opensourcebim.nmd.NmdDataResolver;
-import org.opensourcebim.nmd.NmdDataResolverImpl;
 
 public class MpgCalculationResultsService extends IfcObjectCollectionBaseService {
 
@@ -27,11 +27,12 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 		
 		// resolve any ifc to nmd coupling
 		NmdDataResolver resolver = new NmdDataResolverImpl();
-		MpgObjectStore resolvedData = resolver.NmdToMpg(ifcResults);
+		resolver.setStore(ifcResults);
+		resolver.NmdToMpg();
 		
 		// calculate the mpg scores
 		MpgCalculator calculator = new MpgCalculator();
-		calculator.setObjectStore(resolvedData);
+		calculator.setObjectStore(resolver.getStore());
 		MpgCalculationResults calcResults = calculator.calculate(75.0);
 		
 		return this.toBimBotsJsonOutput(calcResults, "mpg calculation results");

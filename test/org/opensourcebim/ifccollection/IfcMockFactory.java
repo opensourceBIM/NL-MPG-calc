@@ -209,13 +209,19 @@ public class IfcMockFactory {
 		when(geom.getVolume()).thenReturn(volume);
 		when(geom.getArea()).thenReturn(area);
 		Double faceArea = Math.pow(volume, 2.0/3.0);
+		Double faceLength = Math.pow(volume, 1.0/3.0);
 		when(geom.getAdditionalData()).thenReturn(
 				"{\"TOTAL_SURFACE_AREA\":" + String.valueOf(faceArea * 6.0)
 				+ ",\"TOTAL_SHAPE_VOLUME\":" + volume
 				+ ",\"SURFACE_AREA_ALONG_X\":" + faceArea 
 				+ ",\"SURFACE_AREA_ALONG_Y\":" + faceArea 
 				+ ",\"SURFACE_AREA_ALONG_Z\":" + faceArea 
-				+ ",\"LARGEST_FACE_AREA\":" + faceArea + "}");
+				+ ",\"LARGEST_FACE_AREA\":" + faceArea 
+				+ ",\"LARGEST_FACE_DIRECTION\":[0,0,1]" 
+				+ ",\"BOUNDING_BOX_SIZE_ALONG_X\":" + faceLength 
+				+ ",\"BOUNDING_BOX_SIZE_ALONG_Y\":" + faceLength 
+				+ ",\"BOUNDING_BOX_SIZE_ALONG_Z\":" + faceLength +"}");	
+		
 		return geom;
 	}
 

@@ -5,7 +5,7 @@ package org.opensourcebim.nmd;
  * In order to get the tests working implement this class (Named NmdDatabaseConfigImpl) and make 
  * sure the implementation is on the git ignore list.
  */
-public interface NmdDatabaseConfig {
+public interface NmdUserDataConfig {
 
 	/*
 	 * refresh token for authorization to request a new OAuth token
@@ -16,4 +16,14 @@ public interface NmdDatabaseConfig {
 	 * Company specific client id for authorization
 	 */
 	Integer getClientId();
+
+	public String getNmd2DbPath();
+
+	String getIFcFilesForKeyWordMapRootPath();
+
+	String getNlsfbAlternativesFilePath();
+
+	String getMappingDbPath();
+
+	public String getCommonWordDutchFilePath();
 }

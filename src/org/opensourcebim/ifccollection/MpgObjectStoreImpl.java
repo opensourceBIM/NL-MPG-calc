@@ -1,17 +1,14 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.bimserver.utils.AreaUnit;
@@ -19,6 +16,7 @@ import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.BasicEList;
 import org.opensourcebim.ifcanalysis.GuidCollection;
+import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -40,38 +38,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	private List<MpgSpace> spaces;
 
 	/**
-	 * stores which object GUIDs have no material
-	 */
-	private GuidCollection guidsWithoutMaterial;
-
-	/**
-	 * stores which object GUIDs have no material or no layers and have neither
-	 * related objects that have materials
-	 */
-	private GuidCollection guidsWithoutMaterialAndWithoutFullDecomposedMaterials;
-
-	/**
-	 * stores which object GUIDs have no volume
-	 */
-	private GuidCollection guidsWithoutVolume;
-
-	/**
-	 * stores which object GUIDs have no volume and have any of their decomposed
-	 * objects wthout volume
-	 */
-	private GuidCollection guidsWithoutVolumeAndWithoutFullDecomposedVolumes;
-
-	/**
-	 * stores which objects have layers that cannot be resolved to a material
-	 */
-	private GuidCollection guidsWithUndefinedLayerMats;
-
-	/**
-	 * stores materials have a single object but multiple materials
-	 */
-	private GuidCollection guidsWithRedundantMats;
-
-	/**
 	 * list to store the guids with any MpgObjects that the object linked to that
 	 * guid decomposes
 	 */
@@ -86,28 +52,13 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		setElements(new HashSet<>());
 		setObjects(new BasicEList<MpgObject>());
 		setSpaces(new BasicEList<MpgSpace>());
-
-		setGuidsWithoutMaterial(new GuidCollection(this, "# of objects that have missing materials"));
-		setGuidsWithoutMaterialAndWithoutFullDecomposedMaterials(new GuidCollection(this,
-				"# of objects without material and any of the decomposed objects without material"));
-		setGuidsWithoutVolume(new GuidCollection(this, "# of objects that have missing volumes"));
-		setGuidsWithoutVolumeAndWithoutFullDecomposedVolumes(new GuidCollection(this,
-				"# of objects without volume and any of the decomposed objects without volume"));
-		setGuidsWithUndefinedLayerMats(new GuidCollection(this, "# of objects that have undefined layers"));
-		setGuidsWithRedundantMaterialSpecs(
-				new GuidCollection(this, "# of objects that cannot be linked to materials 1-on-1"));
-		this.setUnits(VolumeUnit.CUBIC_METER, AreaUnit.SQUARED_METER, LengthUnit.METER);
+		setUnits(VolumeUnit.CUBIC_METER, AreaUnit.SQUARED_METER, LengthUnit.METER);
 	}
 
 	public void reset() {
 		mpgObjects.clear();
 		mpgElements.clear();
 		spaces.clear();
-
-		getGuidsWithoutMaterial().reset();
-		getGuidsWithoutVolume().reset();
-		getGuidsWithUndefinedLayerMats().reset();
-		getGuidsWithRedundantMaterials().reset();
 	}
 
 	@Override
@@ -141,7 +92,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	public void addElement(String name) {
 		if (name != null && !name.isEmpty()) {
-			mpgElements.add(new MpgElement(name));
+			mpgElements.add(new MpgElement(name, this));
 		}
 	}
 
@@ -155,10 +106,10 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void addProductCardToElement(String name, Integer cuasCode, NmdProductCard card) {
+	public void addProductCardToElement(String name, NmdProductCard card) {
 		MpgElement el = getElementByName(name);
 		if (el != null) {
-			el.addProductCard(cuasCode, card);
+			el.addProductCard(card);
 		}
 	}
 
@@ -240,6 +191,16 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		return materialNames.stream().map(mat -> this.getElementByName(mat)).collect(Collectors.toList());
 	}
 
+	public MpgElement getElementByObjectGuid(String guid) {
+		Optional<MpgElement> el = this.getElements().stream().filter(e -> e.getMpgObject().getGlobalId().equals(guid))
+				.findFirst();
+		if (el.isPresent()) {
+			return el.get();
+		} else {
+			return null;
+		}
+	}
+
 	@Override
 	public double getTotalVolumeOfMaterial(String name) {
 		return getObjectsByMaterialName(name).stream()
@@ -269,7 +230,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 * @param isDecomposedByrelationMap hashMap containing the guids of decomposed
 	 *                                  and decomposing objects.
 	 */
-	public void recreateParentChildMap(Map<String, String> isDecomposedByrelationMap) {
+	public void reloadParentChildRelationShips(Map<String, String> isDecomposedByrelationMap) {
 
 		this.getObjects().forEach(o -> {
 			if (isDecomposedByrelationMap.containsKey(o.getGlobalId())) {
@@ -278,7 +239,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		});
 
 		// create a list with parent ids linked to child objects
-		this.decomposedRelations = this.getObjects().stream().filter(o -> StringUtils.isBlank(o.getParentId()))
+		this.decomposedRelations = this.getObjects().stream().filter(o -> !StringUtils.isBlank(o.getParentId()))
 				.map(o -> new ImmutablePair<String, MpgObject>(o.getParentId(), o)).collect(Collectors.toList());
 	}
 
@@ -303,142 +264,111 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public GuidCollection getGuidsWithoutMaterial() {
-		return guidsWithoutMaterial;
-	}
-
-	public void setGuidsWithoutMaterial(GuidCollection coll) {
-		this.guidsWithoutMaterial = coll;
-	}
-
-	@Override
-	public GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials() {
-		return guidsWithoutMaterialAndWithoutFullDecomposedMaterials;
-	}
-
-	public void setGuidsWithoutMaterialAndWithoutFullDecomposedMaterials(
-			GuidCollection guidsWithoutMaterialAndWithoutFullDecomposedMaterials) {
-		this.guidsWithoutMaterialAndWithoutFullDecomposedMaterials = guidsWithoutMaterialAndWithoutFullDecomposedMaterials;
-	}
-
-	@Override
-	public GuidCollection getGuidsWithoutVolume() {
-		return guidsWithoutVolume;
-	}
-
-	public void setGuidsWithoutVolume(GuidCollection coll) {
-		this.guidsWithoutVolume = coll;
-	}
-
-	@Override
-	public GuidCollection getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes() {
-		return guidsWithoutVolumeAndWithoutFullDecomposedVolumes;
-	}
-
-	public void setGuidsWithoutVolumeAndWithoutFullDecomposedVolumes(
-			GuidCollection guidsWithoutVolumeAndWithoutFullDecomposedVolumes) {
-		this.guidsWithoutVolumeAndWithoutFullDecomposedVolumes = guidsWithoutVolumeAndWithoutFullDecomposedVolumes;
-	}
-
-	@Override
-	public GuidCollection getGuidsWithRedundantMaterials() {
-		return guidsWithRedundantMats;
-	}
-
-	public void setGuidsWithRedundantMaterialSpecs(GuidCollection coll) {
-		this.guidsWithRedundantMats = coll;
-	}
-
-	@Override
-	public GuidCollection getGuidsWithUndefinedLayerMats() {
-		return guidsWithUndefinedLayerMats;
-	}
-
-	public void setGuidsWithUndefinedLayerMats(GuidCollection coll) {
-		this.guidsWithUndefinedLayerMats = coll;
-	}
-
-	/**
-	 * Do a general check over all objects to check whether there are floating
-	 * materials (not linked to any MpgObject) or if there are MpgObjects that do no
-	 * match with any material
-	 * 
-	 * @return
-	 */
-	public void validateIfcDataCollection() {
-		// check for objects that have not a single material defined or objects without
-		// layers and multiple materials
-		getGuidsWithoutMaterial().setCollection(mpgObjects.stream().filter(o -> o.hasUndefinedMaterials(false))
-				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
-
-		getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials().setCollection(mpgObjects.stream()
-				.filter(o -> o.hasUndefinedMaterials(true)).map(o -> o.getGlobalId()).collect(Collectors.toList()));
-
-		// some objects might not have a volume defined. check whether any object or any
-		// of its children have undefined volumes.
-		getGuidsWithoutVolume().setCollection(mpgObjects.stream().filter(o -> o.hasUndefinedVolume(false))
-				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
-
-		getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes().setCollection(mpgObjects.stream()
-				.filter(o -> o.hasUndefinedVolume(true)).map(o -> o.getGlobalId()).collect(Collectors.toList()));
-
-		// check for materials without layers that have more than a single material
-		// added to them and as such cannot be resolved automatically
-		getGuidsWithRedundantMaterials().setCollection(mpgObjects.stream().filter(o -> o.hasRedundantMaterials(false))
-				.map(o -> o.getGlobalId()).collect(Collectors.toList()));
-
-		// check for objects that have more than 0 materials linked, but are still
-		// missing 1 to n materials
-		getGuidsWithUndefinedLayerMats().setCollection(mpgObjects.stream().filter(o -> o.hasUndefinedLayers(false))
-				.map(g -> g.getGlobalId()).collect(Collectors.toList()));
-	}
-
-	@Override
 	public boolean isIfcDataComplete() {
 		return getGuidsWithoutMaterial().getSize() == 0 && getGuidsWithoutVolume().getSize() == 0
 				&& getGuidsWithRedundantMaterials().getSize() == 0 && getGuidsWithUndefinedLayerMats().getSize() == 0;
 	}
 
+	/**
+	 * set the mapping of an element if the parent or child relation ship mapping
+	 * has changed
+	 * 
+	 * @param globalId guid of the mpgobject to start from
+	 * @param flag     flag to indicate whether the map was set (true) or unset
+	 *                 (false)
+	 */
 	@Override
-	public void SummaryReport() {
-		System.out.println("----------------------------");
-		System.out.println("Summary report for ifc file:");
+	public void toggleMappingDependencies(String globalId, boolean flag) {
+		List<MpgElement> children = this.allChildElementsByGuid(globalId);
+		List<MpgElement> parents = this.allParentElementsByGuid(globalId);
 
-		System.out.println();
-		System.out.println("Total objects found : " + mpgObjects.size());
-		System.out.println("object details per product type:");
-
-		List<MpgObject> products;
-		for (String productType : getDistinctIfcProductTypes()) {
-			products = getObjectsByProductType(productType);
-			System.out.println("#product type : " + productType);
-			System.out.println(" - number found : " + products.size());
-			System.out.println(" - with total volume : " + getTotalVolumeOfProductType(productType));
-			System.out.println("Materials found relating to product: ");
-			for (MpgElement element : getElementsByProductType(productType)) {
-				if (element != null) {
-					System.out.println(" - " + element.getIfcName());
+		if (flag) {
+			// override all the children mappings
+			children.forEach(el -> {
+				el.setMappingMethod(NmdMapping.IndirectThroughParent);
+				el.removeProductCards();
+			});
+			
+			parents.forEach(el -> {
+				if (el.getMappingMethod() == NmdMapping.None && allChildrenAreMapped(el)) {
+					el.setMappingMethod(NmdMapping.IndirectThroughChildren);
 				}
-			}
-			System.out.println();
+			});
+		} else {
+			// revert all hierarchical child mappings 
+			// (as there can only be a single parent with a direct mapping)
+			children.forEach(el -> {
+				if (el.getMappingMethod() == NmdMapping.IndirectThroughParent) {
+					el.setMappingMethod(NmdMapping.None);
+				}
+			});
+			// any parents that had a indirect through children mapping will be reverted
+			parents.forEach(el -> {
+				if (el.getMappingMethod() == NmdMapping.IndirectThroughChildren) {
+					el.setMappingMethod(NmdMapping.None);
+				}
+			});
 		}
 
-		System.out.println("#Total open space objects: " + this.getSpaces().size());
-		System.out.println(" - total floor area : " + this.getTotalFloorArea());
-		System.out.println();
+	}
 
-		getGuidsWithoutMaterial().SummaryOfGuids();
-		getGuidsWithoutVolume().SummaryOfGuids();
-		getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials().SummaryOfGuids();
-		getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes().SummaryOfGuids();
-		getGuidsWithRedundantMaterials().SummaryOfGuids();
-		getGuidsWithUndefinedLayerMats().SummaryOfGuids();
+	/**
+	 * Recursively check whether all children are mapped.
+	 * @param el MpgElement to check hierarchy of
+	 * @return a flag to indicate that all chidren have a mapping
+	 */
+	private boolean allChildrenAreMapped(MpgElement el) {
+		List<MpgElement> childrenOfElement = decomposedRelations.stream()
+				.filter(kvp -> kvp.getKey().equals(el.getMpgObject().getGlobalId()))
+				.map(v -> v.getValue().getGlobalId())
+				.map(guid -> this.getElementByObjectGuid(guid)).collect(Collectors.toList());
+		
+		if (childrenOfElement.size() > 0) {
+			return childrenOfElement.stream().allMatch(ce -> ce.hasMapping() || allChildrenAreMapped(ce));
+		} else {
+			return false;
+		}
+	}
+	
+	/**
+	 * get a collection of MpgElements that are higher up in the hierarchy than the
+	 * input element guid
+	 * 
+	 * @param globalId guid to start search
+	 * @return collection of elements that have the input guid as a (recursive)
+	 *         child
+	 */
+	private List<MpgElement> allParentElementsByGuid(String globalId) {
+		List<MpgElement> elements = new ArrayList<MpgElement>();
+		Optional<String> parentId = this.decomposedRelations.stream()
+				.filter(v -> v.getValue().getGlobalId().equals(globalId)).map(v -> v.getKey()).findFirst();
+		if (parentId.isPresent() && !parentId.get().isEmpty()) {
+			MpgElement parent = this.getElementByObjectGuid(parentId.get());
+			elements.add(parent);
+			elements.addAll(allParentElementsByGuid(parent.getMpgObject().getGlobalId()));
+		}
+		return elements;
+	}
 
-		System.out.println("End of Summary");
-		System.out.println("----------------------------");
+	/**
+	 * Get a collection of elements that are down in te hierarch than the input guid
+	 * 
+	 * @param globalId guid to start from
+	 * @return a list of elements that are a (recursive) child of the input guid
+	 */
+	private List<MpgElement> allChildElementsByGuid(String globalId) {
+		List<MpgElement> elements = this.mpgElements.stream()
+				.filter(el -> el.getMpgObject().getParentId().equals(globalId)).collect(Collectors.toList());
+		List<MpgElement> childEl = new ArrayList<MpgElement>();
+		elements.forEach(el -> {
+			childEl.addAll(allChildElementsByGuid(el.getMpgObject().getGlobalId()));
+		});
+		elements.addAll(childEl);
+		return elements;
 	}
 
 	@Override
+	@JsonIgnore
 	public Stream<String> getAllMaterialNames() {
 		return this.getElements().stream().flatMap(e -> e.getMpgObject().getListedMaterials().stream())
 				.map(s -> s.getName()).filter(n -> {
@@ -447,85 +377,110 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	/**
-	 * go through all objects without an NLSFB code and try to find matching or
-	 * 'parent' objects that do have a type.
+	 * Recursive check method to validate whether a material or any of its children
+	 * have undefined materials
 	 */
-	public void resolveNlsfbCodes() {
+	@Override
+	public boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren) {
+		long numLayers = obj.getLayers().size();
+		boolean objIsUndefined = (numLayers + obj.getMaterialNamesBySource(null).size()) == 0;
 
-		this.getObjects().stream().filter(o -> o.getNLsfbCode() == "" || o.getNLsfbCode() == null).forEach(o -> {
-			if (!o.getParentId().isEmpty()) {
-				MpgObject p = this.getObjectByGuid(o.getParentId()).get();
-				String parentCode = p.getNLsfbCode();
-				if (!parentCode.isEmpty()) {
-					o.setNLsfbCode(parentCode);
-				}
-			}
-		});
+		// anyMatch returns false on an empty list, so if children should be included,
+		// but no children are present it will still return false
+		boolean hasChildren = getChildren(obj.getGlobalId()).count() > 0;
+		boolean childrenAreUndefined = includeChildren
+				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedMaterials(o, includeChildren));
+
+		return objIsUndefined && !hasChildren ? objIsUndefined : childrenAreUndefined;
 	}
 
-	/**
-	 * run through mpgObjects where no geometry could be found and match these with
-	 * first: similar nlsfb code objects and second (Not implemented yet)
-	 */
-	public void resolveUnknownGeometries() {
-		// maintain a map with already found scalers to boost performance.
-		HashMap<String, List<MpgScalingType>> foundScalers = new HashMap<String, List<MpgScalingType>>();
-		Function<MpgObject, String> getNLsfbProp = (MpgObject e) -> {
-			return e.getNLsfbCode();
-		};
-		Function<MpgObject, String> getProdTypeProp = (MpgObject e) -> {
-			return e.getObjectType();
-		};
+	@Override
+	public boolean hasUndefinedVolume(MpgObject obj, boolean includeChildren) {
+		boolean ownCheck = obj.getGeometry().getVolume() == 0;
+		boolean hasChildren = getChildren(obj.getGlobalId()).count() > 0;
+		boolean childCheck = includeChildren
+				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedVolume(o, includeChildren));
 
-		// TODO: we can make this a lot more abstract to run this for any set of properties, but let's skip that for now.
-		this.getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
-			List<MpgScalingType> scalers = null;
-			String NLsfbKey = o.getNLsfbCode();
+		return ownCheck && !hasChildren ? true : childCheck;
+	}
 
-			if (foundScalers.containsKey(NLsfbKey)) {
-				scalers = foundScalers.get(NLsfbKey);
-			} else {
-				scalers = findScalersForMpgObjectProperty(getNLsfbProp, NLsfbKey);
-				foundScalers.put(NLsfbKey, scalers);
-			}
-			if (scalers.size() > 0) {
-				scalers.forEach(s -> o.getGeometry().addScalingType(s));
-				o.getGeometry().setIsComplete(true);
-			} else {
-				// fallback option is to look at similar IfcProducts
-				String prodTypeKey = o.getObjectType();
-				if (foundScalers.containsKey(prodTypeKey)) {
-					scalers = foundScalers.get(prodTypeKey);
-				} else {
-					scalers = findScalersForMpgObjectProperty(getProdTypeProp, prodTypeKey);
-					foundScalers.put(prodTypeKey, scalers);
-				}
+	@Override
+	public boolean hasRedundantMaterials(MpgObject obj, boolean includeChildren) {
+		long numLayers = obj.getLayers().size();
+		boolean ownCheck = (numLayers == 0) && (obj.getMaterialNamesBySource(null).size() > 1)
+				|| obj.hasDuplicateMaterialNames();
+		boolean childCheck = includeChildren
+				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasRedundantMaterials(o, includeChildren));
+		return ownCheck || childCheck;
+	}
 
-				if (scalers.size() > 0) {
-					scalers.forEach(s -> o.getGeometry().addScalingType(s));
-					o.getGeometry().setIsComplete(true);
-				}
-			}
-		});
+	@Override
+	public boolean hasUndefinedLayers(MpgObject obj, boolean includeChildren) {
+		long numLayers = obj.getLayers().size();
+		long unresolvedLayers = obj.getLayers().stream()
+				.filter(l -> l.getMaterialName() == "" || l.getMaterialName() == null).collect(Collectors.toList())
+				.size();
+
+		boolean ownCheck = (numLayers > 0) && (unresolvedLayers > 0);
+		boolean childCheck = includeChildren
+				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedLayers(o, includeChildren));
+		return ownCheck || childCheck;
 	}
 	
-	/**
-	 * Get the scalers matching a referenceProperty value by looking for scalers in all objects with an equal property value
-	 * @param propMethod Function that returns the requested property from an MpgObject
-	 * @param referenceProperty the reference property value that the other objects should match with.
-	 * @return the MpgScalingType that is most likely to match
-	 */
-	private List<MpgScalingType> findScalersForMpgObjectProperty(Function<MpgObject, String> propMethod,
-			String referenceProperty) {
-		List<List<MpgScalingType>> candidates = this.getObjects().stream().filter(o -> propMethod.apply(o) != null)
-				.filter(o -> propMethod.apply(o).equals(referenceProperty)).filter(o -> o.getGeometry().getIsComplete())
-				.map(o -> o.getGeometry().getScalerTypes()).distinct().collect(Collectors.toList());
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutMaterial() {
+		GuidCollection coll = new GuidCollection(this, "# of objects that have missing materials");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedMaterials(o, false)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
 
-		Optional<List<MpgScalingType>> scaler = candidates.stream().filter(st -> st.size() > 1).findFirst();
-		if (scaler.isPresent()) {
-			return scaler.get();
-		} else {
-			return new ArrayList<MpgScalingType>();
-		}
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials() {
+
+		GuidCollection coll = new GuidCollection(this,
+				"# of objects without material and any of the decomposed objects without material");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedMaterials(o, true)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutVolume() {
+		GuidCollection coll = new GuidCollection(this, "# of objects that have missing volumes");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedVolume(o, false)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes() {
+		GuidCollection coll = new GuidCollection(this,
+				"# of objects without volume and any of the decomposed objects without volume");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedVolume(o, true)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithRedundantMaterials() {
+		GuidCollection coll = new GuidCollection(this, "# of objects that cannot be linked to materials 1-on-1");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasRedundantMaterials(o, false)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithUndefinedLayerMats() {
+		GuidCollection coll = new GuidCollection(this, "# of objects that have undefined layers");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedLayers(o, false)).map(g -> g.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
 	}
 }
