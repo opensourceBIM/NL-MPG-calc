@@ -47,18 +47,48 @@ public class NlsfbCode {
 	}
 
 	/**
-	 * Check that the input code is an overlapping category of this code. 
+	 * Check that the input code is an overlapping category of this code.
 	 * 
 	 * example 1: this = 22.1 code = 22. => true. 
 	 * example 2: this = 22.2 code = 22.1 => false.
 	 * example 3: this = 22.2 code = 22.2 => true.
 	 * 
-	 * @param code the category
+	 * @param code the potential parent category
 	 * @return flag to indicate that this NLSfb object is a (sub) category of the
 	 *         input Nlsfb object
 	 */
 	public Boolean isSubCategoryOf(NlsfbCode code) {
-		return this.majorId == code.getMajorId() && (code.getMediorId() == null || this.mediorId == code.getMediorId());
+		return this.majorId == code.getMajorId()
+				&& compareSubCodes(code.getMediorId(), this.getMediorId());
+	}
+
+	/**
+	 * Should return true when an integer B is a derived (sub)code of integer A
+	 * example: (1,11) => true example (1,21) => false example (1,1) => true
+	 * 
+	 * @param codeA 'parent' code
+	 * @param codeB possible 'child' code
+	 * @return flag to indicate b is a child of a
+	 */
+	private Boolean compareSubCodes(Integer codeA, Integer codeB) {
+		if (codeA == null && codeB != null) {
+			return true;
+		}
+
+		int[] digitsA = String.valueOf(codeA).chars().toArray();
+		int[] digitsB = String.valueOf(codeB).chars().toArray();
+
+		if (digitsA.length > digitsB.length) {
+			return false;
+		}
+
+		for (int i = 0; i < digitsA.length; i++) {
+			if (digitsA[i] != digitsB[i]) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	public String print() {
@@ -70,7 +100,6 @@ public class NlsfbCode {
 	}
 
 	public Integer getMediorId() {
-		// TODO Auto-generated method stub
 		return mediorId;
 	}
 
