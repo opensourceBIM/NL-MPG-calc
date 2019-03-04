@@ -112,35 +112,55 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 	 * re-evaluate a series of ifcFiles and check what kind of materials are present
 	 * in these files. Based on the result determine the most common/important
 	 * keywords to be used in the mapping
+	 * 
+	 * @throws FileNotFoundException
 	 */
 	private void regenerateMaterialKeyWords() {
 
-		List<Path> listFiles = new ArrayList<Path>();
+		List<Path> foundFiles = new ArrayList<Path>();
+		List<String> allMaterials = new ArrayList<String>();
 		try {
 			Files.walk(Paths.get(config.getIFcFilesForKeyWordMapRootPath()))
 					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc")).forEach(p -> {
-						listFiles.add(p);
+						foundFiles.add(p);
 					});
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 
-		List<String[]> allList = new ArrayList<String[]>();
-		for (Path path : listFiles) {
+			for (Path path : foundFiles) {
 
-			List<String[]> fileList = new ArrayList<String[]>();
-			Scanner scanner = new Scanner(path.toUri().toString());
-			while (scanner.hasNextLine()) {
-				String line = scanner.nextLine();
-				if (line.contains("IFCMATERIAL")) {
-
-					fileList.add(StringUtils.substringsBetween(line, "\'", "\'"));
+				List<String> fileMaterials = new ArrayList<String>();
+				Scanner scanner = new Scanner(new File(path.toAbsolutePath().toString()));
+				while (scanner.hasNextLine()) {
+					String line = scanner.nextLine();
+					if (line.contains("IFCMATERIAL(")) {
+						String[] matRes = StringUtils.substringsBetween(line, "\'", "\'");
+						if (matRes != null) {
+							for (int i = 0; i < matRes.length; i++) {
+								if (matRes[i] != null) {
+									List<String> words = Arrays.asList(matRes[i].split(" |-|,")).stream()
+											.filter(w -> w != null && !w.isEmpty()).map(w -> w.toLowerCase())
+											.collect(Collectors.toList());
+									fileMaterials.addAll(words);
+								}
+							}
+						}
+					}
 				}
+				allMaterials.addAll(fileMaterials);
+				scanner.close();
 			}
-			allList.addAll(fileList);
-			scanner.close();
+		} catch (IOException e1) {
+			System.err.println(e1.getMessage());
 		}
+
+		Map<String, Long> wordCount = allMaterials.stream()
+				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+		List<Entry<String, Long>> sortedWordCount = wordCount.entrySet().stream()
+				.filter(w -> w.getKey().toCharArray().length > 2) // remove items that are simply too short
+				.filter(w -> w.getKey().replaceAll("[^a-zA-Z]", "").length() != 0) // remove non textual words
+				.sorted((w1, w2) -> {
+					return w1.getValue().compareTo(w2.getValue());
+				}).collect(Collectors.toList());
+		System.out.println("");
 	}
 
 	/**
