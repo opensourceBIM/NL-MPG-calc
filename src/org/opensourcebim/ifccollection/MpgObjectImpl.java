@@ -39,7 +39,7 @@ public class MpgObjectImpl implements MpgObject {
 		this.setObjectName(objectName);
 		if (objectType != null) {
 			objectType = objectType.replaceAll("Impl$", "");
-			objectType = objectType.replaceAll("^Ifc", "");
+			// objectType = objectType.replaceAll("^Ifc", "");
 			this.setObjectType(objectType);
 		}
 		this.parentId = parentId;
