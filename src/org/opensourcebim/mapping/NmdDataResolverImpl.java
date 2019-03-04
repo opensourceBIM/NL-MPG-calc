@@ -46,11 +46,14 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private NmdDataService service;
 	private NmdMappingDataService mappingService;
 	private MpgObjectStore store;
+	private String splitChars = " |-|,";
+	private Set<String> keyWords;
 
 	public NmdDataResolverImpl() {
 		NmdUserDataConfig config = new NmdUserDataConfigImpl();
 		setService(new Nmd2DataService(config));
 		setMappingService(new NmdMappingDataServiceImpl(config));
+		keyWords = mappingService.getKeyWordMappings(2).keySet(); // avoid words that only occur once..
 	}
 
 	public MpgObjectStore getStore() {
@@ -248,8 +251,20 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// sort the found products for every entry in the material list
 		List<NmdProductCard> selectedProducts = new ArrayList<NmdProductCard>();
 
-		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();
-		allProducts.forEach(p -> prods.add(new ImmutablePair(p, getMinLevenshteinScoreForProduct(name, p))));
+		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();	
+		
+		// get min levenshtein distance for each ref word and penalize for the
+		// superfluous data
+		List<String> refs = Arrays.asList(name.split(splitChars)).stream()
+				.filter(r -> r.length() >= 2)
+				.filter(w -> keyWords.contains(w.toLowerCase()))
+				.collect(Collectors.toList());
+		
+		if (name.toLowerCase().equals("glas")) {
+			System.out.println();
+		}
+		allProducts.forEach(p -> 
+			prods.add(new ImmutablePair<NmdProductCard, Double>(p, getMinLevenshteinScoreForProduct(refs, p))));
 		prods.sort((p1, p2) -> Double.compare(p1.getValue(), p2.getValue()));
 
 		Double benchMark = prods.get(0).getValue() / name.toCharArray().length;
@@ -272,24 +287,15 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return the minimum levensthein distance of the reference word wrt any of the
 	 *         profileSet names
 	 */
-	private Double getMinLevenshteinScoreForProduct(String refWord, NmdProductCard card) {
+	private Double getMinLevenshteinScoreForProduct(List<String> refWords, NmdProductCard card) {
 		// get all words in the profileSet names and clean them
-		String splitChars = " |-|,";
 		List<String> keyWords = card.getProfileSets().stream()
 				.flatMap(ps -> Arrays.asList(ps.getName().split(splitChars)).stream())
 				.filter(w -> !w.isEmpty() && w.length() > 2).collect(Collectors.toList());
 		keyWords.addAll(Arrays.asList(card.getDescription().split(splitChars)));
 		keyWords.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
 
-		// ToDo: compare refWords with pre generated keyword dictionary to make a
-		// pre-selection of what is relevant and what not.
-
-		// get min levenshtein distance for each ref word and penalize for the
-		// superfluous data
-		List<String> refs = Arrays.asList(refWord.split(splitChars)).stream().filter(r -> r.length() >= 2)
-				.collect(Collectors.toList());
-
-		return calculateLevenshteinScore(refs, keyWords);
+		return calculateLevenshteinScore(refWords, keyWords);
 	}
 
 	@SuppressWarnings("deprecation")
