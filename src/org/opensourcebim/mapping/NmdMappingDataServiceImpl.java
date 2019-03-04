@@ -200,10 +200,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 				.sorted((w1, w2) -> {
 					return w1.getValue().compareTo(w2.getValue());
 				}).collect(Collectors.toList());
-		
 
-		
-		
 		writeKeyWordsToDB(filteredWordCount);
 	}
 
