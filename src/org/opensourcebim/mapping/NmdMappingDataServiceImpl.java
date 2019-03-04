@@ -94,7 +94,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 			System.out.println("");
 			while (rs.next()) {
 				String keyWord = rs.getString("keyword").trim();
-				Long keyCount = (long)rs.getInt("code");
+				Long keyCount = (long)rs.getInt("count");
 				keyWordMap.putIfAbsent(keyWord, keyCount);
 			}
 
@@ -222,7 +222,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 
 			statement.close();
 		} catch (SQLException e) {
-			System.err.println("error querying keyword map : " + e.getMessage());
+			System.err.println("error querying common word store : " + e.getMessage());
 		}
 		return commonWords;
 	}
