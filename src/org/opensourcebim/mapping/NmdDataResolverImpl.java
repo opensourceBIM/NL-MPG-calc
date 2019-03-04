@@ -29,7 +29,6 @@ import org.opensourcebim.nmd.NmdElement;
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdMappingDataService;
 import org.opensourcebim.nmd.NmdProductCard;
-import org.opensourcebim.nmd.NmdProductCardImpl;
 import org.opensourcebim.nmd.NmdProfileSet;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;

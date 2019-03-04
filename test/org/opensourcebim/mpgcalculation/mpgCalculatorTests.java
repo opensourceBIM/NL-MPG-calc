@@ -3,28 +3,11 @@ package org.opensourcebim.mpgcalculation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import java.util.HashMap;
-import java.util.UUID;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.ifccollection.MpgGeometry;
-import org.opensourcebim.ifccollection.MpgLayer;
-import org.opensourcebim.ifccollection.MpgLayerImpl;
-import org.opensourcebim.ifccollection.MpgObjectImpl;
-import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
-import org.opensourcebim.ifccollection.MpgSpaceImpl;
-import org.opensourcebim.nmd.NmdFaseProfiel;
-import org.opensourcebim.nmd.NmdFaseProfielImpl;
-import org.opensourcebim.nmd.NmdMilieuCategorie;
-import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProductCardImpl;
-import org.opensourcebim.nmd.NmdProfileSet;
-import org.opensourcebim.nmd.NmdProfileSetImpl;
-import org.opensourcebim.nmd.NmdReferenceResources;
 import org.opensourcebim.nmd.ObjectStoreBuilder;
-import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
 public class mpgCalculatorTests {
 

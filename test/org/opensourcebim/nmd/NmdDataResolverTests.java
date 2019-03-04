@@ -9,10 +9,6 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.ifccollection.MpgGeometry;
-import org.opensourcebim.ifccollection.MpgObjectImpl;
-import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
 
 public class NmdDataResolverTests {

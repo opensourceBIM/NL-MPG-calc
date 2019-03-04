@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class MpgGeometry {
 	private double volume;
 	private double floorArea;
-	private double faceArea;
 
 	private Boolean isComplete;
 	
@@ -17,7 +16,6 @@ public class MpgGeometry {
 	public MpgGeometry() {
 		volume = Double.NaN;
 		floorArea = Double.NaN;
-		faceArea = Double.NaN;
 
 		setIsComplete(false);
 	}

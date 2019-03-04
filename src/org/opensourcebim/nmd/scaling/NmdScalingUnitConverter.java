@@ -1,6 +1,5 @@
 package org.opensourcebim.nmd.scaling;
 
-import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.LengthUnit;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 
