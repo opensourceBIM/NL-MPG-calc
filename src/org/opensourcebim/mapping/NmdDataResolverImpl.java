@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -351,14 +352,14 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * go through all objets and try to find an appropriate element that matches the
+	 * go through all objects and try to find an appropriate element that matches the
 	 * NLsfb code. If no code can be found try resolving the NLsfb code by looking
 	 * at decomposing elements and/or a list of alternative IfcProduct to NLsfb
 	 * mappings.
 	 */
 	public void resolveNlsfbCodes() {
 
-		HashMap<String, List<String>> map = getMappingService().getNlsfbMappings();
+		Map<String, List<String>> map = getMappingService().getNlsfbMappings();
 
 		this.getStore().getElements().forEach(el -> {
 
@@ -383,7 +384,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					}
 				}
 
-				// Now add all aternatives to fall back on should the first mapping give no or
+				// Now add all aternatives to fall back on should the first mapping give no results
 				if (foundMap == null) {
 					foundMap = map.getOrDefault(p.getObjectType(), null);
 				}

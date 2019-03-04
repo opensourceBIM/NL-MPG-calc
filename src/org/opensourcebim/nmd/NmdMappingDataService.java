@@ -1,7 +1,7 @@
 package org.opensourcebim.nmd;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.mapping.NmdUserMap;
@@ -16,7 +16,7 @@ public interface NmdMappingDataService {
 	
 	NmdUserMap getApproximateMapForObject(MpgObject object);
 	
-	HashMap<String, List<String>> getNlsfbMappings();
+	Map<String, List<String>> getNlsfbMappings();
 	
-	void putNlsfbMapping(String ifcProductType, String[] codes, Boolean append);
+	Map<String, Long> getKeyWordMappings();
 }

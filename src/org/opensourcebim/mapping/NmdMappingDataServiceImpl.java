@@ -1,13 +1,12 @@
 package org.opensourcebim.mapping;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -28,36 +27,20 @@ import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.NmdUserDataConfig;
 import org.opensourcebim.nmd.NmdMappingDataService;
 
-public class NmdMappingDataServiceImpl implements NmdMappingDataService {
+/**
+ * Class to provide an interface between java code and a mapping database
+ * The mapping database will store any data that is required to resolve what (Nmd) products to choose
+ * based on ifc file data.
+ * @author vijj
+ * 
+ */
+public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdMappingDataService {
 
-	private Connection connection;
-	private NmdUserDataConfig config;
+	private String mat_keyword_table = "ifc_material_keywords";
+	private String ifc_to_nlsfb_table = "ifc_to_nlsfb_map";
 
 	public NmdMappingDataServiceImpl(NmdUserDataConfig config) {
-		this.config = config;
-		connect();
-	}
-
-	@Override
-	public void connect() {
-		try {
-			connection = DriverManager.getConnection("jdbc:sqlite:" + config.getMappingDbPath());
-		} catch (SQLException e) {
-			// if the error message is "out of memory",
-			// it probably means no database file is found
-			System.err.println(e.getMessage());
-		}
-	}
-
-	@Override
-	public void disconnect() {
-		try {
-			if (this.connection == null || this.connection.isClosed()) {
-				this.connection.close();
-			}
-		} catch (SQLException e) {
-			System.err.println("Error occured in disocnnecting from mapping service: " + e.getMessage());
-		}
+		super(config);
 	}
 
 	@Override
@@ -73,12 +56,6 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 	}
 
 	@Override
-	public void putNlsfbMapping(String ifcProductType, String[] codes, Boolean append) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public HashMap<String, List<String>> getNlsfbMappings() {
 
 		HashMap<String, List<String>> elementMap = new HashMap<String, List<String>>();
@@ -86,7 +63,7 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 			Statement statement = connection.createStatement();
 			statement.setQueryTimeout(30);
 
-			ResultSet rs = statement.executeQuery("Select * from ifc_to_nlsfb_map");
+			ResultSet rs = statement.executeQuery("Select * from " + this.ifc_to_nlsfb_table);
 			System.out.println("");
 			while (rs.next()) {
 				String prodName = rs.getString("ifcproducttype").trim();
@@ -94,13 +71,35 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 				elementMap.putIfAbsent(prodName, new ArrayList<String>());
 				elementMap.get(prodName).add(nlsfbCode);
 			}
-			
+
 			statement.close();
 		} catch (SQLException e) {
 			System.err.println("error querying nlsfb map : " + e.getMessage());
 		}
 
 		return elementMap;
+	}
+	
+	@Override
+	public Map<String, Long> getKeyWordMappings() {
+		HashMap<String, Long> keyWordMap = new HashMap<String, Long>();
+		try {
+			Statement statement = connection.createStatement();
+			statement.setQueryTimeout(30);
+
+			ResultSet rs = statement.executeQuery("Select * from " + this.mat_keyword_table);
+			System.out.println("");
+			while (rs.next()) {
+				String keyWord = rs.getString("keyword").trim();
+				Long keyCount = (long)rs.getInt("code");
+				keyWordMap.putIfAbsent(keyWord, keyCount);
+			}
+
+			statement.close();
+		} catch (SQLException e) {
+			System.err.println("error querying keyword map : " + e.getMessage());
+		}
+		return keyWordMap;
 	}
 
 	public void regenerateMappingData() {
@@ -121,7 +120,12 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 		List<String> allMaterials = new ArrayList<String>();
 		try {
 			Files.walk(Paths.get(config.getIFcFilesForKeyWordMapRootPath()))
-					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc")).forEach(p -> {
+					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc"))
+					.filter(p -> {
+						// filter on max file size (50 MB) limit on 5e7
+						return (new File(p.toAbsolutePath().toString())).length() < 5e7; 
+					})
+					.forEach(p -> {
 						foundFiles.add(p);
 					});
 
@@ -136,7 +140,7 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 						if (matRes != null) {
 							for (int i = 0; i < matRes.length; i++) {
 								if (matRes[i] != null) {
-									List<String> words = Arrays.asList(matRes[i].split(" |-|,")).stream()
+									List<String> words = Arrays.asList(matRes[i].split(" |-|,|_")).stream()
 											.filter(w -> w != null && !w.isEmpty()).map(w -> w.toLowerCase())
 											.collect(Collectors.toList());
 									fileMaterials.addAll(words);
@@ -148,19 +152,42 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 				allMaterials.addAll(fileMaterials);
 				scanner.close();
 			}
-		} catch (IOException e1) {
-			System.err.println(e1.getMessage());
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
 		}
 
 		Map<String, Long> wordCount = allMaterials.stream()
 				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-		List<Entry<String, Long>> sortedWordCount = wordCount.entrySet().stream()
+		List<Entry<String, Long>> filteredWordCount = wordCount.entrySet().stream()
 				.filter(w -> w.getKey().toCharArray().length > 2) // remove items that are simply too short
-				.filter(w -> w.getKey().replaceAll("[^a-zA-Z]", "").length() != 0) // remove non textual words
+				.filter(w -> w.getKey().replaceAll("[^a-zA-Z]", "").length() != 0) // remove purely numerical content
 				.sorted((w1, w2) -> {
 					return w1.getValue().compareTo(w2.getValue());
 				}).collect(Collectors.toList());
-		System.out.println("");
+		writeKeyWordsToDB(filteredWordCount);
+	}
+
+	private Boolean writeKeyWordsToDB(List<Entry<String, Long>> words) {
+		String tableName = this.mat_keyword_table;
+		String[] headers = new String[] { "keyword", "count" };
+		List<String[]> values = words.stream()
+				.map(w -> new String[] { w.getKey(), w.getValue().toString() })
+				.collect(Collectors.toList());
+		
+		try {
+			deleteTable(tableName);
+	
+			String createTableSql = "CREATE TABLE IF NOT EXISTS " + tableName + " (\n"
+					+ "	id integer PRIMARY KEY AUTOINCREMENT,\n" + " keyword text NOT NULL,\n"
+					+ "	count integer NOT NULL\n" + ");";
+			this.executeAndCommitCommand(createTableSql);
+			this.executeAndCommitCommand(createSqlInsertStatement(tableName, headers, values));
+		} catch(SQLException e) {
+			System.err.println("Error occured while cleaning or writing data to " + this.mat_keyword_table + " : " + e.getMessage());
+			return false;
+		}
+		
+		return true;
 	}
 
 	/**
@@ -168,8 +195,8 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 	 */
 	private void regenerateIfcToNlsfbMappings() {
 		try {
-			String tableName = "ifc_to_nlsfb_map";
-			CSVReader reader = new CSVReader(new FileReader(config.getKeyWordCsvPath()));
+			String tableName = this.ifc_to_nlsfb_table;
+			CSVReader reader = new CSVReader(new FileReader(config.getNlsfbAlternativesFilePath()));
 			List<String[]> myEntries = reader.readAll();
 			reader.close();
 
@@ -188,30 +215,8 @@ public class NmdMappingDataServiceImpl implements NmdMappingDataService {
 				// our import file does not seem to be in the assumed structure.
 				System.out.println("incorrect input data encountered.");
 			}
-		} catch (SQLException e) {
-			System.err.println("incorrect sql command");
-		} catch (FileNotFoundException e) {
-			System.err.println("");
-		} catch (IOException e) {
-
+		} catch (SQLException|IOException e) {
+			System.err.println("error occured with creating NLSfb alternatives map: " + e.getMessage());
 		}
-	}
-
-	private String createSqlInsertStatement(String table, String[] headers, List<String[]> values) {
-
-		String valueString = StringUtils.join(
-				values.stream().map(ar -> "('" + StringUtils.join(ar, "','") + "')").collect(Collectors.toList()), ",");
-		return "INSERT INTO " + table + " (" + StringUtils.join(headers, ",") + ") VALUES " + valueString;
-	}
-
-	private void deleteTable(String tableName) throws SQLException {
-		this.executeAndCommitCommand("DROP TABLE IF EXISTS " + tableName);
-	}
-
-	private void executeAndCommitCommand(String sqlCommand) throws SQLException {
-		Statement statement = connection.createStatement();
-		statement.setQueryTimeout(30);
-		statement.executeUpdate(sqlCommand);
-		statement.close();
 	}
 }

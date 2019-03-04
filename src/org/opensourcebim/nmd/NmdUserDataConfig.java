@@ -21,7 +21,7 @@ public interface NmdUserDataConfig {
 
 	String getIFcFilesForKeyWordMapRootPath();
 
-	String getKeyWordCsvPath();
+	String getNlsfbAlternativesFilePath();
 
 	String getMappingDbPath();
 }
