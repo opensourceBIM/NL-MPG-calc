@@ -159,7 +159,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// the results to mapping object
 		Set<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
 		if (selectedProducts.size() > 0) {
-			selectedProducts.forEach(c -> mpgElement.addProductCard(c));
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
 			if (selectedProducts.size() == candidateElements.size()
 					|| selectedProducts.stream().anyMatch(pc -> pc.getIsTotaalProduct())) {
@@ -214,8 +213,18 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// Find per material the most likely candidates that fall within the
 		// specifications
 		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
-		mats.forEach(mat -> {
-			List<NmdProductCard> productOptions = sortProductsBasedOnStringSimilarity(mat.getName(), allProducts, .10);
+
+		for (MaterialSource mat : mats) {
+			List<NmdProductCard> productOptions = selectProductsBasedOnStringSimilarity(mat.getName(), allProducts,
+					.10);
+
+			// check if a decent enough filter has been made. if not tag that there are too
+			// many options.
+			// ToDo: make warning settings variable
+			if (allProducts.size() <= 4 * productOptions.size() || productOptions.size() > 15) {
+				mpgElement.getMpgObject().addTag(MpgInfoTagType.mappingWarning,
+						"large uncertainty for mapping material: " + mat.getName());
+			}
 
 			for (NmdProductCard card : productOptions) {
 				// per found element we should try to select a fitting productCard
@@ -238,39 +247,36 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			// ToDo: currently this is a set Function, but this can be replaced with any
 			// user defined selection method.
 			if (productOptions.size() > 0) {
-				viableCandidates.add(selectCard.apply(productOptions));
+				NmdProductCard chosenCard = selectCard.apply(productOptions);
+				viableCandidates.add(chosenCard);
+				mpgElement.mapProductCard(mat, chosenCard);
 			}
-		});
+		}
 
 		return viableCandidates;
 	}
 
-	private List<NmdProductCard> sortProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts,
+	private List<NmdProductCard> selectProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts,
 			Double cutOff) {
 		// sort the found products for every entry in the material list
-		List<NmdProductCard> selectedProducts = new ArrayList<NmdProductCard>();
-
-		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();	
-		
+		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();
+		List<NmdProductCard> res = new ArrayList<NmdProductCard>();
 		// get min levenshtein distance for each ref word and penalize for the
 		// superfluous data
-		List<String> refs = Arrays.asList(name.split(splitChars)).stream()
-				.filter(r -> r.length() >= 2)
-				.filter(w -> keyWords.contains(w.toLowerCase()))
-				.collect(Collectors.toList());
-		
-		allProducts.forEach(p -> 
-			prods.add(new ImmutablePair<NmdProductCard, Double>(p, getMinLevenshteinScoreForProduct(refs, p))));
+		List<String> refs = Arrays.asList(name.split(splitChars)).stream().filter(r -> r.length() >= 2)
+				.filter(w -> keyWords.contains(w.toLowerCase())).collect(Collectors.toList());
+
+		allProducts.forEach(p -> prods
+				.add(new ImmutablePair<NmdProductCard, Double>(p, getMinLevenshteinScoreForProduct(refs, p))));
 		prods.sort((p1, p2) -> Double.compare(p1.getValue(), p2.getValue()));
 
-		Double benchMark = prods.get(0).getValue() / name.toCharArray().length;
+		Double benchMark = prods.get(0).getValue();
 		for (Pair<NmdProductCard, Double> pv : prods) {
-			if (pv.getValue() / name.toCharArray().length <= benchMark * (1 + cutOff)) {
-				selectedProducts.add(pv.getKey());
+			if (pv.getValue() <= benchMark * (1 + cutOff)) {
+				res.add(pv.getKey());
 			}
 		}
-		;
-		return selectedProducts;
+		return res;
 	}
 
 	/**
@@ -287,6 +293,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		List<String> keyWords = card.getProfileSets().stream()
 				.flatMap(ps -> Arrays.asList(ps.getName().split(splitChars)).stream())
 				.filter(w -> !w.isEmpty() && w.length() > 2).collect(Collectors.toList());
+		
 		keyWords.addAll(Arrays.asList(card.getDescription().split(splitChars)));
 		keyWords.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
 
@@ -353,10 +360,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * go through all objects and try to find an appropriate element that matches the
-	 * NLsfb code. If no code can be found try resolving the NLsfb code by looking
-	 * at decomposing elements and/or a list of alternative IfcProduct to NLsfb
-	 * mappings.
+	 * go through all objects and try to find an appropriate element that matches
+	 * the NLsfb code. If no code can be found try resolving the NLsfb code by
+	 * looking at decomposing elements and/or a list of alternative IfcProduct to
+	 * NLsfb mappings.
 	 */
 	public void resolveNlsfbCodes() {
 
@@ -385,7 +392,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					}
 				}
 
-				// Now add all aternatives to fall back on should the first mapping give no results
+				// Now add all aternatives to fall back on should the first mapping give no
+				// results
 				if (foundMap == null) {
 					foundMap = map.getOrDefault(p.getObjectType(), null);
 				}

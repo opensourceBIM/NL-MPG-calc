@@ -5,6 +5,7 @@ public enum MpgInfoTagType {
 	geometryDirectionSelected,
 	geometryFromResolvedType,
 	geometrySourceType,
+	mappingWarning,
 	nlsfbCodeFromResolvedType, 
-	nmdProductCardWarning,
+	nmdProductCardWarning, 
 }
