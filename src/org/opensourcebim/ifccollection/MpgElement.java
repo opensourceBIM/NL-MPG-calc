@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class MpgElement {
 
 	private String ifcName;
-	private List<NmdProductCard> productCards;
+	private List<Integer> productIds;
 	private MpgObject mpgObject;
 
 	private MpgObjectStore store;
@@ -27,7 +27,7 @@ public class MpgElement {
 
 	public MpgElement(String name, MpgObjectStore store) {
 		ifcName = name;
-		this.productCards = new ArrayList<NmdProductCard>();
+		this.setProductIds(new ArrayList<Integer>());
 		this.mappingMethod = NmdMapping.None;
 		this.store = store;
 	}
@@ -77,26 +77,27 @@ public class MpgElement {
 		return this.mappingMethod != NmdMapping.None;
 	}
 
-	public String print() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("material : " + ifcName + " with properties" + System.getProperty("line.separator"));
-		sb.append("nmd material(s) linked to MpgMaterial: " + this.productCards.size()
-				+ System.getProperty("line.separator"));
-		sb.append("specs undefined " + System.getProperty("line.separator"));
-
-		return sb.toString();
+	public List<Integer> getProductIds() {
+		return productIds;
 	}
 
+	public void setProductIds(List<Integer> productIds) {
+		this.productIds = productIds;
+	}
+	
+	@JsonIgnore
 	public List<NmdProductCard> getNmdProductCards() {
-		return productCards;
+		return this.getStore().getProductCards(this.getProductIds());
 	}
 
 	public void addProductCard(NmdProductCard productCard) {
-		this.productCards.add(productCard);
+		this.getProductIds().add(productCard.getProductId());
+		this.getStore().addProductCard(productCard);
+		
 	}
 
 	public void removeProductCards() {
-		this.productCards.clear();
+		this.getProductIds().clear();
 	}
 
 	/**

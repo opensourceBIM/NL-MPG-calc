@@ -1,7 +1,9 @@
 package org.opensourcebim.ifccollection;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -30,36 +32,31 @@ public interface MpgObjectStore {
 	
 	Stream<String> getAllMaterialNames();
 	
-	Set<String> getDistinctIfcProductTypes();
-
 	void addObject(MpgObject mpgObject);
-	
-	List<MpgObject> getObjectsByProductType(String productType);
-	
-	List<MpgObject> getObjectsByProductName(String productName);
-	
-	List<MpgSpace> getObjectsByMaterialName(String materialName);
-	
 	List<MpgObject> getObjectsByGuids(HashSet<String> guids);
-	
 	Optional<MpgObject> getObjectByGuid(String guid);
-	
 	Stream<MpgObject> getChildren(String parentGuid);
+	
 	
 	LengthUnit getLengthUnit();
 	AreaUnit getAreaUnit();
 	VolumeUnit getVolumeUnit();
 	
+	
 	void addElement(String string);
-
 	MpgElement getElementByName(String name);
 	List<MpgElement> getElementsByProductType(String productType);
 	
-	double getTotalVolumeOfMaterial(String name);
-	double getTotalVolumeOfProductType(String productType);
+	
+	void addProductCard(NmdProductCard card);
+	NmdProductCard getProductCard(Integer id);
+	List<NmdProductCard> getProductCards(Collection<Integer> ids);
+	Map<Integer, NmdProductCard> getProductCards();
 	
 	void addSpace(MpgSpace space);
+	double getTotalVolumeOfMaterial(String name);
 	double getTotalFloorArea();
+	
 	
 	boolean isIfcDataComplete();
 	
