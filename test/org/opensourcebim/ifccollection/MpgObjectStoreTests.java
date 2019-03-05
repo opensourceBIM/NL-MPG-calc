@@ -35,13 +35,14 @@ public class MpgObjectStoreTests {
 			
 	@Test
 	public void testChangingAMaterialWillChangeAnyRelatedObjectMaterials() {
-		objectStore.addElement("dummyMaterial");
+		MpgElement el = objectStore.addElement("dummyMaterial");
 		
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(2, 1.0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
 		mpgObject.addMaterialSource("dummyMaterial", "", "layer");
 		objectStore.addObject(mpgObject);
-		objectStore.getElementByName("dummyMaterial").setMappingMethod(NmdMapping.DirectTotaalProduct);
+		
+		el.setMappingMethod(NmdMapping.DirectTotaalProduct);
 		
 		assertEquals(NmdMapping.DirectTotaalProduct,
 				objectStore.getElementsByProductType("Wall").get(0).getMappingMethod());

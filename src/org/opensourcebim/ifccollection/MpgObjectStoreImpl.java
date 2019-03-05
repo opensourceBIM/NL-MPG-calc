@@ -95,10 +95,13 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void addElement(String name) {
+	public MpgElement addElement(String name) {
+		MpgElement el = null;
 		if (name != null && !name.isEmpty()) {
-			mpgElements.add(new MpgElement(name, this));
+			el = new MpgElement(name, this);
+			mpgElements.add(el);
 		}
+		return el;
 	}
 
 	@Override
@@ -108,14 +111,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	private void setElements(HashSet<MpgElement> mpgElements) {
 		this.mpgElements = mpgElements;
-	}
-
-	@Override
-	public void addProductCardToElement(String name, NmdProductCard card) {
-		MpgElement el = getElementByName(name);
-		if (el != null) {
-			el.addProductCard(card);
-		}
 	}
 
 	@Override

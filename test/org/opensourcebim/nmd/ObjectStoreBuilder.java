@@ -5,6 +5,9 @@ import static org.mockito.Mockito.mock;
 import java.util.HashMap;
 import java.util.UUID;
 
+import org.bimserver.shared.Guid;
+import org.opensourcebim.ifccollection.MaterialSource;
+import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgLayer;
 import org.opensourcebim.ifccollection.MpgLayerImpl;
@@ -22,9 +25,11 @@ public class ObjectStoreBuilder {
 	}
 	
 	public void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int lifetime) {
-		getStore().addElement(ifcMatName);
-		getStore().addProductCardToElement(ifcMatName, createUnitProductCard(nmdMatName, unit, category, lifetime));
+		MpgElement el = getStore().addElement(ifcMatName);
 		addUnitIfcObjectForElement(ifcMatName, 1.0, 1.0);
+		el.mapProductCard(
+				new MaterialSource("builder-" + ifcMatName, ifcMatName, "builder"),
+				createUnitProductCard(nmdMatName, unit, category, lifetime));
 	}
 	
 	public void addUnitIfcObjectForElement(String ifcMatName, double volume, double area) {

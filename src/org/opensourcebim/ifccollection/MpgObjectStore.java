@@ -27,11 +27,9 @@ public interface MpgObjectStore {
 	List<MpgObject> getObjects();
 	List<MpgSpace> getSpaces();
 	
-	void addProductCardToElement(String string, NmdProductCard specs);
-	void setObjectForElement(String name, MpgObject mpgObject);
-	
 	Stream<String> getAllMaterialNames();
 	
+	void setObjectForElement(String name, MpgObject mpgObject);
 	void addObject(MpgObject mpgObject);
 	List<MpgObject> getObjectsByGuids(HashSet<String> guids);
 	Optional<MpgObject> getObjectByGuid(String guid);
@@ -43,7 +41,7 @@ public interface MpgObjectStore {
 	VolumeUnit getVolumeUnit();
 	
 	
-	void addElement(String string);
+	MpgElement addElement(String string);
 	MpgElement getElementByName(String name);
 	List<MpgElement> getElementsByProductType(String productType);
 	

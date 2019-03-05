@@ -208,8 +208,7 @@ public class MpgIfcObjectCollector {
 				// all properties are set. add it to the store.
 				// create the mpg element
 				String newMpgElementId = product.getName() + "-" + product.getGlobalId();
-				this.objectStore.addElement(newMpgElementId);
-				MpgElement newMpgElement = this.objectStore.getElementByName(newMpgElementId);
+				MpgElement newMpgElement = this.objectStore.addElement(newMpgElementId);
 
 				objectStore.getObjects().add(mpgObject);
 				newMpgElement.setMpgObject(mpgObject);
