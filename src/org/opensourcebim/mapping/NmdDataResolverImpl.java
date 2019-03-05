@@ -259,15 +259,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				.filter(w -> keyWords.contains(w.toLowerCase()))
 				.collect(Collectors.toList());
 		
-		if (name.toLowerCase().equals("glas")) {
-			System.out.println();
-		}
 		allProducts.forEach(p -> 
 			prods.add(new ImmutablePair<NmdProductCard, Double>(p, getMinLevenshteinScoreForProduct(refs, p))));
 		prods.sort((p1, p2) -> Double.compare(p1.getValue(), p2.getValue()));
 
 		Double benchMark = prods.get(0).getValue() / name.toCharArray().length;
-		System.out.println("");
 		for (Pair<NmdProductCard, Double> pv : prods) {
 			if (pv.getValue() / name.toCharArray().length <= benchMark * (1 + cutOff)) {
 				selectedProducts.add(pv.getKey());

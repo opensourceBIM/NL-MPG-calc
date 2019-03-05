@@ -87,7 +87,7 @@ public class MpgGeometry {
 	 */
 	public void setDimensionsByVolumeRatio(MpgGeometry geom) {
 		if (geom.getDimensions().length != 3) {
-			System.out.println("wut?");
+			this.setDimensions(Double.NaN, Double.NaN, Double.NaN);
 			return;
 		}
 		Double lengthRatio = Math.pow(this.getVolume() / geom.getVolume(), 1.0/3.0);
