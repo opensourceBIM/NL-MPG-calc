@@ -313,7 +313,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				.collect(Collectors.toSet());
 
 		keyWords.addAll(Arrays.asList(card.getDescription().toLowerCase().split(ResolverSettings.splitChars)));
-		System.out.println("");
 		keyWords.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
 		keyWords.removeIf(w -> w.isEmpty() || w.length() < ResolverSettings.minWordLengthForSimilarityCheck);
 		
