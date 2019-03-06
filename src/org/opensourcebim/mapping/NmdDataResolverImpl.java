@@ -45,14 +45,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private NmdDataService service;
 	private NmdMappingDataService mappingService;
 	private MpgObjectStore store;
-	private String splitChars = " |-|,";
 	private Set<String> keyWords;
 
 	public NmdDataResolverImpl() {
 		NmdUserDataConfig config = new NmdUserDataConfigImpl();
 		setService(new Nmd2DataService(config));
 		setMappingService(new NmdMappingDataServiceImpl(config));
-		keyWords = mappingService.getKeyWordMappings(2).keySet(); // avoid words that only occur once..
+		keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet(); // avoid words
+																											// that only
+																											// occur
+																											// once..
 	}
 
 	public MpgObjectStore getStore() {
@@ -215,13 +217,13 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
 
 		for (MaterialSource mat : mats) {
-			List<NmdProductCard> productOptions = selectProductsBasedOnStringSimilarity(mat.getName(), allProducts,
-					.10);
+			List<NmdProductCard> productOptions = selectProductsBasedOnStringSimilarity(mat.getName(), allProducts);
 
 			// check if a decent enough filter has been made. if not tag that there are too
 			// many options.
 			// ToDo: make warning settings variable
-			if (allProducts.size() <= 4 * productOptions.size() || productOptions.size() > 15) {
+			if (allProducts.size() * ResolverSettings.tooManyOptionsRatio <= productOptions.size()
+					|| productOptions.size() > ResolverSettings.tooManyOptionsAbsNum) {
 				mpgElement.getMpgObject().addTag(MpgInfoTagType.mappingWarning,
 						"large uncertainty for mapping material: " + mat.getName());
 			}
@@ -229,7 +231,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			for (NmdProductCard card : productOptions) {
 				// per found element we should try to select a fitting productCard
 				int dims = NmdScalingUnitConverter.getUnitDimension(card.getUnit());
-				if (card.getProfileSets().size() > 0) {
+				if (!card.getProfileSets().isEmpty()) {
 					// determine scaling dimension
 					MpgScalingOrientation orientation = mpgElement.getMpgObject().getGeometry()
 							.getScalerOrientation(dims);
@@ -246,7 +248,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			// function and add this one to the results list
 			// ToDo: currently this is a set Function, but this can be replaced with any
 			// user defined selection method.
-			if (productOptions.size() > 0) {
+			if (!productOptions.isEmpty()) {
 				NmdProductCard chosenCard = selectCard.apply(productOptions);
 				viableCandidates.add(chosenCard);
 				mpgElement.mapProductCard(mat, chosenCard);
@@ -256,14 +258,14 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		return viableCandidates;
 	}
 
-	private List<NmdProductCard> selectProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts,
-			Double cutOff) {
+	private List<NmdProductCard> selectProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts) {
 		// sort the found products for every entry in the material list
 		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();
 		List<NmdProductCard> res = new ArrayList<NmdProductCard>();
 		// get min levenshtein distance for each ref word and penalize for the
 		// superfluous data
-		List<String> refs = Arrays.asList(name.split(splitChars)).stream().filter(r -> r.length() >= 2)
+		List<String> refs = Arrays.asList(name.split(ResolverSettings.splitChars)).stream()
+				.filter(r -> r.length() >= ResolverSettings.minWordLengthForSimilarityCheck)
 				.filter(w -> keyWords.contains(w.toLowerCase())).collect(Collectors.toList());
 
 		allProducts.forEach(p -> prods
@@ -272,7 +274,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		Double benchMark = prods.get(0).getValue();
 		for (Pair<NmdProductCard, Double> pv : prods) {
-			if (pv.getValue() <= benchMark * (1 + cutOff)) {
+			if (pv.getValue() <= benchMark * (1 + ResolverSettings.cutOffSimilarityRatio)) {
 				res.add(pv.getKey());
 			}
 		}
@@ -291,10 +293,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private Double getMinLevenshteinScoreForProduct(List<String> refWords, NmdProductCard card) {
 		// get all words in the profileSet names and clean them
 		List<String> keyWords = card.getProfileSets().stream()
-				.flatMap(ps -> Arrays.asList(ps.getName().split(splitChars)).stream())
+				.flatMap(ps -> Arrays.asList(ps.getName().split(ResolverSettings.splitChars)).stream())
 				.filter(w -> !w.isEmpty() && w.length() > 2).collect(Collectors.toList());
-		
-		keyWords.addAll(Arrays.asList(card.getDescription().split(splitChars)));
+
+		keyWords.addAll(Arrays.asList(card.getDescription().split(ResolverSettings.splitChars)));
 		keyWords.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
 
 		return calculateLevenshteinScore(refWords, keyWords);
