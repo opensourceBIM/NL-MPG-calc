@@ -12,11 +12,15 @@ public class ResolverSettings {
 	public static int keyWordOccurenceMininum = 2;
 	
 	// determines how long a word should be to be included
-	public static int minWordLengthForSimilarityCheck = 2;
+	public static int minWordLengthForSimilarityCheck = 3;
 	
 	// value that describes which productCards to include based on their similarity score.
 	public static double cutOffSimilarityRatio = 0.1;
 	
-	public static String splitChars = " |-|,";
+	// regex statement ot determine which characters need to be split on. 
+	public static String splitChars = " |-|,|:|;";
+
+	// penalisation factor to reduce overuse of keywords in description.
+	public static double descriptionLengthPenaltyCoefficient = 0.3;
 	
 }

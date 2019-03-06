@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -51,10 +52,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		NmdUserDataConfig config = new NmdUserDataConfigImpl();
 		setService(new Nmd2DataService(config));
 		setMappingService(new NmdMappingDataServiceImpl(config));
-		keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet(); // avoid words
-																											// that only
-																											// occur
-																											// once..
+		keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet();
 	}
 
 	public MpgObjectStore getStore() {
@@ -64,7 +62,26 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	public void setStore(MpgObjectStore store) {
 		this.store = store;
 	}
+	
 
+	public NmdMappingDataService getMappingService() {
+		return mappingService;
+	}
+
+	public void setMappingService(NmdMappingDataService mappingService) {
+		this.mappingService = mappingService;
+	}
+
+	@Override
+	public void setService(NmdDataService nmdDataService) {
+		// check if same service is not already present?
+		this.service = nmdDataService;
+	}
+
+	public NmdDataService getService() {
+		return this.service;
+	}
+	
 	/**
 	 * Start the various subscribed services and try get the most viable
 	 * productcards for every MpgObject found
@@ -89,7 +106,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			getService().preLoadData();
 
 			// get data per material
-			// ToDo: group the elements that are equal for sake of the mapping process
+			// ToDo: group the elements that are 'equal' for sake of the mapping process
 			// (geometry, type, ..) to avoid a lot of duplication
 			for (MpgElement element : getStore().getElements()) {
 				// element could already have a mapping through a decomposes relation
@@ -98,24 +115,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					resolveNmdMappingForElement(element);
 				}
 			}
-
 		} catch (ArrayIndexOutOfBoundsException ex) {
 			System.out.println("Error occured in retrieving material data");
-		}
-
-		finally {
+		} finally {
 			getService().logout();
 		}
-	}
-
-	@Override
-	public void setService(NmdDataService nmdDataService) {
-		// check if same service is not already present?
-		this.service = nmdDataService;
-	}
-
-	public NmdDataService getService() {
-		return this.service;
 	}
 
 	private void resolveNmdMappingForElement(MpgElement mpgElement) {
@@ -150,15 +154,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return;
 		}
 
-		// STEP3: select the elements we want to include
+		// STEP3: select the elements we want to include based on mandatory flags and/or
+		// other constraints
 		List<NmdElement> candidateElements = selectCandidateElements(mpgElement, allMatchedElements);
 		if (candidateElements.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"None of the candidate NmdElements matching the selection criteria.");
 		}
 
-		// STEP4: from every candidate element we should pick 0:1 productcards and add
-		// the results to mapping object
+		// STEP4: from every candidate element we should pick 0:1 productcards per
+		// material and add a mapping
 		Set<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
 		if (selectedProducts.size() > 0) {
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
@@ -166,7 +171,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					|| selectedProducts.stream().anyMatch(pc -> pc.getIsTotaalProduct())) {
 				mpgElement.setIsFullyCovered(true);
 			}
-
 		} else {
 			mpgElement.setMappingMethod(NmdMapping.None);
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
@@ -258,20 +262,32 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		return viableCandidates;
 	}
 
+	/**
+	 * Detemrine the top list of products based on a string similarity score
+	 * 
+	 * @param name        material name
+	 * @param allProducts preselected list of cadidate productcards
+	 * @return selection of productcards based on similarity score and cutoff
+	 *         criteria
+	 */
 	private List<NmdProductCard> selectProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts) {
-		// sort the found products for every entry in the material list
 		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();
 		List<NmdProductCard> res = new ArrayList<NmdProductCard>();
-		// get min levenshtein distance for each ref word and penalize for the
-		// superfluous data
-		List<String> refs = Arrays.asList(name.split(ResolverSettings.splitChars)).stream()
+
+		List<String> materialDescription = Arrays.asList(name.split(ResolverSettings.splitChars)).stream()
 				.filter(r -> r.length() >= ResolverSettings.minWordLengthForSimilarityCheck)
 				.filter(w -> keyWords.contains(w.toLowerCase())).collect(Collectors.toList());
-
+		materialDescription.removeIf(w -> w.isEmpty() || w.length() < ResolverSettings.minWordLengthForSimilarityCheck);
+		
+		if (materialDescription.isEmpty()) {
+			return res;
+		}
+		
 		allProducts.forEach(p -> prods
-				.add(new ImmutablePair<NmdProductCard, Double>(p, getMinLevenshteinScoreForProduct(refs, p))));
-		prods.sort((p1, p2) -> Double.compare(p1.getValue(), p2.getValue()));
+				.add(new ImmutablePair<NmdProductCard, Double>(p, getProductSimilarityScore(materialDescription, p))));
 
+		// determine the best product and benchmark with the other remaining candidates.
+		prods.sort((p1, p2) -> Double.compare(p1.getValue(), p2.getValue()));
 		Double benchMark = prods.get(0).getValue();
 		for (Pair<NmdProductCard, Double> pv : prods) {
 			if (pv.getValue() <= benchMark * (1 + ResolverSettings.cutOffSimilarityRatio)) {
@@ -282,39 +298,50 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * Determine the minimum levenshstein distance with respect to the various
-	 * descriptions within the productCard
+	 * Determine the similarity of the material wrt the various descriptions within
+	 * a productCard
 	 * 
 	 * @param refWord reference word to search for within the product card
 	 * @param card    NmdProductCard object with > 0 profileSets
 	 * @return the minimum levensthein distance of the reference word wrt any of the
 	 *         profileSet names
 	 */
-	private Double getMinLevenshteinScoreForProduct(List<String> refWords, NmdProductCard card) {
-		// get all words in the profileSet names and clean them
-		List<String> keyWords = card.getProfileSets().stream()
-				.flatMap(ps -> Arrays.asList(ps.getName().split(ResolverSettings.splitChars)).stream())
-				.filter(w -> !w.isEmpty() && w.length() > 2).collect(Collectors.toList());
+	private Double getProductSimilarityScore(List<String> refWords, NmdProductCard card) {
+		// get all words in the profileSet names and card description and clean them
+		Set<String> keyWords = card.getProfileSets().stream()
+				.flatMap(ps -> Arrays.asList(ps.getName().toLowerCase().split(ResolverSettings.splitChars)).stream())
+				.collect(Collectors.toSet());
 
-		keyWords.addAll(Arrays.asList(card.getDescription().split(ResolverSettings.splitChars)));
+		keyWords.addAll(Arrays.asList(card.getDescription().toLowerCase().split(ResolverSettings.splitChars)));
+		System.out.println("");
 		keyWords.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
-
-		return calculateLevenshteinScore(refWords, keyWords);
+		keyWords.removeIf(w -> w.isEmpty() || w.length() < ResolverSettings.minWordLengthForSimilarityCheck);
+		
+		return calculateSimilarityScore(refWords, keyWords.stream().collect(Collectors.toList()));
 	}
 
+	/**
+	 * Determine the similarity based on a a list of materials descriptions and a list of product card descriptions
+	 * 
+	 * @param materialDescriptors list of words found in the material
+	 * @param productCardKeyWords list of words found in the product card
+	 * @return a score to indicate word similarity. lwoer scores indicate a larger similarity
+	 */
 	@SuppressWarnings("deprecation")
-	private Double calculateLevenshteinScore(List<String> refs, List<String> keyWords) {
+	private Double calculateSimilarityScore(List<String> materialDescriptors, List<String> productCardKeyWords) {
 
+		BiFunction<String, String, Double> score = 
+				(ref, check) -> {return (double) StringUtils.getLevenshteinDistance((CharSequence) ref, check);};
+						
 		Double sum = 0.0;
-		for (String ref : refs) {
-			keyWords.sort(
-					(w1, w2) -> Double.compare((double) StringUtils.getLevenshteinDistance((CharSequence) ref, w1),
-							(double) StringUtils.getLevenshteinDistance((CharSequence) ref, w2)));
-			sum += (double) StringUtils.getLevenshteinDistance((CharSequence) ref, keyWords.get(0));
+		for (String ref : materialDescriptors) {
+			productCardKeyWords.sort((w1, w2) -> Double.compare(score.apply(ref, w1),score.apply(ref, w2)));
+			
+			sum += score.apply(ref, productCardKeyWords.get(0));
 		}
 
 		// penalize on word count difference
-		sum += 0.5 * Math.abs(keyWords.size() - refs.size());
+		sum += ResolverSettings.descriptionLengthPenaltyCoefficient * Math.abs(productCardKeyWords.size() - materialDescriptors.size());
 		return sum;
 	}
 
@@ -421,9 +448,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return e.getObjectType();
 		};
 
-		// TODO: we can make this a lot more abstract to run this for any set of
-		// properties,
-		// but let's skip that for now.
+		// TODO: make this more abstract to run on generic property
 		this.getStore().getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
 			MpgGeometry geom = null;
 			String NLsfbKey = o.getNLsfbCode();
@@ -480,13 +505,4 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return null;
 		}
 	}
-
-	public NmdMappingDataService getMappingService() {
-		return mappingService;
-	}
-
-	public void setMappingService(NmdMappingDataService mappingService) {
-		this.mappingService = mappingService;
-	}
-
 }
