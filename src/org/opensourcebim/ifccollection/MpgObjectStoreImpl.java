@@ -1,6 +1,8 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@JsonIgnore
 	private List<MpgObject> mpgObjects;
+	
+	private HashMap<Integer, NmdProductCard> productCards;
 
 	private List<MpgSpace> spaces;
 
@@ -49,6 +53,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	private LengthUnit lengthUnit;
 
 	public MpgObjectStoreImpl() {
+		productCards = new HashMap<Integer, NmdProductCard>();
 		setElements(new HashSet<>());
 		setObjects(new BasicEList<MpgObject>());
 		setSpaces(new BasicEList<MpgSpace>());
@@ -90,10 +95,13 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void addElement(String name) {
+	public MpgElement addElement(String name) {
+		MpgElement el = null;
 		if (name != null && !name.isEmpty()) {
-			mpgElements.add(new MpgElement(name, this));
+			el = new MpgElement(name, this);
+			mpgElements.add(el);
 		}
+		return el;
 	}
 
 	@Override
@@ -106,14 +114,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	@Override
-	public void addProductCardToElement(String name, NmdProductCard card) {
-		MpgElement el = getElementByName(name);
-		if (el != null) {
-			el.addProductCard(card);
-		}
-	}
-
-	@Override
 	public void setObjectForElement(String name, MpgObject mpgObject) {
 		MpgElement el = getElementByName(name);
 		if (el != null) {
@@ -121,6 +121,11 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		}
 	}
 
+	@Override
+	public void addObject(MpgObject mpgObject) {
+		this.getObjects().add(mpgObject);
+	}
+	
 	@Override
 	public List<MpgObject> getObjects() {
 		return mpgObjects;
@@ -138,29 +143,39 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	private void setSpaces(List<MpgSpace> spaces) {
 		this.spaces = spaces;
 	}
-
+	
 	@Override
-	public void addObject(MpgObject mpgObject) {
-		this.getObjects().add(mpgObject);
+	public void addProductCard(NmdProductCard card) {
+		this.productCards.putIfAbsent(card.getProductId(), card);
+	}
+	
+	public void removeProductCard(Integer id) {
+		this.productCards.remove(id);
+	}
+	
+	@Override
+	public NmdProductCard getProductCard(Integer id) {
+		return this.productCards.getOrDefault(id, null);
+	}
+	
+	@Override
+	public Map<Integer, NmdProductCard> getProductCards() {
+		return this.productCards;
+	}
+	
+	@Override
+	public List<NmdProductCard> getProductCards(Collection<Integer> ids) {
+		return this.productCards.entrySet().stream()
+				.filter(es -> ids.contains(es.getKey()))
+				.map(es -> es.getValue())
+				.collect(Collectors.toList());
 	}
 
-	@Override
-	public Set<String> getDistinctIfcProductTypes() {
-		return mpgObjects.stream().map(group -> group.getObjectType()).distinct().collect(Collectors.toSet());
-	}
-
-	@Override
-	public List<MpgObject> getObjectsByProductType(String productType) {
+	private List<MpgObject> getObjectsByProductType(String productType) {
 		return mpgObjects.stream().filter(g -> g.getObjectType().equals(productType)).collect(Collectors.toList());
 	}
 
-	@Override
-	public List<MpgObject> getObjectsByProductName(String productName) {
-		return mpgObjects.stream().filter(g -> g.getObjectName() == productName).collect(Collectors.toList());
-	}
-
-	@Override
-	public List<MpgSpace> getObjectsByMaterialName(String materialName) {
+	private List<MpgSpace> getObjectsByMaterialName(String materialName) {
 		return mpgObjects.stream().flatMap(g -> g.getLayers().stream()).filter(o -> o.getMaterialName() != null)
 				.filter(o -> o.getMaterialName().equals(materialName)).collect(Collectors.toList());
 	}
@@ -182,7 +197,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		return element.isPresent() ? element.get() : null;
 	}
 
-	@Override
 	public List<MpgElement> getElementsByProductType(String productType) {
 		List<MpgObject> objectsByProductType = this.getObjectsByProductType(productType);
 		List<String> materialNames = objectsByProductType.stream()
@@ -205,12 +219,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public double getTotalVolumeOfMaterial(String name) {
 		return getObjectsByMaterialName(name).stream()
 				.collect(Collectors.summingDouble(o -> o == null ? 0.0 : o.getVolume()));
-	}
-
-	@Override
-	public double getTotalVolumeOfProductType(String productType) {
-		return getObjectsByProductType(productType).stream()
-				.collect(Collectors.summingDouble(o -> o.getGeometry().getVolume()));
 	}
 
 	@Override
@@ -351,7 +359,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	/**
-	 * Get a collection of elements that are down in te hierarch than the input guid
+	 * Get a collection of elements that are down in the hierarchy than the input guid
 	 * 
 	 * @param globalId guid to start from
 	 * @return a list of elements that are a (recursive) child of the input guid

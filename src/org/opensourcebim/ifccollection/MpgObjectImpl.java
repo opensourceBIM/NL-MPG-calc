@@ -39,7 +39,6 @@ public class MpgObjectImpl implements MpgObject {
 		this.setObjectName(objectName);
 		if (objectType != null) {
 			objectType = objectType.replaceAll("Impl$", "");
-			// objectType = objectType.replaceAll("^Ifc", "");
 			this.setObjectType(objectType);
 		}
 		this.parentId = parentId;
@@ -50,9 +49,7 @@ public class MpgObjectImpl implements MpgObject {
 		this.nlsfbAlternatives = new HashSet<String>();
 	}
 	
-	public MpgObjectImpl() {
-		// TODO Auto-generated constructor stub
-	}
+	public MpgObjectImpl() { }
 
 	@Override
 	public void addLayer(MpgLayer mpgLayer) {

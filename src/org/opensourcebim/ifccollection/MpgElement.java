@@ -2,6 +2,8 @@ package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
@@ -17,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class MpgElement {
 
 	private String ifcName;
-	private List<NmdProductCard> productCards;
 	private MpgObject mpgObject;
 
 	private MpgObjectStore store;
@@ -27,7 +28,6 @@ public class MpgElement {
 
 	public MpgElement(String name, MpgObjectStore store) {
 		ifcName = name;
-		this.productCards = new ArrayList<NmdProductCard>();
 		this.mappingMethod = NmdMapping.None;
 		this.store = store;
 	}
@@ -77,26 +77,35 @@ public class MpgElement {
 		return this.mappingMethod != NmdMapping.None;
 	}
 
-	public String print() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("material : " + ifcName + " with properties" + System.getProperty("line.separator"));
-		sb.append("nmd material(s) linked to MpgMaterial: " + this.productCards.size()
-				+ System.getProperty("line.separator"));
-		sb.append("specs undefined " + System.getProperty("line.separator"));
-
-		return sb.toString();
+	public List<Integer> getProductIds() {
+		return this.getMpgObject().getListedMaterials().stream()
+				.filter(m -> m.getMapId() > 0)
+				.map(m ->m.getMapId())
+				.collect(Collectors.toList());
 	}
-
+	
+	@JsonIgnore
 	public List<NmdProductCard> getNmdProductCards() {
-		return productCards;
+		return this.getStore().getProductCards(this.getProductIds());
 	}
 
-	public void addProductCard(NmdProductCard productCard) {
-		this.productCards.add(productCard);
+	private void addProductCard(NmdProductCard productCard) {
+		this.getProductIds().add(productCard.getProductId());
+		this.getStore().addProductCard(productCard);
 	}
 
 	public void removeProductCards() {
-		this.productCards.clear();
+		this.getMpgObject().getListedMaterials().forEach(mat -> mat.clearMap());
+	}
+	
+	public void mapProductCard(MaterialSource mat, NmdProductCard card) {
+		// add the material to the mpgObject if it has not been added yet.
+		if (this.getMpgObject().getListedMaterials().stream().filter(m -> m.getOid().equals(mat.getOid())).count() == 0) {
+			this.getMpgObject().addMaterialSource(mat);
+		}
+		
+		mat.setMapping(card);
+		this.addProductCard(card);
 	}
 
 	/**

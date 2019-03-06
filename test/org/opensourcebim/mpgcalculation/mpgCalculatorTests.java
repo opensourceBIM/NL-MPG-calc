@@ -3,28 +3,13 @@ package org.opensourcebim.mpgcalculation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import java.util.HashMap;
-import java.util.UUID;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.ifccollection.MpgGeometry;
-import org.opensourcebim.ifccollection.MpgLayer;
-import org.opensourcebim.ifccollection.MpgLayerImpl;
-import org.opensourcebim.ifccollection.MpgObjectImpl;
-import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
-import org.opensourcebim.ifccollection.MpgSpaceImpl;
-import org.opensourcebim.nmd.NmdFaseProfiel;
-import org.opensourcebim.nmd.NmdFaseProfielImpl;
-import org.opensourcebim.nmd.NmdMilieuCategorie;
-import org.opensourcebim.nmd.NmdProductCard;
+import org.opensourcebim.ifccollection.MaterialSource;
+import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.nmd.NmdProductCardImpl;
-import org.opensourcebim.nmd.NmdProfileSet;
-import org.opensourcebim.nmd.NmdProfileSetImpl;
-import org.opensourcebim.nmd.NmdReferenceResources;
 import org.opensourcebim.nmd.ObjectStoreBuilder;
-import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
 public class mpgCalculatorTests {
 
@@ -87,7 +72,8 @@ public class mpgCalculatorTests {
 	public void testReturnSuccessWhenMpgObjectFullyCoveredWithDeelProducten() {
 		// adding a profile set that is not a totaalproduct will trigger a warning
 		String ifcName = "steel";
-		builder.getStore().addElement(ifcName);
+		MpgElement el = builder.getStore().addElement(ifcName);
+		
 		String name = "steel beam";
 		String unit = "m3";
 		int category = 1;
@@ -99,7 +85,8 @@ public class mpgCalculatorTests {
 		// since we're not adding a totaalproduct we need to cover every CUAS stage individually
 		card.addProfileSet(builder.createProfileSet(name, unit, 1));
 		card.setIsTotaalProduct(false);
-		builder.getStore().addProductCardToElement(ifcName, card);
+		
+		el.mapProductCard(new MaterialSource("1", "steel", "dummy"), card);
 
 		builder.addUnitIfcObjectForElement(ifcName, 1.0, 1.0);
 
@@ -192,49 +179,6 @@ public class mpgCalculatorTests {
 		startCalculations(1);
 
 		assertEquals(results.getTotalCost() / 3.0, results.getCostPerProductName("Stainless Steel"), 1e-8);
-	}
-
-	/**
-	 * When there are multiple deel producten linked to a single product set the replacement calculations should
-	 * be done for the entire product based on the construction profiel that is first encountered 
-	 * TODO : why not longest duration? the current approach would result in different scores based on the selection order.
-	 */
-	@Test
-	public void testProductCardWithDeelProductenWillUseReplacementsOfFirstConstructionProfile() {		
-		
-		builder.getStore().addElement("Brick Wall");
-		NmdProductCardImpl productCard = new NmdProductCardImpl();
-		productCard.setUnit("m2");
-		productCard.setLifetime(10);
-		productCard.setCategory(1);
-		productCard.addProfileSet(builder.createProfileSet("bricks", "m2", 10));
-		productCard.addProfileSet(builder.createProfileSet("mortar", "m2", 1));
-		builder.getStore().addProductCardToElement("Brick Wall", productCard);
-		builder.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
-		
-		startCalculations(10);
-		Double totalCostBrickFirst = results.getTotalCost();
-		
-		builder.getStore().reset();
-		
-		// repeat the calculation with mortar added first - different replacement time
-		builder.getStore().addElement("Brick Wall");
-		productCard = new NmdProductCardImpl();
-		productCard.setUnit("m2");
-		productCard.setLifetime(10);
-		productCard.setCategory(1);
-		productCard.addProfileSet(builder.createProfileSet("mortar", "m2", 1));
-		productCard.addProfileSet(builder.createProfileSet("bricks", "m2", 10));
-
-		builder.getStore().addProductCardToElement("Brick Wall", productCard);
-		builder.addUnitIfcObjectForElement("Brick Wall", 1.0, 1.0);
-		
-		startCalculations(10);
-		Double totalCostMortarFirst = results.getTotalCost();
-
-		// the first construction element lifespan should be taken for all of the elements
-		// changing the order should therefore change the results (bad design?)
-		assertFalse((totalCostBrickFirst - totalCostMortarFirst) > 1e-8);
 	}
 
 	/**
