@@ -114,6 +114,7 @@ public class MpgElement {
 	}
 
 	public boolean getIsFullyCovered() {
-		return this.getMpgObject().getListedMaterials().parallelStream().allMatch(mat -> mat.getMapId() > 0);
+		return this.getMpgObject().getListedMaterials().size() > 0 
+				&& this.getMpgObject().getListedMaterials().parallelStream().allMatch(mat -> mat.getMapId() > 0);
 	}
 }
