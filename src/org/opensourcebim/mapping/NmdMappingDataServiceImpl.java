@@ -21,11 +21,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import com.opencsv.CSVReader;
-
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.nmd.NmdUserDataConfig;
 import org.opensourcebim.nmd.NmdMappingDataService;
+import org.opensourcebim.nmd.NmdUserDataConfig;
+
+import com.opencsv.CSVReader;
 
 /**
  * Class to provide an interface between java code and a mapping database

@@ -18,11 +18,8 @@ public class MpgElement {
 
 	private String ifcName;
 	private MpgObject mpgObject;
-
 	private MpgObjectStore store;
-
 	private NmdMapping mappingMethod;
-	private boolean coveredFlag;
 
 	public MpgElement(String name, MpgObjectStore store) {
 		ifcName = name;

@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,13 +27,13 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.nmd.Nmd2DataService;
 import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.NmdUserDataConfig;
-import org.opensourcebim.nmd.NmdUserDataConfigImpl;
 import org.opensourcebim.nmd.NmdElement;
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdMappingDataService;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProfileSet;
+import org.opensourcebim.nmd.NmdUserDataConfig;
+import org.opensourcebim.nmd.NmdUserDataConfigImpl;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
@@ -191,7 +192,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return
 	 */
 	public Set<String> tryGetKeyMaterials(String objectName) {
-		Set<String> objectDescription = parseStringForWords(objectName);
+		Set<String> objectDescription = NmdDataResolverImpl.parseStringForWords(objectName);
 		Set<String> res = new HashSet<String>();
 		if (!objectDescription.isEmpty()) {
 			for (String word : objectDescription) {
@@ -200,19 +201,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 						res.add(word);
 					}
 				}
-
 			}
 		}
 		return res;
 	}
 
-	private Set<String> parseStringForWords(String objectName) {
-		Set<String> set = Arrays.asList(objectName.split(ResolverSettings.splitChars)).stream()
-				.filter(r -> r.length() >= ResolverSettings.minWordLengthForSimilarityCheck).map(w -> w.toLowerCase())
+	private static Set<String> parseStringForWords(String objectName) {
+		return Arrays.asList(objectName.split(ResolverSettings.splitChars)).stream()
+				.map(w -> w.replaceAll(ResolverSettings.numericReplacePattern, "").toLowerCase().trim())
+				.filter(w -> w.length() >= ResolverSettings.minWordLengthForSimilarityCheck)
 				.collect(Collectors.toSet());
-		set.forEach(w -> w.replaceAll(ResolverSettings.numericReplacePattern, "").toLowerCase().trim());
-
-		return set;
 	}
 
 	private void resolveNmdMappingForElement(MpgElement mpgElement) {
@@ -378,10 +376,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();
 		List<NmdProductCard> res = new ArrayList<NmdProductCard>();
 
-		List<String> materialDescription = Arrays.asList(name.split(ResolverSettings.splitChars)).stream()
-				.filter(r -> r.length() >= ResolverSettings.minWordLengthForSimilarityCheck)
-				.filter(w -> keyWords.contains(w.toLowerCase())).collect(Collectors.toList());
-		materialDescription.removeIf(w -> w.isEmpty() || w.length() < ResolverSettings.minWordLengthForSimilarityCheck);
+		Set<String> materialDescription = parseStringForWords(name);
 
 		if (materialDescription.isEmpty()) {
 			return res;
@@ -410,15 +405,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return the minimum levensthein distance of the reference word wrt any of the
 	 *         profileSet names
 	 */
-	private Double getProductSimilarityScore(List<String> refWords, NmdProductCard card) {
+	private Double getProductSimilarityScore(Set<String> refWords, NmdProductCard card) {
 		// get all words in the profileSet names and card description and clean them
-		Set<String> keyWords = card.getProfileSets().stream()
-				.flatMap(ps -> Arrays.asList(ps.getName().toLowerCase().split(ResolverSettings.splitChars)).stream())
-				.collect(Collectors.toSet());
-
-		keyWords.addAll(Arrays.asList(card.getDescription().toLowerCase().split(ResolverSettings.splitChars)));
-		keyWords.forEach(word -> word.replaceAll(ResolverSettings.numericReplacePattern, ""));
-		keyWords.removeIf(w -> w.isEmpty() || w.length() < ResolverSettings.minWordLengthForSimilarityCheck);
+		Set<String> map = card.getProfileSets().stream().map(ps -> ps.getName()).collect(Collectors.toSet());
+		map.add(card.getDescription());
+		String totalDescription =String.join(" " , map);
+		Set<String> keyWords = NmdDataResolverImpl.parseStringForWords(totalDescription);
 
 		return calculateSimilarityScore(refWords, keyWords.stream().collect(Collectors.toList()));
 	}
@@ -433,7 +425,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 *         similarity
 	 */
 	@SuppressWarnings("deprecation")
-	private Double calculateSimilarityScore(List<String> materialDescriptors, List<String> productCardKeyWords) {
+	private Double calculateSimilarityScore(Set<String> materialDescriptors, List<String> productCardKeyWords) {
 
 		BiFunction<String, String, Double> score = (ref, check) -> {
 			return (double) StringUtils.getLevenshteinDistance((CharSequence) ref, check);
