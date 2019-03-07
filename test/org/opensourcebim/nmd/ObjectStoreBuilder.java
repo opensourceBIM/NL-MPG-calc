@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import java.util.HashMap;
 import java.util.UUID;
 
-import org.bimserver.shared.Guid;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
