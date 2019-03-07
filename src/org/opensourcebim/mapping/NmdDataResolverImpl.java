@@ -550,7 +550,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// TODO: make this more abstract to run on generic property
 		this.getStore().getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
 			MpgGeometry geom = null;
-			String NLsfbKey = o.getNLsfbCode().print();
+			String NLsfbKey = o.getNLsfbCode() != null ? o.getNLsfbCode().print() : "";
 
 			if (foundGeometries.containsKey(NLsfbKey)) {
 				geom = foundGeometries.get(NLsfbKey);

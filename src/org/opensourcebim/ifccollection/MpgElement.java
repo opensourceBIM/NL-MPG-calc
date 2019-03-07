@@ -113,6 +113,10 @@ public class MpgElement {
 				.anyMatch(ps -> ps.getIsScalable() && ps.getScaler() != null);
 	}
 
+	/**
+	 * Indicates that all the materials have a mapping and that the material has at least a single material
+	 * @return flag to indicate all materials are mapped to an nmdProductCard
+	 */
 	public boolean getIsFullyCovered() {
 		return this.getMpgObject().getListedMaterials().size() > 0 
 				&& this.getMpgObject().getListedMaterials().parallelStream().allMatch(mat -> mat.getMapId() > 0);
