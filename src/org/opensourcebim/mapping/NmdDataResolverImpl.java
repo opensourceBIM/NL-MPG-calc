@@ -10,10 +10,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.jdt.internal.codeassist.impl.Keywords;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
@@ -62,7 +65,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	public void setStore(MpgObjectStore store) {
 		this.store = store;
 	}
-	
 
 	public NmdMappingDataService getMappingService() {
 		return mappingService;
@@ -81,7 +83,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	public NmdDataService getService() {
 		return this.service;
 	}
-	
+
 	/**
 	 * Start the various subscribed services and try get the most viable
 	 * productcards for every MpgObject found
@@ -93,11 +95,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return;
 		}
 
-		// try to find nlsfb codes that match with the object type
+		// pre process: identify material keywords and/or nlsfb codes from material
+		// and name descriptions.
+		this.tryFindAdditionalInfo();
+
+		// pre process: try to fill in missing Nlsfb codes based on hierarchy in the
+		// model
 		this.resolveNlsfbCodes();
 
-		// try to find the correct dimensions for objects that could not have
-		// their geometries resolved
+		// pre process: try fill in dimensions by producttype relations for products
+		// without parsed geometry
 		this.resolveUnknownGeometries();
 
 		try {
@@ -105,7 +112,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			getService().login();
 			getService().preLoadData();
 
-			// get data per material
+			//
 			// ToDo: group the elements that are 'equal' for sake of the mapping process
 			// (geometry, type, ..) to avoid a lot of duplication
 			for (MpgElement element : getStore().getElements()) {
@@ -120,6 +127,91 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		} finally {
 			getService().logout();
 		}
+	}
+
+	/**
+	 * Try find Nlsfb codes in the ifcName and IFcMaterials and try find materials
+	 * in the the IFcName when these fields are not defined already.
+	 */
+	private void tryFindAdditionalInfo() {
+
+		for (MpgElement el : store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty())
+				.collect(Collectors.toList())) {
+
+			String productName = el.getMpgObject().getObjectName();
+			Set<String> foundMaterials = this.tryGetKeyMaterials(productName);
+
+			// add a material for any material not already present
+			Set<String> matNames = new HashSet<String>(el.getMpgObject().getMaterialNamesBySource(null).stream()
+					.map(name -> name.toLowerCase().trim()).collect(Collectors.toList()));
+
+			// add the found materials as aa single material item only if there are no materials already defined.
+			if (!foundMaterials.isEmpty() && el.getMpgObject().getListedMaterials().isEmpty()) {
+
+				el.getMpgObject().addMaterialSource(
+						new MaterialSource("-1", String.join(" ", foundMaterials), "from description"));
+			}
+
+			// get NLSfb codes from product name and material descriptions
+			Set<String> nlsfbCodes = NmdDataResolverImpl.tryGetNlsfbCodes(productName);
+			matNames.forEach(mat -> nlsfbCodes.addAll(NmdDataResolverImpl.tryGetNlsfbCodes(mat)));
+
+			// add the first item to the nlsfb code if not already set and all of them to the alternatives list.
+			if (!nlsfbCodes.isEmpty() && !el.getMpgObject().hasNlsfbCode()) {
+				el.getMpgObject().setNLsfbCode(nlsfbCodes.iterator().next());
+				el.getMpgObject().addNlsfbAlternatives(nlsfbCodes);
+			} else if (!nlsfbCodes.isEmpty()) {
+				el.getMpgObject().addNlsfbAlternatives(nlsfbCodes);
+			}
+		}
+	}
+
+	/**
+	 * try find a code that matches the 4 digit nlsfb pattern of 2 numbers a period
+	 * and then 2 more numbers.
+	 * 
+	 * @param inputString a character string
+	 * @return the nlsfb codes found in the input string
+	 */
+	public static Set<String> tryGetNlsfbCodes(String inputString) {
+		Matcher m = Pattern.compile("(\\d{2}\\.\\d{2})").matcher(inputString);
+		Set<String> res = new HashSet<String>();
+		while (m.find()) {
+			res.add(m.group(1));
+		}
+		return res;
+	}
+
+	/**
+	 * Check whether a generic string contains a material keyword from the mapping
+	 * db
+	 * 
+	 * @param objectName
+	 * @return
+	 */
+	public Set<String> tryGetKeyMaterials(String objectName) {
+		Set<String> objectDescription = parseStringForWords(objectName);
+		Set<String> res = new HashSet<String>();
+		if (!objectDescription.isEmpty()) {
+			for (String word : objectDescription) {
+				for (String key : keyWords) {
+					if (word.contains(key)) {
+						res.add(word);
+					}
+				}
+
+			}
+		}
+		return res;
+	}
+
+	private Set<String> parseStringForWords(String objectName) {
+		Set<String> set = Arrays.asList(objectName.split(ResolverSettings.splitChars)).stream()
+				.filter(r -> r.length() >= ResolverSettings.minWordLengthForSimilarityCheck).map(w -> w.toLowerCase())
+				.collect(Collectors.toSet());
+		set.forEach(w -> w.replaceAll(ResolverSettings.numericReplacePattern, "").toLowerCase().trim());
+
+		return set;
 	}
 
 	private void resolveNmdMappingForElement(MpgElement mpgElement) {
@@ -278,11 +370,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				.filter(r -> r.length() >= ResolverSettings.minWordLengthForSimilarityCheck)
 				.filter(w -> keyWords.contains(w.toLowerCase())).collect(Collectors.toList());
 		materialDescription.removeIf(w -> w.isEmpty() || w.length() < ResolverSettings.minWordLengthForSimilarityCheck);
-		
+
 		if (materialDescription.isEmpty()) {
 			return res;
 		}
-		
+
 		allProducts.forEach(p -> prods
 				.add(new ImmutablePair<NmdProductCard, Double>(p, getProductSimilarityScore(materialDescription, p))));
 
@@ -313,34 +405,38 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				.collect(Collectors.toSet());
 
 		keyWords.addAll(Arrays.asList(card.getDescription().toLowerCase().split(ResolverSettings.splitChars)));
-		keyWords.forEach(word -> word.replaceAll("[^a-zA-Z]", ""));
+		keyWords.forEach(word -> word.replaceAll(ResolverSettings.numericReplacePattern, ""));
 		keyWords.removeIf(w -> w.isEmpty() || w.length() < ResolverSettings.minWordLengthForSimilarityCheck);
-		
+
 		return calculateSimilarityScore(refWords, keyWords.stream().collect(Collectors.toList()));
 	}
 
 	/**
-	 * Determine the similarity based on a a list of materials descriptions and a list of product card descriptions
+	 * Determine the similarity based on a a list of materials descriptions and a
+	 * list of product card descriptions
 	 * 
 	 * @param materialDescriptors list of words found in the material
 	 * @param productCardKeyWords list of words found in the product card
-	 * @return a score to indicate word similarity. lwoer scores indicate a larger similarity
+	 * @return a score to indicate word similarity. lwoer scores indicate a larger
+	 *         similarity
 	 */
 	@SuppressWarnings("deprecation")
 	private Double calculateSimilarityScore(List<String> materialDescriptors, List<String> productCardKeyWords) {
 
-		BiFunction<String, String, Double> score = 
-				(ref, check) -> {return (double) StringUtils.getLevenshteinDistance((CharSequence) ref, check);};
-						
+		BiFunction<String, String, Double> score = (ref, check) -> {
+			return (double) StringUtils.getLevenshteinDistance((CharSequence) ref, check);
+		};
+
 		Double sum = 0.0;
 		for (String ref : materialDescriptors) {
-			productCardKeyWords.sort((w1, w2) -> Double.compare(score.apply(ref, w1),score.apply(ref, w2)));
-			
+			productCardKeyWords.sort((w1, w2) -> Double.compare(score.apply(ref, w1), score.apply(ref, w2)));
+
 			sum += score.apply(ref, productCardKeyWords.get(0));
 		}
 
 		// penalize on word count difference
-		sum += ResolverSettings.descriptionLengthPenaltyCoefficient * Math.abs(productCardKeyWords.size() - materialDescriptors.size());
+		sum += ResolverSettings.descriptionLengthPenaltyCoefficient
+				* Math.abs(productCardKeyWords.size() - materialDescriptors.size());
 		return sum;
 	}
 
@@ -409,7 +505,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				try {
 					p = this.getStore().getObjectByGuid(o.getParentId()).get();
 				} catch (Exception e) {
-					System.out.println("should not happen?");
+					System.out.println("encountered GUID that should have a parent, but is not mapped correctly : " + o.getParentId());
 				}
 				if (!o.hasNlsfbCode()) {
 

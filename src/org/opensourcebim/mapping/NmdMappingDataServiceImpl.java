@@ -65,7 +65,6 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 			statement.setQueryTimeout(30);
 
 			ResultSet rs = statement.executeQuery("Select * from " + this.ifc_to_nlsfb_table);
-			System.out.println("");
 			while (rs.next()) {
 				String prodName = rs.getString("ifcproducttype").trim();
 				String nlsfbCode = rs.getString("code").trim();
@@ -91,7 +90,6 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 			ResultSet rs = statement.executeQuery(
 					"Select * from " + this.mat_keyword_table + " "
 					+ "where count >= " + minOccurence.toString());
-			System.out.println("");
 			while (rs.next()) {
 				String keyWord = rs.getString("keyword").trim();
 				Long keyCount = (long)rs.getInt("count");
@@ -164,7 +162,6 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 					});
 
 			for (Path path : foundFiles) {
-
 				List<String> fileMaterials = new ArrayList<String>();
 				Scanner scanner = new Scanner(new File(path.toAbsolutePath().toString()));
 				while (scanner.hasNextLine()) {
@@ -186,13 +183,16 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 				allMaterials.addAll(fileMaterials);
 				scanner.close();
 			}
+			
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
 		
+		// group the words by occurence and remove any common words from the found keywords
 		List<String> common_words = getCommonWordsDutch();
 		Map<String, Long> wordCount = allMaterials.stream()
 				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
 		List<Entry<String, Long>> filteredWordCount = wordCount.entrySet().stream()
 				.filter(w -> w.getKey().toCharArray().length > 2) // remove items that are simply too short
 				.filter(w -> 2 * w.getKey().replaceAll("[^a-zA-Z]", "").length() >= w.getKey().length() ) // remove items with too large ratio of non-text content
@@ -211,7 +211,6 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 			statement.setQueryTimeout(30);
 
 			ResultSet rs = statement.executeQuery("Select * from " + this.common_word_dutch_table);
-			System.out.println("");
 			while (rs.next()) {
 				String word = rs.getString("word").trim();
 				commonWords.add(word);
