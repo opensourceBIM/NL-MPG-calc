@@ -508,9 +508,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				}
 				if (!o.hasNlsfbCode()) {
 
-					String parentCode = p.getNLsfbCode();
-					if (parentCode != null && !parentCode.isEmpty()) {
-						o.setNLsfbCode(parentCode);
+					if (p.hasNlsfbCode()) {
+						o.setNLsfbCode(p.getNLsfbCode().print());
 						o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "Resolved from: " + p.getGlobalId());
 					}
 				}
@@ -536,7 +535,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// maintain a map with already found scalers to boost performance.
 		HashMap<String, MpgGeometry> foundGeometries = new HashMap<String, MpgGeometry>();
 		Function<MpgObject, String> getNLsfbProp = (MpgObject e) -> {
-			return e.getNLsfbCode();
+			return e.getNLsfbCode().print();
 		};
 		Function<MpgObject, String> getProdTypeProp = (MpgObject e) -> {
 			return e.getObjectType();
@@ -545,7 +544,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// TODO: make this more abstract to run on generic property
 		this.getStore().getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
 			MpgGeometry geom = null;
-			String NLsfbKey = o.getNLsfbCode();
+			String NLsfbKey = o.getNLsfbCode().print();
 
 			if (foundGeometries.containsKey(NLsfbKey)) {
 				geom = foundGeometries.get(NLsfbKey);

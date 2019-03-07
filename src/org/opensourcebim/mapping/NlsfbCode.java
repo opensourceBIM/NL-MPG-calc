@@ -92,7 +92,14 @@ public class NlsfbCode {
 	}
 
 	public String print() {
-		return getMajorId().toString() + "." + mediorId.toString() + (minorId == null ? "" : "." + minorId.toString());
+		String res = getMajorId().toString();
+		if (getMediorId() != null && getMediorId() > 0) {
+			res += "." + mediorId.toString();
+			if (getMinorId()!= null && getMinorId() > 0) {
+				res += "." + getMinorId().toString();
+			}
+		} 
+		return res;
 	}
 
 	public Integer getMajorId() {
