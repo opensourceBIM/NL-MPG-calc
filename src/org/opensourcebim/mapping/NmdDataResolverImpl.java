@@ -144,7 +144,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			Set<String> matNames = new HashSet<String>(el.getMpgObject().getMaterialNamesBySource(null).stream()
 					.map(name -> name.toLowerCase().trim()).collect(Collectors.toList()));
 
-			// add the found materials as aa single material item only if there are no materials already defined.
+			// add the found materials as aa single material item only if there are no
+			// materials already defined.
 			if (!foundMaterials.isEmpty() && el.getMpgObject().getListedMaterials().isEmpty()) {
 
 				el.getMpgObject().addMaterialSource(
@@ -155,7 +156,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			Set<String> nlsfbCodes = NmdDataResolverImpl.tryGetNlsfbCodes(productName);
 			matNames.forEach(mat -> nlsfbCodes.addAll(NmdDataResolverImpl.tryGetNlsfbCodes(mat)));
 
-			// add the first item to the nlsfb code if not already set and all of them to the alternatives list.
+			// add the first item to the nlsfb code if not already set and all of them to
+			// the alternatives list.
 			if (!nlsfbCodes.isEmpty() && !el.getMpgObject().hasNlsfbCode()) {
 				el.getMpgObject().setNLsfbCode(nlsfbCodes.iterator().next());
 				el.getMpgObject().addNlsfbAlternatives(nlsfbCodes);
@@ -225,11 +227,24 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		NmdUserMap map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject());
 		if (map != null) {
 			// get products in map and exit if succeeded.
+		}		
+		
+		// first try to resolve for explicitly indicated nlsfb code
+		FindProductsForNlsfbCodes(mpgElement, new HashSet<NlsfbCode>(Arrays.asList(mpgElement.getMpgObject().getNLsfbCode())));
+		if (!mpgElement.hasMapping()) {
+			// if that doesn't work. try it for all the alternatives (no order of precendence)
+			FindProductsForNlsfbCodes(mpgElement, mpgElement.getMpgObject().getNLsfbAlternatives());
 		}
+	}
 
-		// STEP 1: find any relevant NLsfb codes
-		Set<NlsfbCode> alternatives = mpgElement.getMpgObject().getNLsfbAlternatives();
-		if (alternatives.size() == 0 || alternatives.stream().allMatch(c -> c == null)) {
+	/**
+	 * Find a mapping for the element by looking at a selection of nlsfbCodes
+	 * @param mpgElement
+	 * @param codeSet
+	 */
+	private void FindProductsForNlsfbCodes(MpgElement mpgElement, Set<NlsfbCode> codeSet) {
+		// STEP 1: check if there are relevant nlsfbcodes present in the inp[ut set
+		if (codeSet.size() == 0 || codeSet.stream().allMatch(c -> c == null)) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NLsfbcodes linked to the product");
 			return;
@@ -237,11 +252,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// STEP 2: find all the elements that we **could** include based on NLsfb
 		// match..
-		List<NmdElement> allMatchedElements = getService().getElementsForNLsfbCodes(alternatives);
+		List<NmdElement> allMatchedElements = getService().getElementsForNLsfbCodes(codeSet);
 
 		if (allMatchedElements.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
-					"No NMD element match for any of the listed NLsfb codes");
+					"No NMD element match for listed NLsfb codes");
 			return;
 		}
 
@@ -505,7 +520,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				try {
 					p = this.getStore().getObjectByGuid(o.getParentId()).get();
 				} catch (Exception e) {
-					System.out.println("encountered GUID that should have a parent, but is not mapped correctly : " + o.getParentId());
+					System.out.println("encountered GUID that should have a parent, but is not mapped correctly : "
+							+ o.getParentId());
 				}
 				if (!o.hasNlsfbCode()) {
 
