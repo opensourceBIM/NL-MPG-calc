@@ -266,6 +266,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		if (candidateElements.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"None of the candidate NmdElements matching the selection criteria.");
+			return;
 		}
 
 		// STEP4: from every candidate element we should pick 0:1 productcards per
@@ -273,10 +274,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		Set<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
 		if (selectedProducts.size() > 0) {
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
-			if (selectedProducts.size() == candidateElements.size()
-					|| selectedProducts.stream().anyMatch(pc -> pc.getIsTotaalProduct())) {
-				mpgElement.setIsFullyCovered(true);
-			}
 		} else {
 			mpgElement.setMappingMethod(NmdMapping.None);
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,

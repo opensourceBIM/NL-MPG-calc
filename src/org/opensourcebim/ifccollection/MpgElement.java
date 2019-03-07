@@ -117,10 +117,6 @@ public class MpgElement {
 	}
 
 	public boolean getIsFullyCovered() {
-		return coveredFlag;
-	}
-
-	public void setIsFullyCovered(boolean flag) {
-		this.coveredFlag = flag;
+		return this.getMpgObject().getListedMaterials().parallelStream().allMatch(mat -> mat.getMapId() > 0);
 	}
 }
