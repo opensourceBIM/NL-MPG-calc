@@ -347,6 +347,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				NmdProductCard chosenCard = selectCard.apply(productOptions);
 				viableCandidates.add(chosenCard);
 				mpgElement.mapProductCard(mat, chosenCard);
+				mpgElement.getMpgObject().setNLsfbCode(chosenCard.getNlsfbCode());
 			}
 		}
 
@@ -535,7 +536,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// maintain a map with already found scalers to boost performance.
 		HashMap<String, MpgGeometry> foundGeometries = new HashMap<String, MpgGeometry>();
 		Function<MpgObject, String> getNLsfbProp = (MpgObject e) -> {
-			return e.getNLsfbCode().print();
+			return e.getNLsfbCode() == null ? null : e.getNLsfbCode().print();
 		};
 		Function<MpgObject, String> getProdTypeProp = (MpgObject e) -> {
 			return e.getObjectType();

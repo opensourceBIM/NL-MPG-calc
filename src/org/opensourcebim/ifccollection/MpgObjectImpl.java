@@ -113,6 +113,11 @@ public class MpgObjectImpl implements MpgObject {
 			this.nlsfb = new NlsfbCode(code);
 		}
 	}
+	
+	@Override
+	public void setNLsfbCode(NlsfbCode code) {
+		this.nlsfb = code;
+	}
 
 	@Override
 	public boolean hasNlsfbCode() {

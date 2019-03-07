@@ -49,17 +49,15 @@ public class NlsfbCode {
 	/**
 	 * Check that the input code is an overlapping category of this code.
 	 * 
-	 * example 1: this = 22.1 code = 22. => true. 
-	 * example 2: this = 22.2 code = 22.1 => false.
-	 * example 3: this = 22.2 code = 22.2 => true.
+	 * example 1: this = 22.1 code = 22. => true. example 2: this = 22.2 code = 22.1
+	 * => false. example 3: this = 22.2 code = 22.2 => true.
 	 * 
 	 * @param code the potential parent category
 	 * @return flag to indicate that this NLSfb object is a (sub) category of the
 	 *         input Nlsfb object
 	 */
 	public Boolean isSubCategoryOf(NlsfbCode code) {
-		return this.majorId == code.getMajorId()
-				&& compareSubCodes(code.getMediorId(), this.getMediorId());
+		return this.majorId == code.getMajorId() && compareSubCodes(code.getMediorId(), this.getMediorId());
 	}
 
 	/**
@@ -92,13 +90,18 @@ public class NlsfbCode {
 	}
 
 	public String print() {
-		String res = getMajorId().toString();
-		if (getMediorId() != null && getMediorId() > 0) {
-			res += "." + mediorId.toString();
-			if (getMinorId()!= null && getMinorId() > 0) {
-				res += "." + getMinorId().toString();
+		String res = "";
+		if (getMajorId() != null) {
+			res += getMajorId().toString();
+			if (getMediorId() != null && getMediorId() > 0) {
+				res += "." + mediorId.toString();
+				if (getMinorId() != null && getMinorId() > 0) {
+					res += "." + getMinorId().toString();
+				}
 			}
-		} 
+		} else {
+			System.out.println();
+		}
 		return res;
 	}
 
