@@ -86,7 +86,7 @@ public class MpgObjectImpl implements MpgObject {
 		return this.objectName;
 	}
 
-	private void setObjectName(String objectName) {
+	public void setObjectName(String objectName) {
 		this.objectName = objectName == null ? "undefined name" : objectName;
 	}
 

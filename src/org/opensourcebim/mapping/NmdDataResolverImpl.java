@@ -228,18 +228,21 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		NmdUserMap map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject());
 		if (map != null) {
 			// get products in map and exit if succeeded.
-		}		
-		
+		}
+
 		// first try to resolve for explicitly indicated nlsfb code
-		FindProductsForNlsfbCodes(mpgElement, new HashSet<NlsfbCode>(Arrays.asList(mpgElement.getMpgObject().getNLsfbCode())));
+		FindProductsForNlsfbCodes(mpgElement,
+				new HashSet<NlsfbCode>(Arrays.asList(mpgElement.getMpgObject().getNLsfbCode())));
 		if (!mpgElement.hasMapping()) {
-			// if that doesn't work. try it for all the alternatives (no order of precendence)
+			// if that doesn't work. try it for all the alternatives (no order of
+			// precendence)
 			FindProductsForNlsfbCodes(mpgElement, mpgElement.getMpgObject().getNLsfbAlternatives());
 		}
 	}
 
 	/**
 	 * Find a mapping for the element by looking at a selection of nlsfbCodes
+	 * 
 	 * @param mpgElement
 	 * @param codeSet
 	 */
@@ -254,7 +257,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// STEP 2: find all the elements that we **could** include based on NLsfb
 		// match..
 		List<NmdElement> allMatchedElements = getService().getElementsForNLsfbCodes(codeSet);
-
 		if (allMatchedElements.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NMD element match for listed NLsfb codes");
@@ -412,7 +414,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// get all words in the profileSet names and card description and clean them
 		Set<String> map = card.getProfileSets().stream().map(ps -> ps.getName()).collect(Collectors.toSet());
 		map.add(card.getDescription());
-		String totalDescription =String.join(" " , map);
+		String totalDescription = String.join(" ", map);
 		Set<String> keyWords = NmdDataResolverImpl.parseStringForWords(totalDescription);
 
 		return calculateSimilarityScore(refWords, keyWords.stream().collect(Collectors.toList()));
@@ -474,6 +476,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 					Double[] dims = orientation.getScaleDims();
 					if (scaler.getNumberOfDimensions() > dims.length) {
+						// cannot scale a wall (in m2) on more than 1 dimension
 						return false;
 					}
 

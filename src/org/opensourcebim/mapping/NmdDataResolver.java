@@ -16,7 +16,7 @@ public interface NmdDataResolver {
 
 	void NmdToMpg();
 
-	void setService(NmdDataService nmdDataService);
+	void setNmdService(NmdDataService nmdDataService);
 
 	MpgObjectStore getStore();
 	
