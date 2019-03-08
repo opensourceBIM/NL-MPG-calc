@@ -135,26 +135,15 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 */
 	private void tryFindAdditionalInfo() {
 
-		for (MpgElement el : store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty())
+		for (MpgElement el : store.getElements().stream().filter(el -> !el.getMpgObject().hasNlsfbCode())
 				.collect(Collectors.toList())) {
-
-			String productName = el.getMpgObject().getObjectName();
-			Set<String> foundMaterials = this.tryGetKeyMaterials(productName);
-
+			// get NLSfb codes from product name and material descriptions
+			Set<String> nlsfbCodes = NmdDataResolverImpl.tryGetNlsfbCodes(el.getMpgObject().getObjectName());
+			
 			// add a material for any material not already present
 			Set<String> matNames = new HashSet<String>(el.getMpgObject().getMaterialNamesBySource(null).stream()
 					.map(name -> name.toLowerCase().trim()).collect(Collectors.toList()));
-
-			// add the found materials as aa single material item only if there are no
-			// materials already defined.
-			if (!foundMaterials.isEmpty() && el.getMpgObject().getListedMaterials().isEmpty()) {
-
-				el.getMpgObject().addMaterialSource(
-						new MaterialSource("-1", String.join(" ", foundMaterials), "from description"));
-			}
-
-			// get NLSfb codes from product name and material descriptions
-			Set<String> nlsfbCodes = NmdDataResolverImpl.tryGetNlsfbCodes(productName);
+			
 			matNames.forEach(mat -> nlsfbCodes.addAll(NmdDataResolverImpl.tryGetNlsfbCodes(mat)));
 
 			// add the first item to the nlsfb code if not already set and all of them to
@@ -164,6 +153,20 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				el.getMpgObject().addNlsfbAlternatives(nlsfbCodes);
 			} else if (!nlsfbCodes.isEmpty()) {
 				el.getMpgObject().addNlsfbAlternatives(nlsfbCodes);
+			}
+		}
+
+		for (MpgElement el : store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty())
+				.collect(Collectors.toList())) {
+
+			Set<String> foundMaterials = this.tryGetKeyMaterials(el.getMpgObject().getObjectName());
+
+			// add the found materials as aa single material item only if there are no
+			// materials already defined.
+			if (!foundMaterials.isEmpty() && el.getMpgObject().getListedMaterials().isEmpty()) {
+
+				el.getMpgObject().addMaterialSource(
+						new MaterialSource("-1", String.join(" ", foundMaterials), "from description"));
 			}
 		}
 	}
