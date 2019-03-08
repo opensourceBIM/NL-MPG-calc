@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author vijj
  * ToDo: there are currently a lot of methods in here that should be in a lower level class. move these.
  */
-public class AuthorizedDatabaseSession {
+public class AuthorizedDatabaseSession  {
 	protected String scheme = "https";
 	private String host;
 	protected HttpClient httpClient = HttpClients.createDefault();

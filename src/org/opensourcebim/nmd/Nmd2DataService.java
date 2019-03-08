@@ -9,12 +9,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
+import org.opensourcebim.mapping.BaseDataService;
 import org.opensourcebim.mapping.NlsfbCode;
 
-public class Nmd2DataService implements NmdDataService {
+public class Nmd2DataService extends BaseDataService {
 	private Connection connection;
 	
 	private NmdUserDataConfig config;
@@ -175,19 +174,6 @@ public class Nmd2DataService implements NmdDataService {
 		}
 
 		return products;
-	}
-
-	@Override
-	public List<NmdProductCard> getProductsForNLsfbCodes(Set<NlsfbCode> codes) {
-		return getElementsForNLsfbCodes(codes).stream().flatMap(el -> el.getProducts().stream())
-				.collect(Collectors.toList());
-	}
-
-	@Override
-	public List<NmdElement> getElementsForNLsfbCodes(Set<NlsfbCode> codes) {
-		return data.stream().filter(el -> codes.stream()
-				.anyMatch(code -> el.getNlsfbCode().isSubCategoryOf(code)))
-				.collect(Collectors.toList());
 	}
 
 	@Override

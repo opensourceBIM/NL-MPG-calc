@@ -53,7 +53,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 	public NmdDataResolverImpl() {
 		NmdUserDataConfig config = new NmdUserDataConfigImpl();
-		setService(new Nmd2DataService(config));
+		setNmdService(new Nmd2DataService(config));
 		setMappingService(new NmdMappingDataServiceImpl(config));
 		keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet();
 	}
@@ -75,7 +75,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	@Override
-	public void setService(NmdDataService nmdDataService) {
+	public void setNmdService(NmdDataService nmdDataService) {
 		// check if same service is not already present?
 		this.service = nmdDataService;
 	}
