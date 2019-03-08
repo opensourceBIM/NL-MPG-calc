@@ -63,7 +63,7 @@ public class mpgCalculatorTests {
 	@Test
 	public void testReturnIncompleteDataStatusWhenMpgObjectsAreNotFullyCovered() {
 		// adding a profile set that is not a totaalproduct will trigger a warning
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.IncompleteData, results.getStatus());
@@ -83,7 +83,7 @@ public class mpgCalculatorTests {
 		card.setCategory(category);
 		card.setLifetime(1);
 		// since we're not adding a totaalproduct we need to cover every CUAS stage individually
-		card.addProfileSet(builder.createProfileSet(name, unit, 1));
+		card.addProfileSet(builder.createUnitProfileSet(name, unit, 1, 1.0));
 		card.setIsTotaalProduct(false);
 		
 		el.mapProductCard(new MaterialSource("1", "steel", "dummy"), card);
@@ -96,7 +96,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testResultsReturnSuccessStatusWhenCalculationsSucceed() {
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.Success, results.getStatus());
@@ -104,7 +104,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostCannotBeNaN() {
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1.0);
 		assertFalse(results.getTotalCost().isNaN());
@@ -112,7 +112,7 @@ public class mpgCalculatorTests {
 	
 	@Test
 	public void testTotalCostIsNonZeroOnCompleteProduct() {
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1.0);
 		assertFalse(results.getTotalCost() == 0);
@@ -120,7 +120,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testCategory3DataIncreasesTotalCost() {
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 3, 1);
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 3, 1);
 
 		startCalculations(1.0);
 		// 30% increase in cost for category 3 data
@@ -130,10 +130,10 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCorrectedCostIsGivenPerSquareMeterFloorArea() {
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, 1);
 
 		Double totalArea = 10.0;
-		builder.addSpace(totalArea);
+		builder.addSpace(totalArea, 3.0);
 
 		startCalculations(1.0);
 
@@ -143,8 +143,8 @@ public class mpgCalculatorTests {
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperationYear() {
 		Double totalLifeTime = 10.0;
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, totalLifeTime.intValue());
-		builder.addSpace(1.0);
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, totalLifeTime.intValue());
+		builder.addSpace(1.0, 3.0);
 
 
 		startCalculations(totalLifeTime);
@@ -155,15 +155,15 @@ public class mpgCalculatorTests {
 	@Test
 	public void testTotalCorrectedCostIsGivenPerOperatingYearAndFloorArea() {
 		Double factor = 10.0;
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, factor.intValue());
-		builder.addSpace(factor); // 10m2 floor
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, factor.intValue());
+		builder.addSpace(factor, 3.0); // 10m2 floor
 		startCalculations(factor); // 10 years of designlife
 		assertEquals(results.getTotalCost() / (factor * factor), results.getTotalCorrectedCost(), 1e-8);
 	}
 
 	@Test
 	public void testTotalCostPerMaterialReturnsZeroWhenMaterialNotPresent() {
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, 1);
 
 		startCalculations(1);
 
@@ -172,9 +172,9 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testTotalCostPerMaterialReturnsOnlyCostOfRelevantMaterial() {
-		builder.addMaterialWithproductCard("steel", "Stainless Steel", "m2", 1, 1);
-		builder.addMaterialWithproductCard("brick", "brick and mortar", "m2", 1, 1);
-		builder.addMaterialWithproductCard("brick2", "brick and mortar", "m2", 1, 1);
+		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, 1);
+		builder.addMappedMpgElement("brick", "brick and mortar", "m2", 1, 1);
+		builder.addMappedMpgElement("brick2", "brick and mortar", "m2", 1, 1);
 		
 		startCalculations(1);
 
