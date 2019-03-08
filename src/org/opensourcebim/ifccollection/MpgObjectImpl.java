@@ -33,7 +33,6 @@ public class MpgObjectImpl implements MpgObject {
 
 	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId) {
 
-		mpgLayers = new BasicEList<MpgLayer>();
 		this.objectId = objectId;
 		this.setGlobalId(globalId);
 		this.setObjectName(objectName);
@@ -43,13 +42,20 @@ public class MpgObjectImpl implements MpgObject {
 		}
 		this.parentId = parentId;
 
+		initializeCollections();
+	}
+	
+	public MpgObjectImpl() {
+		initializeCollections();
+	}
+	
+	private void initializeCollections() {
+		mpgLayers = new BasicEList<MpgLayer>();
 		properties = new HashMap<String, Object>();
 		tags = new ArrayList<MpgInfoTag>();
 		this.listedMaterials = new BasicEList<MaterialSource>();
 		this.nlsfbAlternatives = new HashSet<NlsfbCode>();
 	}
-	
-	public MpgObjectImpl() { }
 
 	@Override
 	public void addLayer(MpgLayer mpgLayer) {
