@@ -1,0 +1,15 @@
+language: java
+sudo: false # faster builds
+
+script: mvn clean verify
+
+after_success:
+after_failure:
+
+git: 
+    depth: false
+
+
+branches: # todo apply filter to only build branches with issue number.?
+    only:
+    - /.*/
