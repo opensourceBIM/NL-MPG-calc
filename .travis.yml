@@ -1,6 +1,10 @@
 language: java
 sudo: false # faster builds
 
+before_Start:
+    - mvn validate
+
+
 script: mvn clean verify
 
 after_success:
