@@ -3,18 +3,15 @@ package org.opensourcebim.nmd;
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.crypto.dsig.keyinfo.KeyName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 
 public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 
