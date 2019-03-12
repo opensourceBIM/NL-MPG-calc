@@ -21,11 +21,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import com.opencsv.CSVReader;
-
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.nmd.NmdUserDataConfig;
 import org.opensourcebim.nmd.NmdMappingDataService;
+import org.opensourcebim.nmd.NmdUserDataConfig;
+
+import com.opencsv.CSVReader;
 
 /**
  * Class to provide an interface between java code and a mapping database
@@ -115,7 +115,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 	private void createCommonWordsTable() {
 		try {
 			String tableName = this.common_word_dutch_table ;
-			CSVReader reader = new CSVReader(new FileReader(config.getCommonWordDutchFilePath()));
+			CSVReader reader = new CSVReader(new FileReader(config.getCommonWordFilePath()));
 			List<String[]> myEntries = reader.readAll();
 			reader.close();
 
@@ -151,7 +151,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 		List<Path> foundFiles = new ArrayList<Path>();
 		List<String> allMaterials = new ArrayList<String>();
 		try {
-			Files.walk(Paths.get(config.getIFcFilesForKeyWordMapRootPath()))
+			Files.walk(Paths.get(config.getIfcFilesForKeyWordMapRootPath()))
 					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc"))
 					.filter(p -> {
 						// filter on max file size. example: 50 MB limit on 5e7

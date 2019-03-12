@@ -4,8 +4,7 @@ sudo: false # faster builds
 before_Start:
     - mvn validate
 
-
-script: mvn clean verify
+script: mvn clean verify -P ci_dev
 
 after_success:
 after_failure:
