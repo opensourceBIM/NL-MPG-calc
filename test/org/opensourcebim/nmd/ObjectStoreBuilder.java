@@ -18,9 +18,16 @@ import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
 public class ObjectStoreBuilder {
 	private MpgObjectStoreImpl store;
+	private Integer lastId;
+	
 	
 	public ObjectStoreBuilder() {
 		this.setStore(new MpgObjectStoreImpl());
+		lastId = 1;
+	}
+	
+	private Integer getNewId() {
+		return lastId++;
 	}
 	
 	public void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int lifetime) {
@@ -63,8 +70,9 @@ public class ObjectStoreBuilder {
 		getStore().addSpace(new MpgSpaceImpl(UUID.randomUUID().toString(), floorArea * 3, floorArea));
 	}
 
-	public NmdProductCard createUnitProductCard(String name, String unit, int category, int lifetime) {
+	public NmdProductCardImpl createUnitProductCard(String name, String unit, int category, int lifetime) {
 		NmdProductCardImpl specs = new NmdProductCardImpl();
+		specs.setProductId(getNewId());
 		specs.setLifetime(lifetime);
 		specs.setDescription(name);
 		specs.setCategory(category);
@@ -123,13 +131,17 @@ public class ObjectStoreBuilder {
 	}
 	
 	public void addDummyElement1() {
-		store.addElement("baksteen");
-		MpgObjectImpl obj = new MpgObjectImpl(1, "a", "heipaal", "Column", "");
-		obj.setNLsfbCode("11.11");
-
-		obj.setGeometry(createDummyGeom(1.0, 1.0, 5.0));
+		store.addElement("baksteen");		
+		MpgObjectImpl obj = this.createDummyObject("heipaal", "IfcColumn", "", "11.11");
 		store.addObject(obj);
 		store.setObjectForElement("baksteen", obj);
+	}
+	
+	public MpgObjectImpl createDummyObject(String name, String type, String parentId, String nlsfb) {
+		MpgObjectImpl obj = new MpgObjectImpl((long)getNewId(), UUID.randomUUID().toString(), name, type, parentId);
+		obj.setNLsfbCode(nlsfb);
+		obj.setGeometry(createDummyGeom(1.0,  1.0,  1.0));
+		return obj;
 	}
 
 	public NmdReferenceResources getDummyReferences() {

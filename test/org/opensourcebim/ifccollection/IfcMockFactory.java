@@ -10,7 +10,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.bimserver.emf.IfcModelInterface;
+import org.bimserver.models.geometry.Bounds;
 import org.bimserver.models.geometry.GeometryInfo;
+import org.bimserver.models.geometry.Vector3f;
+import org.bimserver.models.geometry.impl.BoundsImpl;
 import org.bimserver.models.ifc2x3tc1.IfcBuildingElement;
 import org.bimserver.models.ifc2x3tc1.IfcMaterial;
 import org.bimserver.models.ifc2x3tc1.IfcMaterialLayer;
@@ -32,6 +35,7 @@ import org.bimserver.models.ifc2x3tc1.IfcSpace;
 import org.bimserver.models.ifc2x3tc1.IfcUnit;
 import org.bimserver.models.ifc2x3tc1.IfcUnitAssignment;
 import org.bimserver.models.ifc2x3tc1.IfcUnitEnum;
+import org.bimserver.utils.Vector3d;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
 
@@ -209,7 +213,21 @@ public class IfcMockFactory {
 		when(geom.getVolume()).thenReturn(volume);
 		when(geom.getArea()).thenReturn(area);
 		Double faceArea = Math.pow(volume, 2.0/3.0);
-		Double faceLength = Math.pow(volume, 1.0/3.0);
+		Double faceLength = Math.pow(volume, 1.0/3.0);;
+		
+		Bounds bounds = mock(Bounds.class);
+		Vector3f vecMax = mock(Vector3f.class);
+		Vector3f vecMin = mock(Vector3f.class);
+		when(vecMax.getX()).thenReturn(faceLength);
+		when(vecMax.getX()).thenReturn(faceLength);
+		when(vecMax.getX()).thenReturn(faceLength);
+		when(vecMin.getX()).thenReturn(0.0);
+		when(vecMin.getX()).thenReturn(0.0);
+		when(vecMin.getX()).thenReturn(0.0);
+		when(bounds.getMax()).thenReturn(vecMax);
+		when(bounds.getMin()).thenReturn(vecMin);
+		when(geom.getBoundsUntransformed()).thenReturn(bounds);
+		
 		when(geom.getAdditionalData()).thenReturn(
 				"{\"TOTAL_SURFACE_AREA\":" + String.valueOf(faceArea * 6.0)
 				+ ",\"TOTAL_SHAPE_VOLUME\":" + volume
