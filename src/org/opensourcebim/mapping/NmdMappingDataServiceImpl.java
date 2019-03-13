@@ -36,9 +36,9 @@ import com.opencsv.CSVReader;
  */
 public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdMappingDataService {
 
-	private String mat_keyword_table = "ifc_material_keywords";
-	private String ifc_to_nlsfb_table = "ifc_to_nlsfb_map";
-	private String common_word_dutch_table = "common_words_dutch_table";
+	private final String mat_keyword_table = "ifc_material_keywords";
+	private final String ifc_to_nlsfb_table = "ifc_to_nlsfb_map";
+	private final String common_word_dutch_table = "common_words_dutch_table";
 
 	public NmdMappingDataServiceImpl(NmdUserDataConfig config) {
 		super(config);
