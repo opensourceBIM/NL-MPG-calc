@@ -57,9 +57,11 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		setObjects(new BasicEList<MpgObject>());
 		setSpaces(new BasicEList<MpgSpace>());
 		setUnits(VolumeUnit.CUBIC_METER, AreaUnit.SQUARED_METER, LengthUnit.METER);
+		decomposedRelations = new ArrayList<ImmutablePair<String,MpgObject>>();
 	}
 
 	public void reset() {
+		decomposedRelations.clear();
 		mpgObjects.clear();
 		mpgElements.clear();
 		spaces.clear();
