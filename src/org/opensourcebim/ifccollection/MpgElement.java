@@ -22,7 +22,6 @@ public class MpgElement {
 	private MpgObjectStore store;
 
 	private NmdMapping mappingMethod;
-	private boolean coveredFlag;
 
 	public MpgElement(String name, MpgObjectStore store) {
 		ifcName = name;
@@ -117,10 +116,8 @@ public class MpgElement {
 	}
 
 	public boolean getIsFullyCovered() {
-		return coveredFlag;
-	}
-
-	public void setIsFullyCovered(boolean flag) {
-		this.coveredFlag = flag;
+		return this.getMpgObject() != null && 
+				(this.getMpgObject().getListedMaterials().stream().allMatch(m -> m.getMapId() > 0) || 
+				this.getNmdProductCards().stream().anyMatch(pc -> pc.getIsTotaalProduct()));
 	}
 }
