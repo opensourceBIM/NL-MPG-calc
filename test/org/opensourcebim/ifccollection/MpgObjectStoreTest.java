@@ -8,14 +8,17 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.nmd.NmdMapping;
+import org.opensourcebim.nmd.ObjectStoreBuilder;
 
-public class MpgObjectStoreTests {
+public class MpgObjectStoreTest {
 
 	private MpgObjectStore objectStore;
+	private ObjectStoreBuilder builder;
 	
 	@Before
 	public void setUp() throws Exception {
 		objectStore = new MpgObjectStoreImpl();
+		builder = new ObjectStoreBuilder();
 	}
 
 	@After
@@ -40,6 +43,7 @@ public class MpgObjectStoreTests {
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		mpgObject.addLayer(new MpgLayerImpl(2, 1.0, "dummyMaterial", Integer.toString("dummyMaterial".hashCode())));
 		mpgObject.addMaterialSource("dummyMaterial", "", "layer");
+		el.setMpgObject(mpgObject);
 		objectStore.addObject(mpgObject);
 		
 		el.setMappingMethod(NmdMapping.DirectTotaalProduct);
@@ -117,8 +121,9 @@ public class MpgObjectStoreTests {
 	
 	@Test
 	public void testWarningCheckReturnsFalseOnObjectWithoutLinkedMaterialAndOrphanMaterial() {
-		objectStore.addElement("orphan material");
+		objectStore.addElement("orphan material element");
 		MpgObject mpgObject = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
+		// we now add a layer with no material defined.
 		mpgObject.addLayer(new MpgLayerImpl(10, 1.0, null, null));
 		objectStore.addObject(mpgObject);
 		
@@ -162,8 +167,9 @@ public class MpgObjectStoreTests {
 		MpgObjectImpl obj = new MpgObjectImpl(1, "a", "custom wall", "Wall", "");
 		MpgLayerImpl layer = new MpgLayerImpl(10, 1.0, "test material", Integer.toString("test material".hashCode()));
 		obj.addLayer(layer);
+		
 		// mock volume as this will not be added in this way
-		obj.getGeometry().setVolume(layer.getVolume());
+		obj.setGeometry(builder.createDummyGeom(1.0, 1.0, 1.0));
 		objectStore.addObject(obj);
 		
 		assertTrue("warning found in objectstore while it should not be there.",

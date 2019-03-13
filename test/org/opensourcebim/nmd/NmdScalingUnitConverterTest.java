@@ -8,11 +8,11 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
-public class NmdScalingUnitConverterTests {
+public class NmdScalingUnitConverterTest {
 
 	private MpgObjectStore store;
 
-	public NmdScalingUnitConverterTests() {
+	public NmdScalingUnitConverterTest() {
 	}
 
 	@Before

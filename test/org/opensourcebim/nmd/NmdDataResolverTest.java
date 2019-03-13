@@ -11,14 +11,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
 
-public class NmdDataResolverTests {
+public class NmdDataResolverTest {
 
 	private ObjectStoreBuilder builder;
 	private Nmd3DataService db;
 	private NmdDataResolverImpl resolver;
 	private List<NmdElement> testElements;
 
-	public NmdDataResolverTests() {
+	public NmdDataResolverTest() {
 	}
 
 	@Before

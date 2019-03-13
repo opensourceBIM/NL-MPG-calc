@@ -16,13 +16,13 @@ import org.opensourcebim.nmd.scaling.NmdLogarithmicScaler;
 import org.opensourcebim.nmd.scaling.NmdPowerScaler;
 import org.opensourcebim.nmd.scaling.NmdScalerFactory;
 
-public class NmdScalerTests {
+public class NmdScalerTest {
 
 	NmdScalerFactory factory;
 	
 	// TODO test unit scaling etc.
 	
-	public NmdScalerTests() {
+	public NmdScalerTest() {
 	}
 
 	@Before

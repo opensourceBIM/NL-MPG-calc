@@ -6,11 +6,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class MpgCalculationResultsTests {
+public class MpgCalculationResultsTest {
 
 	private MpgCalculationResults results;
 
-	public MpgCalculationResultsTests() {
+	public MpgCalculationResultsTest() {
 	}
 
 	@Before
