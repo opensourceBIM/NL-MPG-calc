@@ -1,5 +1,10 @@
 package org.opensourcebim.nmd;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -8,12 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.opensourcebim.mapping.NlsfbCode;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 public class Nmd2DataService implements NmdDataService {
 	private Connection connection;

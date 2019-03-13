@@ -1,0 +1,15 @@
+language: java
+sudo: false
+
+script: mvn clean test -Dtest=!*IntegrationTest -P ci_dev
+
+after_success:
+after_failure:
+
+git: 
+    depth: false
+
+
+branches: # todo apply filter to only build branches with issue number.?
+    only:
+    - /.*/

@@ -3,7 +3,6 @@ package org.opensourcebim.ifccollection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
@@ -24,7 +23,6 @@ public class MpgElement {
 	private MpgObjectStore store;
 
 	private NmdMapping mappingMethod;
-	private boolean coveredFlag;
 
 	public MpgElement(String name, MpgObjectStore store) {
 		ifcName = name;
@@ -78,7 +76,8 @@ public class MpgElement {
 	}
 
 	public List<Integer> getProductIds() {
-		return this.getMpgObject().getListedMaterials().stream()
+		
+		return this.getMpgObject() == null ? new ArrayList<Integer>() : this.getMpgObject().getListedMaterials().stream()
 				.filter(m -> m.getMapId() > 0)
 				.map(m ->m.getMapId())
 				.collect(Collectors.toList());
@@ -100,7 +99,8 @@ public class MpgElement {
 	
 	public void mapProductCard(MaterialSource mat, NmdProductCard card) {
 		// add the material to the mpgObject if it has not been added yet.
-		if (this.getMpgObject().getListedMaterials().stream().filter(m -> m.getOid().equals(mat.getOid())).count() == 0) {
+		if (this.getMpgObject().getListedMaterials().isEmpty() || this.getMpgObject().getListedMaterials().stream()
+				.filter(m -> m.getOid().equals(mat.getOid())).count() == 0) {
 			this.getMpgObject().addMaterialSource(mat);
 		}
 		
@@ -119,10 +119,8 @@ public class MpgElement {
 	}
 
 	public boolean getIsFullyCovered() {
-		return coveredFlag;
-	}
-
-	public void setIsFullyCovered(boolean flag) {
-		this.coveredFlag = flag;
+		return this.getMpgObject() != null && 
+				(this.getMpgObject().getListedMaterials().stream().allMatch(m -> m.getMapId() > 0) || 
+				this.getNmdProductCards().stream().anyMatch(pc -> pc.getIsTotaalProduct()));
 	}
 }

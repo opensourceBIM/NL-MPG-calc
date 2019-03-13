@@ -19,11 +19,12 @@ public interface NmdUserDataConfig {
 
 	public String getNmd2DbPath();
 
-	String getIFcFilesForKeyWordMapRootPath();
+	String getIfcFilesForKeyWordMapRootPath();
 
 	String getNlsfbAlternativesFilePath();
 
 	String getMappingDbPath();
 
-	public String getCommonWordDutchFilePath();
+	public String getCommonWordFilePath();
+
 }

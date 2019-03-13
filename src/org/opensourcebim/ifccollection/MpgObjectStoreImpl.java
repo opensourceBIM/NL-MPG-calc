@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,9 +57,11 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		setObjects(new BasicEList<MpgObject>());
 		setSpaces(new BasicEList<MpgSpace>());
 		setUnits(VolumeUnit.CUBIC_METER, AreaUnit.SQUARED_METER, LengthUnit.METER);
+		decomposedRelations = new ArrayList<ImmutablePair<String,MpgObject>>();
 	}
 
 	public void reset() {
+		decomposedRelations.clear();
 		mpgObjects.clear();
 		mpgElements.clear();
 		spaces.clear();
@@ -404,7 +405,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public boolean hasUndefinedVolume(MpgObject obj, boolean includeChildren) {
-		boolean ownCheck = obj.getGeometry().getVolume() == 0;
+		boolean ownCheck = obj.getGeometry() == null || obj.getGeometry().getVolume() == 0;
 		boolean hasChildren = getChildren(obj.getGlobalId()).count() > 0;
 		boolean childCheck = includeChildren
 				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedVolume(o, includeChildren));

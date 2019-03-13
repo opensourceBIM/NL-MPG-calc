@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmd>
+	<token>"no token defined"</token>
+	<id>-1</id>
+	<nmd2Path>"data//nmd2.db"</nmd2Path>
+	<mappingDbPath>"data//mappings.db"</mappingDbPath>
+	<nlsfbAlternativesPath>"data//no_file.csv"</nlsfbAlternativesPath>
+	<rootPath></rootPath>
+	<commonWordExclusionPath>"data//no_file.csv"</commonWordExclusionPath>
+</nmd>

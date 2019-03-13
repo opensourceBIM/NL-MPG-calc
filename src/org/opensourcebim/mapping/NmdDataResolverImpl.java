@@ -13,10 +13,10 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.jdt.internal.codeassist.impl.Keywords;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
@@ -25,15 +25,14 @@ import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
-import org.opensourcebim.nmd.Nmd2DataService;
 import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.NmdUserDataConfig;
-import org.opensourcebim.nmd.NmdUserDataConfigImpl;
 import org.opensourcebim.nmd.NmdElement;
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdMappingDataService;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProfileSet;
+import org.opensourcebim.nmd.NmdUserDataConfig;
+import org.opensourcebim.nmd.NmdUserDataConfigImpl;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
@@ -47,15 +46,13 @@ import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 public class NmdDataResolverImpl implements NmdDataResolver {
 
 	private NmdDataService service;
+	private NmdUserDataConfig config;
 	private NmdMappingDataService mappingService;
 	private MpgObjectStore store;
 	private Set<String> keyWords;
 
 	public NmdDataResolverImpl() {
-		NmdUserDataConfig config = new NmdUserDataConfigImpl();
-		setService(new Nmd2DataService(config));
-		setMappingService(new NmdMappingDataServiceImpl(config));
-		keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet();
+		config = new NmdUserDataConfigImpl();
 	}
 
 	public MpgObjectStore getStore() {
@@ -65,13 +62,20 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	public void setStore(MpgObjectStore store) {
 		this.store = store;
 	}
+	
+	@Override
+	public NmdUserDataConfig getConfig() {
+		return config;
+	}
 
 	public NmdMappingDataService getMappingService() {
 		return mappingService;
 	}
 
+	@Override
 	public void setMappingService(NmdMappingDataService mappingService) {
 		this.mappingService = mappingService;
+		keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet();
 	}
 
 	@Override
@@ -259,10 +263,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		Set<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
 		if (selectedProducts.size() > 0) {
 			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
-			if (selectedProducts.size() == candidateElements.size()
-					|| selectedProducts.stream().anyMatch(pc -> pc.getIsTotaalProduct())) {
-				mpgElement.setIsFullyCovered(true);
-			}
 		} else {
 			mpgElement.setMappingMethod(NmdMapping.None);
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,

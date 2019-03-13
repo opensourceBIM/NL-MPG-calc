@@ -11,6 +11,33 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>bouw besluit materials</name>
 	<description>BIM plugin for checking BIM models versus the environment norms of the Dutch government Bouwbesluit</description>
+
+	<profiles>
+		<profile>
+			<id>local_dev</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+				<resources>
+					<resource>
+						<directory>src//org//opensourcebim//resources//local</directory>
+					</resource>
+				</resources>
+			</build>
+		</profile>
+		<profile>
+			<id>ci_dev</id>
+			<build>
+				<resources>
+					<resource>
+						<directory>src//org//opensourcebim//resources//ci</directory>
+					</resource>
+				</resources>
+			</build>
+		</profile>
+	</profiles>
+
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<testSourceDirectory>test</testSourceDirectory>
@@ -23,15 +50,22 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.0.0-M3</version>
+			</plugin>
 		</plugins>
 	</build>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>pluginbase</artifactId>
-			<version>1.5.126-SNAPSHOT</version>
+			<version>1.5.125</version>
 		</dependency>
 		<dependency>
+			<scope>test</scope>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<version>2.23.0</version>
@@ -39,7 +73,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimserverclientlib</artifactId>
-			<version>1.5.126-SNAPSHOT</version>
+			<version>1.5.125</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -58,6 +92,11 @@
 			<artifactId>opencsv</artifactId>
 			<version>4.0</version>
 		</dependency>
-
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>

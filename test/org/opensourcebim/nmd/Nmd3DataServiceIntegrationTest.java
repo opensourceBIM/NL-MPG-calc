@@ -14,16 +14,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-public class Nmd3DataServiceTests {
+public class Nmd3DataServiceIntegrationTest {
 
 	private Nmd3DataService db;
 	private NmdUserDataConfig config;
 
-	public Nmd3DataServiceTests() {
+	public Nmd3DataServiceIntegrationTest() {
 	}
 
 	@Before
@@ -195,11 +191,11 @@ public class Nmd3DataServiceTests {
 			db.getAdditionalProfileDataForCard(pc);
 		}));
 	
-		ObjectMapper mapper = new ObjectMapper();
-		JsonNode node = mapper.valueToTree(db.getData());
-		try {
-			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node));
-		} catch (JsonProcessingException e1) {}
+//		ObjectMapper mapper = new ObjectMapper();
+//		JsonNode node = mapper.valueToTree(db.getData());
+//		try {
+//			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node));
+//		} catch (JsonProcessingException e1) {}
 		assertTrue(db.getData().stream()
 				.flatMap(e -> e.getProducts().stream().flatMap(pc -> pc.getProfileSets().stream())).count() > 0);
 	}

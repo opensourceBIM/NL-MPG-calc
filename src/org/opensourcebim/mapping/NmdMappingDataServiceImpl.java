@@ -21,11 +21,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import com.opencsv.CSVReader;
-
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.nmd.NmdUserDataConfig;
 import org.opensourcebim.nmd.NmdMappingDataService;
+import org.opensourcebim.nmd.NmdUserDataConfig;
+
+import com.opencsv.CSVReader;
 
 /**
  * Class to provide an interface between java code and a mapping database
@@ -36,9 +36,9 @@ import org.opensourcebim.nmd.NmdMappingDataService;
  */
 public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdMappingDataService {
 
-	private String mat_keyword_table = "ifc_material_keywords";
-	private String ifc_to_nlsfb_table = "ifc_to_nlsfb_map";
-	private String common_word_dutch_table = "common_words_dutch_table";
+	private final String mat_keyword_table = "ifc_material_keywords";
+	private final String ifc_to_nlsfb_table = "ifc_to_nlsfb_map";
+	private final String common_word_dutch_table = "common_words_dutch_table";
 
 	public NmdMappingDataServiceImpl(NmdUserDataConfig config) {
 		super(config);
@@ -115,7 +115,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 	private void createCommonWordsTable() {
 		try {
 			String tableName = this.common_word_dutch_table ;
-			CSVReader reader = new CSVReader(new FileReader(config.getCommonWordDutchFilePath()));
+			CSVReader reader = new CSVReader(new FileReader(config.getCommonWordFilePath()));
 			List<String[]> myEntries = reader.readAll();
 			reader.close();
 
@@ -151,7 +151,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 		List<Path> foundFiles = new ArrayList<Path>();
 		List<String> allMaterials = new ArrayList<String>();
 		try {
-			Files.walk(Paths.get(config.getIFcFilesForKeyWordMapRootPath()))
+			Files.walk(Paths.get(config.getIfcFilesForKeyWordMapRootPath()))
 					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc"))
 					.filter(p -> {
 						// filter on max file size. example: 50 MB limit on 5e7
