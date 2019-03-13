@@ -403,7 +403,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	@Override
 	public boolean hasUndefinedVolume(MpgObject obj, boolean includeChildren) {
-		boolean ownCheck = obj.getGeometry().getVolume() == 0;
+		boolean ownCheck = obj.getGeometry() == null || obj.getGeometry().getVolume() == 0;
 		boolean hasChildren = getChildren(obj.getGlobalId()).count() > 0;
 		boolean childCheck = includeChildren
 				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedVolume(o, includeChildren));
