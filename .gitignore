@@ -13,3 +13,4 @@ test/org/opensourcebim/nmd/NmdDatabaseConfigImpl.java
 src/org/opensourcebim/nmd/NmdDatabaseConfigImpl.java
 src/data/NMD_2.2_OPLEVERING_20180626_AANGEPAST.db
 src/org/opensourcebim/nmd/NmdUserDataConfigImpl.java
+src/org/opensourcebim/resources/local/nmdConfig.xml
