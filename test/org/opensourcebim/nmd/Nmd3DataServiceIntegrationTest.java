@@ -14,10 +14,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class Nmd3DataServiceIntegrationTest {
 
 	private Nmd3DataService db;

@@ -13,7 +13,6 @@ import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.geometry.Bounds;
 import org.bimserver.models.geometry.GeometryInfo;
 import org.bimserver.models.geometry.Vector3f;
-import org.bimserver.models.geometry.impl.BoundsImpl;
 import org.bimserver.models.ifc2x3tc1.IfcBuildingElement;
 import org.bimserver.models.ifc2x3tc1.IfcMaterial;
 import org.bimserver.models.ifc2x3tc1.IfcMaterialLayer;
@@ -35,7 +34,6 @@ import org.bimserver.models.ifc2x3tc1.IfcSpace;
 import org.bimserver.models.ifc2x3tc1.IfcUnit;
 import org.bimserver.models.ifc2x3tc1.IfcUnitAssignment;
 import org.bimserver.models.ifc2x3tc1.IfcUnitEnum;
-import org.bimserver.utils.Vector3d;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
 
