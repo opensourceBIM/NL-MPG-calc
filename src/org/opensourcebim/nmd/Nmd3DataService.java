@@ -32,7 +32,8 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  */
 public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDataService {
-
+// ToDo: implement class AUthorizedBAseDatabaseSession
+	
 	private static final DateFormat dbDateFormat = new SimpleDateFormat("yyyyMMdd");
 	private String apiPath;
 	private Calendar requestDate;
@@ -48,6 +49,11 @@ public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDat
 		this.setHost("www.Milieudatabase-datainvoer.nl");
 		this.apiPath = "/NMD_30_API_v0.2/api/NMD30_Web_API/";
 		this.config = config;
+		this.requestDate = Calendar.getInstance();
+		this.data = new ArrayList<NmdElement>();
+	}
+	
+	public Nmd3DataService() {
 		this.requestDate = Calendar.getInstance();
 		this.data = new ArrayList<NmdElement>();
 	}

@@ -27,7 +27,7 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 		
 		// resolve any ifc to nmd coupling
 		NmdDataResolver resolver = new NmdDataResolverImpl();
-		resolver.setService(new Nmd2DataService(resolver.getConfig()));
+		resolver.setNmdService(new Nmd2DataService(resolver.getConfig()));
 		resolver.setMappingService(new NmdMappingDataServiceImpl(resolver.getConfig()));
 		resolver.setStore(ifcResults);
 		resolver.NmdToMpg();

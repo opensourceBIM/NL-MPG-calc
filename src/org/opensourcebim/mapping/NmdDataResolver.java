@@ -18,7 +18,7 @@ public interface NmdDataResolver {
 
 	void NmdToMpg();
 
-	void setService(NmdDataService nmdDataService);
+	void setNmdService(NmdDataService nmdDataService);
 	
 	void setMappingService(NmdMappingDataService nmdMappingService);
 

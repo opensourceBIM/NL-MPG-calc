@@ -17,8 +17,9 @@ public interface MpgObject {
 	String getParentId();
 	void setParentId(String value);
 	
-	String getNLsfbCode();	
+	NlsfbCode getNLsfbCode();	
 	void setNLsfbCode(String code);
+	void setNLsfbCode(NlsfbCode code);
 	boolean hasNlsfbCode();
 	@JsonIgnore
 	Set<NlsfbCode> getNLsfbAlternatives();

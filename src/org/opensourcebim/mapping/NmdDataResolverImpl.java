@@ -79,7 +79,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	@Override
-	public void setService(NmdDataService nmdDataService) {
+	public void setNmdService(NmdDataService nmdDataService) {
 		// check if same service is not already present?
 		this.service = nmdDataService;
 	}
@@ -139,33 +139,38 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 */
 	private void tryFindAdditionalInfo() {
 
-		for (MpgElement el : store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty())
+		for (MpgElement el : store.getElements().stream().filter(el -> !el.getMpgObject().hasNlsfbCode())
 				.collect(Collectors.toList())) {
-
-			String productName = el.getMpgObject().getObjectName();
-			Set<String> foundMaterials = this.tryGetKeyMaterials(productName);
-
+			// get NLSfb codes from product name and material descriptions
+			Set<String> nlsfbCodes = NmdDataResolverImpl.tryGetNlsfbCodes(el.getMpgObject().getObjectName());
+			
 			// add a material for any material not already present
 			Set<String> matNames = new HashSet<String>(el.getMpgObject().getMaterialNamesBySource(null).stream()
 					.map(name -> name.toLowerCase().trim()).collect(Collectors.toList()));
-
-			// add the found materials as aa single material item only if there are no materials already defined.
-			if (!foundMaterials.isEmpty() && el.getMpgObject().getListedMaterials().isEmpty()) {
-
-				el.getMpgObject().addMaterialSource(
-						new MaterialSource("-1", String.join(" ", foundMaterials), "from description"));
-			}
-
-			// get NLSfb codes from product name and material descriptions
-			Set<String> nlsfbCodes = NmdDataResolverImpl.tryGetNlsfbCodes(productName);
+			
 			matNames.forEach(mat -> nlsfbCodes.addAll(NmdDataResolverImpl.tryGetNlsfbCodes(mat)));
 
-			// add the first item to the nlsfb code if not already set and all of them to the alternatives list.
+			// add the first item to the nlsfb code if not already set and all of them to
+			// the alternatives list.
 			if (!nlsfbCodes.isEmpty() && !el.getMpgObject().hasNlsfbCode()) {
 				el.getMpgObject().setNLsfbCode(nlsfbCodes.iterator().next());
 				el.getMpgObject().addNlsfbAlternatives(nlsfbCodes);
 			} else if (!nlsfbCodes.isEmpty()) {
 				el.getMpgObject().addNlsfbAlternatives(nlsfbCodes);
+			}
+		}
+
+		for (MpgElement el : store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty())
+				.collect(Collectors.toList())) {
+
+			Set<String> foundMaterials = this.tryGetKeyMaterials(el.getMpgObject().getObjectName());
+
+			// add the found materials as aa single material item only if there are no
+			// materials already defined.
+			if (!foundMaterials.isEmpty() && el.getMpgObject().getListedMaterials().isEmpty()) {
+
+				el.getMpgObject().addMaterialSource(
+						new MaterialSource("-1", String.join(" ", foundMaterials), "from description"));
 			}
 		}
 	}
@@ -194,7 +199,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return
 	 */
 	public Set<String> tryGetKeyMaterials(String objectName) {
-		Set<String> objectDescription = parseStringForWords(objectName);
+		Set<String> objectDescription = NmdDataResolverImpl.parseStringForWords(objectName);
 		Set<String> res = new HashSet<String>();
 		if (!objectDescription.isEmpty()) {
 			for (String word : objectDescription) {
@@ -203,19 +208,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 						res.add(word);
 					}
 				}
-
 			}
 		}
 		return res;
 	}
 
-	private Set<String> parseStringForWords(String objectName) {
-		Set<String> set = Arrays.asList(objectName.split(ResolverSettings.splitChars)).stream()
-				.filter(r -> r.length() >= ResolverSettings.minWordLengthForSimilarityCheck).map(w -> w.toLowerCase())
+	private static Set<String> parseStringForWords(String objectName) {
+		return Arrays.asList(objectName.split(ResolverSettings.splitChars)).stream()
+				.map(w -> w.replaceAll(ResolverSettings.numericReplacePattern, "").toLowerCase().trim())
+				.filter(w -> w.length() >= ResolverSettings.minWordLengthForSimilarityCheck)
 				.collect(Collectors.toSet());
-		set.forEach(w -> w.replaceAll(ResolverSettings.numericReplacePattern, "").toLowerCase().trim());
-
-		return set;
 	}
 
 	private void resolveNmdMappingForElement(MpgElement mpgElement) {
@@ -232,9 +234,25 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			// get products in map and exit if succeeded.
 		}
 
-		// STEP 1: find any relevant NLsfb codes
-		Set<NlsfbCode> alternatives = mpgElement.getMpgObject().getNLsfbAlternatives();
-		if (alternatives.size() == 0 || alternatives.stream().allMatch(c -> c == null)) {
+		// first try to resolve for explicitly indicated nlsfb code
+		FindProductsForNlsfbCodes(mpgElement,
+				new HashSet<NlsfbCode>(Arrays.asList(mpgElement.getMpgObject().getNLsfbCode())));
+		if (!mpgElement.hasMapping()) {
+			// if that doesn't work. try it for all the alternatives (no order of
+			// precendence)
+			FindProductsForNlsfbCodes(mpgElement, mpgElement.getMpgObject().getNLsfbAlternatives());
+		}
+	}
+
+	/**
+	 * Find a mapping for the element by looking at a selection of nlsfbCodes
+	 * 
+	 * @param mpgElement
+	 * @param codeSet
+	 */
+	private void FindProductsForNlsfbCodes(MpgElement mpgElement, Set<NlsfbCode> codeSet) {
+		// STEP 1: check if there are relevant nlsfbcodes present in the inp[ut set
+		if (codeSet.size() == 0 || codeSet.stream().allMatch(c -> c == null)) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NLsfbcodes linked to the product");
 			return;
@@ -242,11 +260,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// STEP 2: find all the elements that we **could** include based on NLsfb
 		// match..
-		List<NmdElement> allMatchedElements = getService().getElementsForNLsfbCodes(alternatives);
-
+		List<NmdElement> allMatchedElements = getService().getElementsForNLsfbCodes(codeSet);
 		if (allMatchedElements.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
-					"No NMD element match for any of the listed NLsfb codes");
+					"No NMD element match for listed NLsfb codes");
 			return;
 		}
 
@@ -256,6 +273,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		if (candidateElements.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"None of the candidate NmdElements matching the selection criteria.");
+			return;
 		}
 
 		// STEP4: from every candidate element we should pick 0:1 productcards per
@@ -348,6 +366,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				NmdProductCard chosenCard = selectCard.apply(productOptions);
 				viableCandidates.add(chosenCard);
 				mpgElement.mapProductCard(mat, chosenCard);
+				mpgElement.getMpgObject().setNLsfbCode(chosenCard.getNlsfbCode());
 			}
 		}
 
@@ -366,10 +385,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();
 		List<NmdProductCard> res = new ArrayList<NmdProductCard>();
 
-		List<String> materialDescription = Arrays.asList(name.split(ResolverSettings.splitChars)).stream()
-				.filter(r -> r.length() >= ResolverSettings.minWordLengthForSimilarityCheck)
-				.filter(w -> keyWords.contains(w.toLowerCase())).collect(Collectors.toList());
-		materialDescription.removeIf(w -> w.isEmpty() || w.length() < ResolverSettings.minWordLengthForSimilarityCheck);
+		Set<String> materialDescription = parseStringForWords(name);
 
 		if (materialDescription.isEmpty()) {
 			return res;
@@ -398,15 +414,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return the minimum levensthein distance of the reference word wrt any of the
 	 *         profileSet names
 	 */
-	private Double getProductSimilarityScore(List<String> refWords, NmdProductCard card) {
+	private Double getProductSimilarityScore(Set<String> refWords, NmdProductCard card) {
 		// get all words in the profileSet names and card description and clean them
-		Set<String> keyWords = card.getProfileSets().stream()
-				.flatMap(ps -> Arrays.asList(ps.getName().toLowerCase().split(ResolverSettings.splitChars)).stream())
-				.collect(Collectors.toSet());
-
-		keyWords.addAll(Arrays.asList(card.getDescription().toLowerCase().split(ResolverSettings.splitChars)));
-		keyWords.forEach(word -> word.replaceAll(ResolverSettings.numericReplacePattern, ""));
-		keyWords.removeIf(w -> w.isEmpty() || w.length() < ResolverSettings.minWordLengthForSimilarityCheck);
+		Set<String> map = card.getProfileSets().stream().map(ps -> ps.getName()).collect(Collectors.toSet());
+		map.add(card.getDescription());
+		String totalDescription = String.join(" ", map);
+		Set<String> keyWords = NmdDataResolverImpl.parseStringForWords(totalDescription);
 
 		return calculateSimilarityScore(refWords, keyWords.stream().collect(Collectors.toList()));
 	}
@@ -421,7 +434,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 *         similarity
 	 */
 	@SuppressWarnings("deprecation")
-	private Double calculateSimilarityScore(List<String> materialDescriptors, List<String> productCardKeyWords) {
+	private Double calculateSimilarityScore(Set<String> materialDescriptors, List<String> productCardKeyWords) {
 
 		BiFunction<String, String, Double> score = (ref, check) -> {
 			return (double) StringUtils.getLevenshteinDistance((CharSequence) ref, check);
@@ -467,6 +480,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 					Double[] dims = orientation.getScaleDims();
 					if (scaler.getNumberOfDimensions() > dims.length) {
+						// cannot scale a wall (in m2) on more than 1 dimension
 						return false;
 					}
 
@@ -505,13 +519,13 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				try {
 					p = this.getStore().getObjectByGuid(o.getParentId()).get();
 				} catch (Exception e) {
-					System.out.println("encountered GUID that should have a parent, but is not mapped correctly : " + o.getParentId());
+					System.out.println("encountered GUID that should have a parent, but is not mapped correctly : "
+							+ o.getParentId());
 				}
 				if (!o.hasNlsfbCode()) {
 
-					String parentCode = p.getNLsfbCode();
-					if (parentCode != null && !parentCode.isEmpty()) {
-						o.setNLsfbCode(parentCode);
+					if (p.hasNlsfbCode()) {
+						o.setNLsfbCode(p.getNLsfbCode().print());
 						o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "Resolved from: " + p.getGlobalId());
 					}
 				}
@@ -537,7 +551,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// maintain a map with already found scalers to boost performance.
 		HashMap<String, MpgGeometry> foundGeometries = new HashMap<String, MpgGeometry>();
 		Function<MpgObject, String> getNLsfbProp = (MpgObject e) -> {
-			return e.getNLsfbCode();
+			return e.getNLsfbCode() == null ? null : e.getNLsfbCode().print();
 		};
 		Function<MpgObject, String> getProdTypeProp = (MpgObject e) -> {
 			return e.getObjectType();
@@ -546,7 +560,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// TODO: make this more abstract to run on generic property
 		this.getStore().getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
 			MpgGeometry geom = null;
-			String NLsfbKey = o.getNLsfbCode();
+			String NLsfbKey = o.getNLsfbCode() != null ? o.getNLsfbCode().print() : "";
 
 			if (foundGeometries.containsKey(NLsfbKey)) {
 				geom = foundGeometries.get(NLsfbKey);

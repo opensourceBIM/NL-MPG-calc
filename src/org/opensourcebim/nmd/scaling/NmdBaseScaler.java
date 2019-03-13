@@ -89,7 +89,7 @@ public abstract class NmdBaseScaler implements NmdScaler {
 	@Override
 	public Boolean areDimsWithinBounds(Double[] dims, double conversionFactor) {
 		if (dims.length == 1) {
-			return areDimsWithinBounds(dims[0] * conversionFactor, null);
+			return areDimsWithinBounds(dims[0] * conversionFactor, dims[0] * conversionFactor);
 		} else if (dims.length == 2) {
 			return areDimsWithinBounds(dims[0] * conversionFactor, dims[1] * conversionFactor);
 		} else {

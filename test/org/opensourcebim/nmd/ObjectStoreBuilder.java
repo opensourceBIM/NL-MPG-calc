@@ -1,8 +1,7 @@
 package org.opensourcebim.nmd;
 
-import static org.mockito.Mockito.mock;
-
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.opensourcebim.ifccollection.MaterialSource;
@@ -16,32 +15,79 @@ import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.mapping.NlsfbCode;
 import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
+
 public class ObjectStoreBuilder {
 	private MpgObjectStoreImpl store;
-	private Integer lastId;
-	
-	
+	private int lastIdCreated;
+
 	public ObjectStoreBuilder() {
 		this.setStore(new MpgObjectStoreImpl());
-		lastId = 1;
+		lastIdCreated = 0;
+	}
+
+	private Integer getNewUniqueId() {
+		return lastIdCreated++;
+	}
+
+	private String getUUID() {
+		return UUID.randomUUID().toString();
 	}
 	
-	private Integer getNewId() {
-		return lastId++;
-	}
-	
-	public void addMaterialWithproductCard(String ifcMatName, String nmdMatName, String unit, int category, int lifetime) {
+	/**
+	 * add element for calculation purposes (not for resolving as it is missing
+	 * relevant info for that purpose.
+	 * 
+	 * @param ifcMatName
+	 * @param nmdMatName
+	 * @param unit
+	 * @param category
+	 * @param lifetime
+	 */
+	public void addMappedMpgElement(String ifcMatName, String nmdMatName, String unit, int category, int lifetime) {
 		MpgElement el = getStore().addElement(ifcMatName);
 		addUnitIfcObjectForElement(ifcMatName, 1.0, 1.0);
-		el.mapProductCard(
-				new MaterialSource("builder-" + ifcMatName, ifcMatName, "builder"),
-				createUnitProductCard(nmdMatName, unit, category, lifetime));
+		NmdElement nmdEl = this.createDummyNmdElement(nmdMatName, "99.99", 0);
+		NmdProductCard card = createDummyProductCard(nmdMatName, category, unit, lifetime, nmdEl);
+		card.addProfileSet(createUnitProfileSet(nmdMatName, "kg", lifetime, 1.0));
+
+		el.mapProductCard(new MaterialSource(getNewUniqueId().toString(), ifcMatName, "builder"), card);
 	}
-	
+
+	/**
+	 * Add element that will still need to be mapped. contains a single MpgObject
+	 * and any information needed for mapping
+	 */
+	public MpgElement AddUnmappedMpgElement(String ifcName, Boolean createLayers, Map<String, Double> ifcMatSpecs,
+			Double[] dims, String nlsfb, String type, String parentUUID) {
+		MpgGeometry geom = this.createDummyGeom(dims[0], dims[1], dims[2] );
+		MpgElement el = getStore().addElement(ifcName);
+		MpgObjectImpl obj = new MpgObjectImpl();
+		obj.setObjectName(ifcName);
+		obj.setGeometry(geom);
+		obj.setNLsfbCode(nlsfb);
+		obj.setGlobalId(getUUID());
+		obj.setObjectType(type);
+		obj.setParentId(parentUUID);
+
+		ifcMatSpecs.forEach((name, ratio) -> {
+			String id = getUUID();
+			if (createLayers) {
+				obj.addLayer(new MpgLayerImpl(geom.getVolume() * ratio, geom.getFaceArea(), name, id));
+				obj.addMaterialSource(new MaterialSource(id, name, "layer"));
+			} else {
+				obj.addMaterialSource(name, id, "direct");
+			}
+		});
+
+		el.setMpgObject(obj);
+
+		return el;
+	}
+
 	public void addUnitIfcObjectForElement(String ifcMatName, double volume, double area) {
 		MpgObjectImpl mpgObject = new MpgObjectImpl(1, UUID.randomUUID().toString(), ifcMatName + " element", "Slab",
 				"");
-		mpgObject.setGeometry(createDummyGeom(1,1,1));
+		mpgObject.setGeometry(createDummyGeom(1, 1, 1));
 
 		MpgLayer testObject = new MpgLayerImpl(volume, area, ifcMatName, Integer.toString(ifcMatName.hashCode()));
 		mpgObject.addLayer(testObject);
@@ -54,37 +100,63 @@ public class ObjectStoreBuilder {
 	public MpgGeometry createDummyGeom(double x, double y, double z) {
 		MpgGeometry geom = new MpgGeometry();
 		geom.setDimensions(x, y, z);
-		geom.setVolume(x*y*z);
-		geom.setFloorArea(x*y);
+		geom.setVolume(x * y * z);
+		geom.setFloorArea(x * y);
 		geom.setIsComplete(true);
 		return geom;
 	}
 
 	/**
-	 * Create some random space with set floor area
+	 * Create some random space with set floor area and height
 	 * 
 	 * @param floorArea
+	 * @param height
 	 */
-	public void addSpace(Double floorArea) {
-
-		getStore().addSpace(new MpgSpaceImpl(UUID.randomUUID().toString(), floorArea * 3, floorArea));
+	public void addSpace(Double floorArea, Double height) {
+		getStore().addSpace(new MpgSpaceImpl(getUUID(), floorArea * 3, floorArea));
 	}
 
-	public NmdProductCardImpl createUnitProductCard(String name, String unit, int category, int lifetime) {
-		NmdProductCardImpl specs = new NmdProductCardImpl();
-		specs.setProductId(getNewId());
-		specs.setLifetime(lifetime);
-		specs.setDescription(name);
-		specs.setCategory(category);
-		specs.setUnit(unit);
-		specs.addProfileSet(createProfileSet(name, unit, lifetime));
+	// NMD OBJECT CREATION METHODS
 
-		return specs;
+	/**
+	 * Create an empty nmd element that has no product cards linked to it.
+	 * 
+	 * @param name
+	 * @param nlsfbCode
+	 * @param parentId
+	 * @return
+	 */
+	public NmdElement createDummyNmdElement(String name, String nlsfbCode, int parentId) {
+		NmdElementImpl el = new NmdElementImpl();
+		el.setNlsfbCode(new NlsfbCode(nlsfbCode));
+		el.setElementId(getNewUniqueId());
+		el.setParentId(parentId);
+		el.setElementName(name);
+		el.setIsMandatory(true);
+		return el;
 	}
 
-	public NmdProfileSet createProfileSet(String name, String unit, int lifetime) {
+
+	public NmdProductCardImpl createDummyProductCard(String description, int category, String unit, int lifetime,
+			NmdElement el) {
+		NmdProductCardImpl card = new NmdProductCardImpl();
+		card.setProductId(getNewUniqueId());
+		card.setCategory(category);
+		card.setDescription(description);
+		card.setIsScalable(true);
+		card.setIsTotaalProduct(false);
+		card.setLifetime(lifetime);
+		if(el != null) {
+			card.setNlsfbCode(el.getNlsfbCode());
+		}
+		card.setParentProductId(0);
+		card.setUnit(unit);
+		return card;
+	}
+
+	public NmdProfileSet createUnitProfileSet(String name, String unit, int lifetime, double quantityPerProductCard) {
 		NmdProfileSetImpl spec = new NmdProfileSetImpl();
-		
+
 		spec.setProfileLifetime(lifetime);
 		spec.addFaseProfiel("TransportToSite", createUnitProfile("TransportToSite"));
 		spec.addFaseProfiel("ConstructionAndReplacements", createUnitProfile("ConstructionAndReplacements"));
@@ -97,13 +169,14 @@ public class ObjectStoreBuilder {
 		spec.addFaseProfiel("Operation", createUnitProfile("Operation"));
 
 		spec.setUnit(unit);
-		spec.setProfielId(1);
+		spec.setProfielId(getNewUniqueId());
 		spec.setIsScalable(true);
+		spec.setQuantity(quantityPerProductCard);
+
 		// as a dummy add a scaler that will do no adjustment
-		spec.setScaler(new NmdLinearScaler("m", 
-				new Double[] {1.0, 0.0, 0.0}, 
-				new Double[] {0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY}, 
-				new Double[] {1.0, 1.0}));
+		spec.setScaler(new NmdLinearScaler("m", new Double[] { 1.0, 0.0, 0.0 },
+				new Double[] { 0.0, Double.POSITIVE_INFINITY, Double.NaN, Double.NaN},
+				new Double[] { 1.0, Double.NaN }));
 		spec.setName(name);
 
 		return spec;
@@ -122,14 +195,10 @@ public class ObjectStoreBuilder {
 		el.setParentId(10);
 		el.setElementName("heipalen");
 		el.setIsMandatory(true);
-		el.addProductCard(createDummyProductCard());
+		el.addProductCard(createDummyProductCard("heipaal", 3, "m", 100, el));
 		return el;
 	}
 
-	public NmdProductCard createDummyProductCard() {
-		return mock(NmdProductCard.class);
-	}
-	
 	public void addDummyElement1() {
 		store.addElement("baksteen");		
 		MpgObjectImpl obj = this.createDummyObject("heipaal", "IfcColumn", "", "11.11");
@@ -138,7 +207,7 @@ public class ObjectStoreBuilder {
 	}
 	
 	public MpgObjectImpl createDummyObject(String name, String type, String parentId, String nlsfb) {
-		MpgObjectImpl obj = new MpgObjectImpl((long)getNewId(), UUID.randomUUID().toString(), name, type, parentId);
+		MpgObjectImpl obj = new MpgObjectImpl(getNewUniqueId(), UUID.randomUUID().toString(), name, type, parentId);
 		obj.setNLsfbCode(nlsfb);
 		obj.setGeometry(createDummyGeom(1.0,  1.0,  1.0));
 		return obj;
@@ -204,14 +273,14 @@ public class ObjectStoreBuilder {
 		units.put(21, "onbekend");
 		units.put(22, "Samengesteld");
 		resources.setUnitMapping(units);
-		
+
 		HashMap<Integer, String> cuasCategorien = new HashMap<Integer, String>();
 		cuasCategorien.put(1, "Constructie");
 		cuasCategorien.put(2, "Uitrusting");
 		cuasCategorien.put(1, "Afwerking");
 		cuasCategorien.put(1, "Schilderwerk");
 		resources.setCuasCategorieMapping(cuasCategorien);
-		
+
 		return resources;
 	}
 
@@ -222,5 +291,5 @@ public class ObjectStoreBuilder {
 	public void setStore(MpgObjectStoreImpl store) {
 		this.store = store;
 	}
-	
+
 }

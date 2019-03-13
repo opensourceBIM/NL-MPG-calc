@@ -73,7 +73,6 @@ public class NmdProductCardImpl implements NmdProductCard {
 		this.nlsfbCode = code;
 	}
 
-
 	@Override
 	public String getUnit() {
 		return this.unit;

@@ -19,9 +19,7 @@ public class MpgElement {
 
 	private String ifcName;
 	private MpgObject mpgObject;
-
 	private MpgObjectStore store;
-
 	private NmdMapping mappingMethod;
 
 	public MpgElement(String name, MpgObjectStore store) {
@@ -118,6 +116,10 @@ public class MpgElement {
 				.anyMatch(ps -> ps.getIsScalable() && ps.getScaler() != null);
 	}
 
+	/**
+	 * Indicates that all the materials have a mapping and that the material has at least a single material
+	 * @return flag to indicate all materials are mapped to an nmdProductCard
+	 */
 	public boolean getIsFullyCovered() {
 		return this.getMpgObject() != null && 
 				(this.getMpgObject().getListedMaterials().stream().allMatch(m -> m.getMapId() > 0) || 

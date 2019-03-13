@@ -27,13 +27,12 @@ public class MpgObjectImpl implements MpgObject {
 	private List<MaterialSource> listedMaterials;
 
 	private MpgGeometry geometry;
-	private String nlsfb;
+	private NlsfbCode nlsfb;
 	private List<MpgInfoTag> tags;
-	private Set<String> nlsfbAlternatives;
+	private Set<NlsfbCode> nlsfbAlternatives;
 
 	public MpgObjectImpl(long objectId, String globalId, String objectName, String objectType, String parentId) {
 
-		mpgLayers = new BasicEList<MpgLayer>();
 		this.objectId = objectId;
 		this.setGlobalId(globalId);
 		this.setObjectName(objectName);
@@ -43,13 +42,20 @@ public class MpgObjectImpl implements MpgObject {
 		}
 		this.parentId = parentId;
 
+		initializeCollections();
+	}
+	
+	public MpgObjectImpl() {
+		initializeCollections();
+	}
+	
+	private void initializeCollections() {
+		mpgLayers = new BasicEList<MpgLayer>();
 		properties = new HashMap<String, Object>();
 		tags = new ArrayList<MpgInfoTag>();
 		this.listedMaterials = new BasicEList<MaterialSource>();
-		this.nlsfbAlternatives = new HashSet<String>();
+		this.nlsfbAlternatives = new HashSet<NlsfbCode>();
 	}
-	
-	public MpgObjectImpl() { }
 
 	@Override
 	public void addLayer(MpgLayer mpgLayer) {
@@ -80,7 +86,7 @@ public class MpgObjectImpl implements MpgObject {
 		return this.objectName;
 	}
 
-	private void setObjectName(String objectName) {
+	public void setObjectName(String objectName) {
 		this.objectName = objectName == null ? "undefined name" : objectName;
 	}
 
@@ -103,37 +109,39 @@ public class MpgObjectImpl implements MpgObject {
 	}
 
 	@Override
-	public String getNLsfbCode() {
+	public NlsfbCode getNLsfbCode() {
 		return this.nlsfb;
 	}
 
 	@Override
 	public void setNLsfbCode(String code) {
 		if (NlsfbCode.isNlsfbCode(code)) {
-			this.nlsfb = code;
-			nlsfbAlternatives.add(code);
+			this.nlsfb = new NlsfbCode(code);
 		}
+	}
+	
+	@Override
+	public void setNLsfbCode(NlsfbCode code) {
+		this.nlsfb = code;
 	}
 
 	@Override
 	public boolean hasNlsfbCode() {
-		return !(getNLsfbCode() == "" || getNLsfbCode() == null);
+		return getNLsfbCode() != null && getNLsfbCode().getMajorId() != null;
 	}
 
 	@Override
 	public Set<NlsfbCode> getNLsfbAlternatives() {
-		Set<String> allCodes = new HashSet<String>();
-		if (getNLsfbCode() != null) {
-			allCodes.add(getNLsfbCode());
-		}
-		allCodes.addAll(nlsfbAlternatives);
-
-		return allCodes.stream().map(c -> new NlsfbCode(c)).collect(Collectors.toSet());
+		return nlsfbAlternatives;
 	}
 
 	@Override
 	public void addNlsfbAlternatives(Set<String> alternatives) {
-		this.nlsfbAlternatives.addAll(alternatives);
+		alternatives.forEach(c -> {
+			if (NlsfbCode.isNlsfbCode(c)) {
+				nlsfbAlternatives.add(new NlsfbCode(c));
+			}
+		});
 	}
 
 	@Override
