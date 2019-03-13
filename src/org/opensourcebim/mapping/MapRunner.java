@@ -7,6 +7,7 @@ public class MapRunner {
 	 * @param args: not required.
 	 */
 	public static void main(String[] args) {
+		
 		NmdMappingDataServiceImpl mapper = new NmdMappingDataServiceImpl(new NmdUserDataConfigImpl());
 
 		mapper.regenerateMappingData();

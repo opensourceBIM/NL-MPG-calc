@@ -2,6 +2,7 @@ package org.opensourcebim.mapping;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
+import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
 import org.opensourcebim.nmd.NmdDataService;
 import org.opensourcebim.nmd.NmdElement;
@@ -21,15 +23,14 @@ import org.opensourcebim.nmd.NmdMappingDataService;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.ObjectStoreBuilder;
 
-public class NmdDataResolverTests {
+@SuppressWarnings("serial")
+public class NmdDataResolverTest {
 
 	private ObjectStoreBuilder builder;
 	private NmdDataResolverImpl resolver;
-	private NmdDataService db;
-	private NmdMappingDataService mapService;
 	private List<NmdElement> testElements;
 
-	public NmdDataResolverTests() {
+	public NmdDataResolverTest() {
 	}
 
 	@Before
@@ -37,11 +38,9 @@ public class NmdDataResolverTests {
 		builder = new ObjectStoreBuilder();
 		resolver = new NmdDataResolverImpl();
 		
-		db = getMockNmdDb();
-		resolver.setNmdService(db);
+		resolver.setNmdService(getMockNmdDb());
 		this.resolver.setStore(builder.getStore());
-		getMockMappings();
-		resolver.setMappingService(this.mapService);
+		resolver.setMappingService(getMockMappings());
 	}
 
 	@After
@@ -55,7 +54,6 @@ public class NmdDataResolverTests {
 		this.resolver.NmdToMpg();
 	}
 	
-	@SuppressWarnings("serial")
 	@Test
 	public void testCanResolveSingleProduct() {
 		builder.AddUnmappedMpgElement("baksteen muur", false,
@@ -166,14 +164,17 @@ public class NmdDataResolverTests {
 		return db;
 	}
 	
-	private void getMockMappings() {
-		this.mapService = mock(NmdMappingDataService.class);
+	private NmdMappingDataService getMockMappings() {
+		NmdMappingDataService mapService = mock(NmdMappingDataService.class);
 		when(mapService.getNlsfbMappings()).thenReturn(new HashMap<String, List<String>>());
 		when(mapService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum)).thenReturn(new HashMap<String, Long>() {{
 			put("baksteen", (long)4321);
 			put("beton", (long)1234);
 			put("staal", (long)42);
 			}
-		});		
+		});
+		// there are no mappings yet, so return null
+		when(mapService.getApproximateMapForObject(any(MpgObject.class))).thenReturn(null);
+		return mapService;
 	}
 }

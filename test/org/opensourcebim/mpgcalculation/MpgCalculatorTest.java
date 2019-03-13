@@ -8,10 +8,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
+import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.nmd.NmdProductCardImpl;
 import org.opensourcebim.nmd.ObjectStoreBuilder;
 
-public class mpgCalculatorTests {
+public class MpgCalculatorTest {
 
 	private MpgCalculator calculator;
 	private ObjectStoreBuilder builder;
@@ -44,7 +45,7 @@ public class mpgCalculatorTests {
 
 	@Test
 	public void testReturnIncompleteDataStatusWhenIfcModelIsNotComplete() {
-		// no objects are linked to the material which should return an warning
+		// no objects are linked to the element which should return a warning
 		builder.getStore().addElement("steel");
 
 		startCalculations(1.0);
@@ -55,6 +56,7 @@ public class mpgCalculatorTests {
 	public void testReturnIncompleteDataStatusWhenNMdDataIsIncomplete() {
 		// no material spec is added which should return a warning
 		builder.getStore().addElement("steel");
+		builder.getStore().setObjectForElement("steel", builder.createDummyObject("steel element", "IfcBeam", "", "42.42"));
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.IncompleteData, results.getStatus());
@@ -63,14 +65,19 @@ public class mpgCalculatorTests {
 	@Test
 	public void testReturnIncompleteDataStatusWhenMpgObjectsAreNotFullyCovered() {
 		// adding a profile set that is not a totaalproduct will trigger a warning
-		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, 1);
+		
+		MpgElement el = builder.getStore().addElement("coated steel beam");
+		MpgObjectImpl obj = builder.createDummyObject("coated steel beam", "IfcBeam", "", "11.11");
+		obj.addMaterialSource(new MaterialSource("1", "steel", "direct"));
+		builder.getStore().setObjectForElement("coated steel beam", obj);
+		el.mapProductCard(new MaterialSource("2", "coating", "direct"), 
+				builder.createDummyProductCard("steel beam", 3, "m", 100, null));
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.IncompleteData, results.getStatus());
 	}
 	@Test
 	public void testReturnSuccessWhenMpgObjectFullyCoveredWithDeelProducten() {
-		// adding a profile set that is not a totaalproduct will trigger a warning
 		String ifcName = "steel";
 		MpgElement el = builder.getStore().addElement(ifcName);
 		
@@ -78,17 +85,12 @@ public class mpgCalculatorTests {
 		String unit = "m3";
 		int category = 1;
 		
-		NmdProductCardImpl card = new NmdProductCardImpl();
-		card.setUnit(unit);
-		card.setCategory(category);
-		card.setLifetime(1);
-		// since we're not adding a totaalproduct we need to cover every CUAS stage individually
-		card.addProfileSet(builder.createUnitProfileSet(name, unit, 1, 1.0));
+		el.setMpgObject(builder.createDummyObject(name, "IfcBeam", "", "42.42"));
+		NmdProductCardImpl card = builder.createDummyProductCard(name, category, unit, 1, null);
+
 		card.setIsTotaalProduct(false);
 		
 		el.mapProductCard(new MaterialSource("1", "steel", "dummy"), card);
-
-		builder.addUnitIfcObjectForElement(ifcName, 1.0, 1.0);
 
 		startCalculations(1.0);
 		assertEquals(ResultStatus.Success, results.getStatus());
@@ -145,7 +147,6 @@ public class mpgCalculatorTests {
 		Double totalLifeTime = 10.0;
 		builder.addMappedMpgElement("steel", "Stainless Steel", "m2", 1, totalLifeTime.intValue());
 		builder.addSpace(1.0, 3.0);
-
 
 		startCalculations(totalLifeTime);
 

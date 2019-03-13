@@ -14,6 +14,7 @@ import org.opensourcebim.mapping.BaseDataService;
 import org.opensourcebim.mapping.NlsfbCode;
 
 public class Nmd2DataService extends BaseDataService {
+
 	private Connection connection;
 	
 	private NmdUserDataConfig config;

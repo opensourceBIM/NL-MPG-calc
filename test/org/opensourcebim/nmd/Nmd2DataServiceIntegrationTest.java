@@ -9,11 +9,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 
-public class Nmd2DataServiceTests {
+public class Nmd2DataServiceIntegrationTest {
 
 	private NmdDataService db;
 
-	public Nmd2DataServiceTests() {
+	public Nmd2DataServiceIntegrationTest() {
 	}
 
 	@Before

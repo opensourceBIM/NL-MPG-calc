@@ -15,6 +15,7 @@ import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.mapping.NlsfbCode;
 import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
+
 public class ObjectStoreBuilder {
 	private MpgObjectStoreImpl store;
 	private int lastIdCreated;
@@ -135,7 +136,8 @@ public class ObjectStoreBuilder {
 		return el;
 	}
 
-	public NmdProductCard createDummyProductCard(String description, int category, String unit, int lifetime,
+
+	public NmdProductCardImpl createDummyProductCard(String description, int category, String unit, int lifetime,
 			NmdElement el) {
 		NmdProductCardImpl card = new NmdProductCardImpl();
 		card.setProductId(getNewUniqueId());
@@ -144,10 +146,11 @@ public class ObjectStoreBuilder {
 		card.setIsScalable(true);
 		card.setIsTotaalProduct(false);
 		card.setLifetime(lifetime);
-		card.setNlsfbCode(el.getNlsfbCode());
+		if(el != null) {
+			card.setNlsfbCode(el.getNlsfbCode());
+		}
 		card.setParentProductId(0);
 		card.setUnit(unit);
-
 		return card;
 	}
 
@@ -183,6 +186,31 @@ public class ObjectStoreBuilder {
 		NmdFaseProfielImpl profile = new NmdFaseProfielImpl(fase, this.getDummyReferences());
 		profile.setAll(1.0);
 		return profile;
+	}
+	
+	public NmdElement createDummyElement() {
+		NmdElementImpl el = new NmdElementImpl();
+		el.setNlsfbCode(new NlsfbCode("11.11"));
+		el.setElementId(11);
+		el.setParentId(10);
+		el.setElementName("heipalen");
+		el.setIsMandatory(true);
+		el.addProductCard(createDummyProductCard("heipaal", 3, "m", 100, el));
+		return el;
+	}
+
+	public void addDummyElement1() {
+		store.addElement("baksteen");		
+		MpgObjectImpl obj = this.createDummyObject("heipaal", "IfcColumn", "", "11.11");
+		store.addObject(obj);
+		store.setObjectForElement("baksteen", obj);
+	}
+	
+	public MpgObjectImpl createDummyObject(String name, String type, String parentId, String nlsfb) {
+		MpgObjectImpl obj = new MpgObjectImpl(getNewUniqueId(), UUID.randomUUID().toString(), name, type, parentId);
+		obj.setNLsfbCode(nlsfb);
+		obj.setGeometry(createDummyGeom(1.0,  1.0,  1.0));
+		return obj;
 	}
 
 	public NmdReferenceResources getDummyReferences() {
