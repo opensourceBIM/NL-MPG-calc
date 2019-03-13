@@ -1,5 +1,6 @@
 package org.opensourcebim.ifccollection;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,7 +76,8 @@ public class MpgElement {
 	}
 
 	public List<Integer> getProductIds() {
-		return this.getMpgObject().getListedMaterials().stream()
+		
+		return this.getMpgObject() == null ? new ArrayList<Integer>() : this.getMpgObject().getListedMaterials().stream()
 				.filter(m -> m.getMapId() > 0)
 				.map(m ->m.getMapId())
 				.collect(Collectors.toList());
