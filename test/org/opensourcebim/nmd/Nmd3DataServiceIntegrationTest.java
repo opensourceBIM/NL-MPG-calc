@@ -18,12 +18,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class Nmd3DataServiceTest {
+public class Nmd3DataServiceIntegrationTest {
 
 	private Nmd3DataService db;
 	private NmdUserDataConfig config;
 
-	public Nmd3DataServiceTest() {
+	public Nmd3DataServiceIntegrationTest() {
 	}
 
 	@Before
