@@ -188,25 +188,7 @@ public class ObjectStoreBuilder {
 		profile.setAll(1.0);
 		return profile;
 	}
-	
-	public NmdElement createDummyElement() {
-		NmdElementImpl el = new NmdElementImpl();
-		el.setNlsfbCode(new NlsfbCode("11.11"));
-		el.setElementId(11);
-		el.setParentId(10);
-		el.setElementName("heipalen");
-		el.setIsMandatory(true);
-		el.addProductCard(createDummyProductCard("heipaal", 3, "m", 100, el));
-		return el;
-	}
-
-	public void addDummyElement1() {
-		store.addElement("baksteen");		
-		MpgObjectImpl obj = this.createDummyObject("heipaal", "IfcColumn", "", "11.11");
-		store.addObject(obj);
-		store.setObjectForElement("baksteen", obj);
-	}
-	
+		
 	public MpgObjectImpl createDummyObject(String name, String type, String parentId, String nlsfb) {
 		MpgObjectImpl obj = new MpgObjectImpl(getNewUniqueId(), UUID.randomUUID().toString(), name, type, parentId);
 		obj.setNLsfbCode(nlsfb);
