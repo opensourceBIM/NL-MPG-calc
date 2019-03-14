@@ -439,7 +439,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	@JsonIgnore
 	public GuidCollection getGuidsWithoutMaterial() {
-		GuidCollection coll = new GuidCollection(this, "# of objects that have missing materials");
+		GuidCollection coll = new GuidCollection(this, "Object GUIDs that have missing materials");
 		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedMaterials(o, false)).map(o -> o.getGlobalId())
 				.collect(Collectors.toList()));
 		return coll;
@@ -450,7 +450,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	public GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials() {
 
 		GuidCollection coll = new GuidCollection(this,
-				"# of objects without material and any of the decomposed objects without material");
+				"Object GUIDs without material and any of the decomposed objects without material");
 		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedMaterials(o, true)).map(o -> o.getGlobalId())
 				.collect(Collectors.toList()));
 		return coll;
@@ -459,7 +459,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	@JsonIgnore
 	public GuidCollection getGuidsWithoutVolume() {
-		GuidCollection coll = new GuidCollection(this, "# of objects that have missing volumes");
+		GuidCollection coll = new GuidCollection(this, "Object GUIDs that have missing volumes");
 		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedVolume(o, false)).map(o -> o.getGlobalId())
 				.collect(Collectors.toList()));
 		return coll;
@@ -469,7 +469,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@JsonIgnore
 	public GuidCollection getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes() {
 		GuidCollection coll = new GuidCollection(this,
-				"# of objects without volume and any of the decomposed objects without volume");
+				"Object GUIDs without volume and any of the decomposed objects without volume");
 		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedVolume(o, true)).map(o -> o.getGlobalId())
 				.collect(Collectors.toList()));
 		return coll;
@@ -478,7 +478,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	@JsonIgnore
 	public GuidCollection getGuidsWithRedundantMaterials() {
-		GuidCollection coll = new GuidCollection(this, "# of objects that cannot be linked to materials 1-on-1");
+		GuidCollection coll = new GuidCollection(this, "Object GUIDs that cannot be linked to materials 1-on-1");
 		coll.setCollection(mpgObjects.stream().filter(o -> hasRedundantMaterials(o, false)).map(o -> o.getGlobalId())
 				.collect(Collectors.toList()));
 		return coll;
