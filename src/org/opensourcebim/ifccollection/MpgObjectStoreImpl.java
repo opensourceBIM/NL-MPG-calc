@@ -385,57 +385,6 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 				}).distinct();
 	}
 
-	/**
-	 * Recursive check method to validate whether a material or any of its children
-	 * have undefined materials
-	 */
-	@Override
-	public boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren) {
-		long numLayers = obj.getLayers().size();
-		boolean objIsUndefined = (numLayers + obj.getMaterialNamesBySource(null).size()) == 0;
-
-		// anyMatch returns false on an empty list, so if children should be included,
-		// but no children are present it will still return false
-		boolean hasChildren = getChildren(obj.getGlobalId()).count() > 0;
-		boolean childrenAreUndefined = includeChildren
-				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedMaterials(o, includeChildren));
-
-		return objIsUndefined && !hasChildren ? objIsUndefined : childrenAreUndefined;
-	}
-
-	@Override
-	public boolean hasUndefinedVolume(MpgObject obj, boolean includeChildren) {
-		boolean ownCheck = obj.getGeometry() == null || obj.getGeometry().getVolume() == 0;
-		boolean hasChildren = getChildren(obj.getGlobalId()).count() > 0;
-		boolean childCheck = includeChildren
-				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedVolume(o, includeChildren));
-
-		return ownCheck && !hasChildren ? true : childCheck;
-	}
-
-	@Override
-	public boolean hasRedundantMaterials(MpgObject obj, boolean includeChildren) {
-		long numLayers = obj.getLayers().size();
-		boolean ownCheck = (numLayers == 0) && (obj.getMaterialNamesBySource(null).size() > 1)
-				|| obj.hasDuplicateMaterialNames();
-		boolean childCheck = includeChildren
-				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasRedundantMaterials(o, includeChildren));
-		return ownCheck || childCheck;
-	}
-
-	@Override
-	public boolean hasUndefinedLayers(MpgObject obj, boolean includeChildren) {
-		long numLayers = obj.getLayers().size();
-		long unresolvedLayers = obj.getLayers().stream()
-				.filter(l -> l.getMaterialName() == "" || l.getMaterialName() == null).collect(Collectors.toList())
-				.size();
-
-		boolean ownCheck = (numLayers > 0) && (unresolvedLayers > 0);
-		boolean childCheck = includeChildren
-				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedLayers(o, includeChildren));
-		return ownCheck || childCheck;
-	}
-	
 	@Override
 	@JsonIgnore
 	public GuidCollection getGuidsWithoutMaterial() {
@@ -487,9 +436,70 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	@JsonIgnore
 	public GuidCollection getGuidsWithUndefinedLayerMats() {
-		GuidCollection coll = new GuidCollection(this, "# of objects that have undefined layers");
+		GuidCollection coll = new GuidCollection(this, "Object GUIDsthat have undefined layers");
 		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedLayers(o, false)).map(g -> g.getGlobalId())
 				.collect(Collectors.toList()));
 		return coll;
 	}
+	
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutMappings() {
+		GuidCollection coll = new GuidCollection(this, "Object GUIDs for objects with incomplete NMD mapping");
+		coll.setCollection(this.getElements().stream().filter(el -> !el.getIsFullyCovered()).map(el -> el.getMpgObject().getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+	
+	/**
+	 * Recursive check method to validate whether a material or any of its children
+	 * have undefined materials
+	 */
+	@Override
+	public boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren) {
+		long numLayers = obj.getLayers().size();
+		boolean objIsUndefined = (numLayers + obj.getMaterialNamesBySource(null).size()) == 0;
+
+		// anyMatch returns false on an empty list, so if children should be included,
+		// but no children are present it will still return false
+		boolean hasChildren = getChildren(obj.getGlobalId()).count() > 0;
+		boolean childrenAreUndefined = includeChildren
+				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedMaterials(o, includeChildren));
+
+		return objIsUndefined && !hasChildren ? objIsUndefined : childrenAreUndefined;
+	}
+
+	@Override
+	public boolean hasUndefinedVolume(MpgObject obj, boolean includeChildren) {
+		boolean ownCheck = obj.getGeometry() == null || obj.getGeometry().getVolume() == 0;
+		boolean hasChildren = getChildren(obj.getGlobalId()).count() > 0;
+		boolean childCheck = includeChildren
+				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedVolume(o, includeChildren));
+
+		return ownCheck && !hasChildren ? true : childCheck;
+	}
+
+	@Override
+	public boolean hasRedundantMaterials(MpgObject obj, boolean includeChildren) {
+		long numLayers = obj.getLayers().size();
+		boolean ownCheck = (numLayers == 0) && (obj.getMaterialNamesBySource(null).size() > 1)
+				|| obj.hasDuplicateMaterialNames();
+		boolean childCheck = includeChildren
+				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasRedundantMaterials(o, includeChildren));
+		return ownCheck || childCheck;
+	}
+
+	@Override
+	public boolean hasUndefinedLayers(MpgObject obj, boolean includeChildren) {
+		long numLayers = obj.getLayers().size();
+		long unresolvedLayers = obj.getLayers().stream()
+				.filter(l -> l.getMaterialName() == "" || l.getMaterialName() == null).collect(Collectors.toList())
+				.size();
+
+		boolean ownCheck = (numLayers > 0) && (unresolvedLayers > 0);
+		boolean childCheck = includeChildren
+				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedLayers(o, includeChildren));
+		return ownCheck || childCheck;
+	}
+	
 }

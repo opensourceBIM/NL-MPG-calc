@@ -36,6 +36,12 @@ public class ObjectStoreToBcfConverter {
 			file.addTopicFolder(redundantMats);
 		}
 		
+		coll = store.getGuidsWithoutMappings();
+		if (coll.getGuids().size() > 0) {
+			TopicFolder redundantMats = createTopicFolderFromGuidCollection(coll);
+			file.addTopicFolder(redundantMats);
+		}
+		
 		return file;
 	}
 
