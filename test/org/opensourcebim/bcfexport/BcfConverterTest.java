@@ -8,7 +8,6 @@ import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.bcf.BcfFile;
-import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.nmd.ObjectStoreBuilder;
 
 public class BcfConverterTest {
@@ -55,6 +54,21 @@ public class BcfConverterTest {
 		converter = new ObjectStoreToBcfConverter(builder.getStore(), null);
 		BcfFile bcf = converter.write();
 		int expectedTopics = 2; // both unmapped and redundant
+		assertEquals(expectedTopics, bcf.getTopicFolders().size());
+		assertTrue(bcf.getTopicFolders().parallelStream().allMatch(t -> !t.getMarkup().getTopic().getDescription().isEmpty()));
+	}
+	
+	@SuppressWarnings("serial")
+	@Test
+	public void testConverterCreatesTopicForObjectsWithundefinedLayers() {
+		
+		builder.AddUnmappedMpgElement("dummy layered element", true,
+				new HashMap<String, Double>() { {put("", 2.0);} },
+				new Double[] {1.0, 1.0, 1.0},
+				"11.11", "IfcDummy", "");
+		converter = new ObjectStoreToBcfConverter(builder.getStore(), null);
+		BcfFile bcf = converter.write();
+		int expectedTopics = 2; // both unmapped layer and redundant
 		assertEquals(expectedTopics, bcf.getTopicFolders().size());
 		assertTrue(bcf.getTopicFolders().parallelStream().allMatch(t -> !t.getMarkup().getTopic().getDescription().isEmpty()));
 	}

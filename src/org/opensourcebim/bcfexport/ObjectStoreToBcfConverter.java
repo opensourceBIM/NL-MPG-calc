@@ -38,8 +38,14 @@ public class ObjectStoreToBcfConverter {
 		
 		coll = store.getGuidsWithoutMappings();
 		if (coll.getGuids().size() > 0) {
-			TopicFolder redundantMats = createTopicFolderFromGuidCollection(coll);
-			file.addTopicFolder(redundantMats);
+			TopicFolder noMappings = createTopicFolderFromGuidCollection(coll);
+			file.addTopicFolder(noMappings);
+		}
+		
+		coll = store.getGuidsWithUndefinedLayerMats();
+		if (coll.getGuids().size() > 0) {
+			TopicFolder undefinedLayers = createTopicFolderFromGuidCollection(coll);
+			file.addTopicFolder(undefinedLayers);
 		}
 		
 		return file;
