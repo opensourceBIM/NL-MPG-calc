@@ -79,6 +79,7 @@ public class ObjectStoreBuilder {
 			}
 		});
 
+		this.getStore().addObject(obj);
 		el.setMpgObject(obj);
 
 		return el;
