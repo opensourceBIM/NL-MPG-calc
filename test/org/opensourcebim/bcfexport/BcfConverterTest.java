@@ -8,6 +8,7 @@ import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.bcf.BcfFile;
+import org.opensourcebim.bcf.TopicFolder;
 import org.opensourcebim.nmd.ObjectStoreBuilder;
 
 public class BcfConverterTest {
@@ -90,6 +91,28 @@ public class BcfConverterTest {
 				.allMatch(t -> !t.getMarkup().getTopic().getDescription().isEmpty()));
 	}
 
+	@SuppressWarnings("serial")
+	@Test
+	public void testConverterCreatesComponentsForEachErroneousGuid() {
+		builder.AddUnmappedMpgElement("dummy element 1", false, new HashMap<String, Double>() {
+			{
+				put("mat1", 2.0);
+			}
+		}, new Double[] { 1.0, 1.0, 1.0 }, "11.11", "IfcDummy", "");
+		builder.AddUnmappedMpgElement("dummy element 2", false, new HashMap<String, Double>() {
+			{
+				put("mat2", 2.0);
+			}
+		}, new Double[] { 1.0, 1.0, 1.0 }, "11.11", "IfcDummy", "");
+		
+		converter = new ObjectStoreToBcfConverter(builder.getStore(), null);
+		BcfFile bcf = converter.write();
+		int expectedComponents = 2;
+		TopicFolder topic = bcf.getTopicFolders().parallelStream().filter(t -> t!=null).findFirst().get();
+		int foundComponents = topic.getVisualizationInfo().getComponents().getSelection().getComponent().size();
+		assertEquals(expectedComponents, foundComponents);
+	}
+	
 	@Test
 	public void testConverterCreatesEmptyBcfWhenNoErrorsEncountered() {
 		builder.addMappedMpgElement("dummy element", "dummy material", "m", 1, 100);
@@ -99,5 +122,6 @@ public class BcfConverterTest {
 		int expectedTopics = 0;
 		assertEquals(expectedTopics, bcf.getTopicFolders().size());
 	}
+	
 
 }
