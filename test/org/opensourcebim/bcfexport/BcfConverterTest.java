@@ -122,6 +122,4 @@ public class BcfConverterTest {
 		int expectedTopics = 0;
 		assertEquals(expectedTopics, bcf.getTopicFolders().size());
 	}
-	
-
 }
