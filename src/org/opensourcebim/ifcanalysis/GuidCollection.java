@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class GuidCollection {
 
 	HashSet<String> guids;
-	String description;
+	private String description;
 	List<String> materials;
 	List<String> types;
 	List<String> names;
@@ -26,7 +26,7 @@ public class GuidCollection {
 	public GuidCollection(MpgObjectStore store, String description) {
 		guids = new HashSet<String>();
 		this.store = store;
-		this.description = description;
+		this.setDescription(description);
 	}
 	
 	public void setCollection(List<String> guids){
@@ -63,6 +63,14 @@ public class GuidCollection {
 		return this.numberOfComposed;
 	}
 	
+	public String getDescription() {
+		return description;
+	}
+	
+	protected void setDescription(String description) {
+		this.description = description;
+	}	
+
 	public void reset() {
 		this.guids.clear();
 		update();
@@ -79,17 +87,4 @@ public class GuidCollection {
 		numberOfComposed = selectedObjects.stream().filter(o -> store.getChildren(o.getGlobalId()).count() > 0).count();
 		numberOfComponents = selectedObjects.stream().filter(o -> o.getParentId() != null && o.getParentId() != "").count();
 	}
-	
-	public void SummaryOfGuids() {
-		System.out.println("------");
-		System.out.println(description + " : " + this.guids.size());
-		System.out.println(">> distinct types : " + String.join(", ", types));
-		System.out.println(">> distinct materials : " + String.join(", ", materials));
-		System.out.println(">> distinct names : " + String.join(", ", names));
-		System.out.println(">> number of parent and child objects (p / c) :" + numberOfComposed + "/" + numberOfComponents);
-		System.out.println("------");
-		System.out.println();
-	}
-	
-	
 }

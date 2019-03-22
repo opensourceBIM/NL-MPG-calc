@@ -71,6 +71,8 @@ public interface MpgObjectStore {
 	GuidCollection getGuidsWithRedundantMaterials();
 	@JsonIgnore
 	GuidCollection getGuidsWithUndefinedLayerMats();
+	@JsonIgnore
+	GuidCollection getGuidsWithoutMappings();
 	
 	boolean hasUndefinedVolume(MpgObject obj, boolean includeChildren);
 

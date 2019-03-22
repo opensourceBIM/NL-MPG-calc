@@ -18,4 +18,10 @@
 		<name>Mpg Results calculation for Revision</name>
 		<description>Returns a MpgCalculationResults object for input IfcModel.</description>
 	</JavaPlugin>
+	<JavaPlugin>
+		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
+		<implementationClass>org.opensourcebim.services.IfcObjectCollectionToBcfService</implementationClass>
+		<name>bcf export for mpg object store issues</name>
+		<description>Returns a BCF file listing the various issues identified during ifc object collection and NMD mapping.</description>
+	</JavaPlugin>
 </PluginDescriptor>

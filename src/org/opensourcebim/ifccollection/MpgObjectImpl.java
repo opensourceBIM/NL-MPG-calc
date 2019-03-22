@@ -204,6 +204,8 @@ public class MpgObjectImpl implements MpgObject {
 
 	@Override
 	public void addMaterialSource(MaterialSource source) {
-		this.listedMaterials.add(source);
+		if (!source.getName().isEmpty()) {
+			this.listedMaterials.add(source);
+		}
 	}
 }

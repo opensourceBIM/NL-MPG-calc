@@ -10,7 +10,7 @@
 	<artifactId>bouwbesluitmaterials</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>bouw besluit materials</name>
-	<description>BIM plugin for checking BIM models versus the environment norms of the Dutch government Bouwbesluit</description>
+	<description>BIMServer plugin for checking BIM models against the environment norms of the Dutch government Bouwbesluit</description>
 
 	<profiles>
 		<profile>
@@ -97,6 +97,11 @@
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.opensourcebim</groupId>
+			<artifactId>bcf</artifactId>
+			<version>0.0.35</version>
 		</dependency>
 	</dependencies>
 </project>

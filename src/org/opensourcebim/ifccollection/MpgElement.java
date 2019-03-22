@@ -74,11 +74,10 @@ public class MpgElement {
 	}
 
 	public List<Integer> getProductIds() {
-		
-		return this.getMpgObject() == null ? new ArrayList<Integer>() : this.getMpgObject().getListedMaterials().stream()
-				.filter(m -> m.getMapId() > 0)
-				.map(m ->m.getMapId())
-				.collect(Collectors.toList());
+
+		return this.getMpgObject() == null ? new ArrayList<Integer>()
+				: this.getMpgObject().getListedMaterials().stream().filter(m -> m.getMapId() > 0).map(m -> m.getMapId())
+						.collect(Collectors.toList());
 	}
 	
 	@JsonIgnore
@@ -117,12 +116,15 @@ public class MpgElement {
 	}
 
 	/**
-	 * Indicates that all the materials have a mapping and that the material has at least a single material
+	 * Indicates that all the materials have a mapping and that the material has at
+	 * least a single material
+	 * 
 	 * @return flag to indicate all materials are mapped to an nmdProductCard
 	 */
 	public boolean getIsFullyCovered() {
-		return this.getMpgObject() != null && 
-				(this.getMpgObject().getListedMaterials().stream().allMatch(m -> m.getMapId() > 0) || 
-				this.getNmdProductCards().stream().anyMatch(pc -> pc.getIsTotaalProduct()));
+		return this.getMpgObject() != null 
+				&& (( this.getMpgObject().getListedMaterials().stream().allMatch(m -> m.getMapId() > 0) 
+				&& this.getMpgObject().getListedMaterials().size() > 0)
+				|| this.getNmdProductCards().stream().anyMatch(pc -> pc.getIsTotaalProduct()));
 	}
 }

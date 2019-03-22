@@ -385,6 +385,72 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 				}).distinct();
 	}
 
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutMaterial() {
+		GuidCollection coll = new GuidCollection(this, "Object GUIDs that have missing materials");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedMaterials(o, false)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials() {
+
+		GuidCollection coll = new GuidCollection(this,
+				"Object GUIDs without material and any of the decomposed objects without material");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedMaterials(o, true)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutVolume() {
+		GuidCollection coll = new GuidCollection(this, "Object GUIDs that have missing volumes");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedVolume(o, false)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes() {
+		GuidCollection coll = new GuidCollection(this,
+				"Object GUIDs without volume and any of the decomposed objects without volume");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedVolume(o, true)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithRedundantMaterials() {
+		GuidCollection coll = new GuidCollection(this, "Object GUIDs that cannot be linked to materials 1-on-1");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasRedundantMaterials(o, false)).map(o -> o.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithUndefinedLayerMats() {
+		GuidCollection coll = new GuidCollection(this, "Object GUIDsthat have undefined layers");
+		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedLayers(o, false)).map(g -> g.getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+	
+	@Override
+	@JsonIgnore
+	public GuidCollection getGuidsWithoutMappings() {
+		GuidCollection coll = new GuidCollection(this, "Object GUIDs for objects with incomplete NMD mapping");
+		coll.setCollection(this.getElements().stream().filter(el -> !el.getIsFullyCovered()).map(el -> el.getMpgObject().getGlobalId())
+				.collect(Collectors.toList()));
+		return coll;
+	}
+	
 	/**
 	 * Recursive check method to validate whether a material or any of its children
 	 * have undefined materials
@@ -436,60 +502,4 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		return ownCheck || childCheck;
 	}
 	
-	@Override
-	@JsonIgnore
-	public GuidCollection getGuidsWithoutMaterial() {
-		GuidCollection coll = new GuidCollection(this, "# of objects that have missing materials");
-		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedMaterials(o, false)).map(o -> o.getGlobalId())
-				.collect(Collectors.toList()));
-		return coll;
-	}
-
-	@Override
-	@JsonIgnore
-	public GuidCollection getGuidsWithoutMaterialAndWithoutFullDecomposedMaterials() {
-
-		GuidCollection coll = new GuidCollection(this,
-				"# of objects without material and any of the decomposed objects without material");
-		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedMaterials(o, true)).map(o -> o.getGlobalId())
-				.collect(Collectors.toList()));
-		return coll;
-	}
-
-	@Override
-	@JsonIgnore
-	public GuidCollection getGuidsWithoutVolume() {
-		GuidCollection coll = new GuidCollection(this, "# of objects that have missing volumes");
-		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedVolume(o, false)).map(o -> o.getGlobalId())
-				.collect(Collectors.toList()));
-		return coll;
-	}
-
-	@Override
-	@JsonIgnore
-	public GuidCollection getGuidsWithoutVolumeAndWithoutFullDecomposedVolumes() {
-		GuidCollection coll = new GuidCollection(this,
-				"# of objects without volume and any of the decomposed objects without volume");
-		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedVolume(o, true)).map(o -> o.getGlobalId())
-				.collect(Collectors.toList()));
-		return coll;
-	}
-
-	@Override
-	@JsonIgnore
-	public GuidCollection getGuidsWithRedundantMaterials() {
-		GuidCollection coll = new GuidCollection(this, "# of objects that cannot be linked to materials 1-on-1");
-		coll.setCollection(mpgObjects.stream().filter(o -> hasRedundantMaterials(o, false)).map(o -> o.getGlobalId())
-				.collect(Collectors.toList()));
-		return coll;
-	}
-
-	@Override
-	@JsonIgnore
-	public GuidCollection getGuidsWithUndefinedLayerMats() {
-		GuidCollection coll = new GuidCollection(this, "# of objects that have undefined layers");
-		coll.setCollection(mpgObjects.stream().filter(o -> hasUndefinedLayers(o, false)).map(g -> g.getGlobalId())
-				.collect(Collectors.toList()));
-		return coll;
-	}
 }
