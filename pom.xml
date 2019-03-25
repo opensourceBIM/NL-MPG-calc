@@ -12,6 +12,12 @@
 	<name>bouw besluit materials</name>
 	<description>BIMServer plugin for checking BIM models against the environment norms of the Dutch government Bouwbesluit</description>
 
+	<properties>
+		<maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<timestamp>${maven.build.timestamp}</timestamp>
+	</properties>
+
 	<profiles>
 		<profile>
 			<id>local_dev</id>
@@ -56,6 +62,13 @@
 				<version>3.0.0-M3</version>
 			</plugin>
 		</plugins>
+		<resources>
+			<resource>
+				<targetPath>plugin</targetPath>
+				<filtering>true</filtering>
+				<directory>plugin</directory>
+			</resource>
+		</resources>
 	</build>
 
 	<dependencies>
