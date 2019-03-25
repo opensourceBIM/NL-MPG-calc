@@ -39,6 +39,6 @@ public class IfcObjectCollectionToBcfService extends IfcObjectCollectionBaseServ
 
 	@Override
 	public String getOutputSchema() {
-		return "XML_BCF_2_1";
+		return "BCF_ZIP_2_1";
 	}
 }
