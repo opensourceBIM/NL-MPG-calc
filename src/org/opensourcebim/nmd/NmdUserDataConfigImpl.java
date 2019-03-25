@@ -1,7 +1,10 @@
 package org.opensourcebim.nmd;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,8 +27,7 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 	private String commonWordFilePath;
 	private String rootPath;
 	
-	public NmdUserDataConfigImpl() {
-		Map<String, String> nmdPropertyMap = loadResources("nmd");
+	public NmdUserDataConfigImpl(Map<String, String> nmdPropertyMap) {
 		this.setToken(nmdPropertyMap.get("token"));
 		this.setClientId(Integer.parseInt(nmdPropertyMap.get("id")));
 		this.setNmd2DbPath(nmdPropertyMap.get("nmd2Path"));
@@ -36,13 +38,21 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 		this.rootPath = nmdPropertyMap.get("rootPath");
 	}
 	
-	private Map<String, String> loadResources(String rootNode) {
+	public NmdUserDataConfigImpl() {
+		this(loadResources("nmd"));
+	}
+	
+	public NmdUserDataConfigImpl(Path rootPath) {
+		this(loadResources(rootPath, "nmd"));
+	}
+
+	private static Map<String, String> loadResources(String rootNode) {
 		Map<String, String> res = new HashMap<String, String>();
 		
 		List<String> keyNames = Arrays.asList(new String[]
 			{"token", "id", "nmd2Path" , "mappingDbPath", "nlsfbAlternativesPath", "rootPath", "commonWordExclusionPath"});
 		
-		URL urlRes = getClass().getClassLoader().getResource("nmdConfig.xml");
+		URL urlRes = NmdUserDataConfigImpl.class.getClassLoader().getResource("nmdConfig.xml");
 		if (urlRes != null) {
 			try {
 				File file = Paths.get(urlRes.toURI()).toFile();
@@ -60,6 +70,34 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 			} 
 		}
 
+		return res;
+	}
+
+	private static Map<String, String> loadResources(Path rootPath, String rootNode) {
+		Map<String, String> res = new HashMap<String, String>();
+		
+		List<String> keyNames = Arrays.asList(new String[]
+				{"token", "id", "nmd2Path" , "mappingDbPath", "nlsfbAlternativesPath", "rootPath", "commonWordExclusionPath"});
+		
+		Path configPath = rootPath.resolve("nmdConfig.xml");
+		if (Files.exists(configPath)) {
+			try {
+				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
+						.newInstance();
+				DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+				try (InputStream newInputStream = Files.newInputStream(configPath)) {
+					Document doc = documentBuilder.parse(newInputStream);
+					keyNames.forEach(key -> {
+						res.put(key, doc.getElementsByTagName(key).item(0).getTextContent());	
+					});
+				}					
+			} catch (Exception e) {
+				System.err.println(e.getMessage());
+			} 
+		} else {
+			System.err.println("nmdConfig.xml not found");
+		}
+		
 		return res;
 	}
 

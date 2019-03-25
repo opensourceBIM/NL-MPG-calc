@@ -20,13 +20,13 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 			throws BimBotsException {
 
 		IfcModelInterface ifcModel = input.getIfcModel();
-
+		
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
 		MpgObjectStore ifcResults = matParser.collectIfcModelObjects(ifcModel);
 		
 		// resolve any ifc to nmd coupling
-		NmdDataResolver resolver = new NmdDataResolverImpl();
+		NmdDataResolver resolver = new NmdDataResolverImpl(getPluginContext().getRootPath());
 		resolver.setNmdService(new Nmd2DataService(resolver.getConfig()));
 		resolver.setMappingService(new NmdMappingDataServiceImpl(resolver.getConfig()));
 		resolver.setStore(ifcResults);

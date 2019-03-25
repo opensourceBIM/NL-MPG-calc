@@ -1,5 +1,6 @@
 package org.opensourcebim.mapping;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -50,6 +51,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private NmdMappingDataService mappingService;
 	private MpgObjectStore store;
 	private Set<String> keyWords;
+
+	public NmdDataResolverImpl(Path rootPath) {
+		config = new NmdUserDataConfigImpl(rootPath);
+	}
 
 	public NmdDataResolverImpl() {
 		config = new NmdUserDataConfigImpl();

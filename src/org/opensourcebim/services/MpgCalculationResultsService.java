@@ -28,7 +28,7 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 		MpgObjectStore ifcResults = matParser.collectIfcModelObjects(ifcModel);
 		
 		// resolve any ifc to nmd coupling
-		NmdDataResolver resolver = new NmdDataResolverImpl();
+		NmdDataResolver resolver = new NmdDataResolverImpl(getPluginContext().getRootPath());
 		
 		resolver.setNmdService(new Nmd2DataService(resolver.getConfig()));
 		resolver.setMappingService(new NmdMappingDataServiceImpl(resolver.getConfig()));
