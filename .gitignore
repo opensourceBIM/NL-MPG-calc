@@ -10,3 +10,4 @@
 *.ear
 /target/
 src/org/opensourcebim/resources/local/nmdConfig.xml
+nmdConfig.xml
