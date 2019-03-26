@@ -26,51 +26,25 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 	private String keyWordFilePath;
 	private String commonWordFilePath;
 	private String rootPath;
+	private static final String rootNode = "nmd";
 	
-	public NmdUserDataConfigImpl(Map<String, String> nmdPropertyMap) {
+	private NmdUserDataConfigImpl(Map<String, String> nmdPropertyMap) {
 		this.setToken(nmdPropertyMap.get("token"));
 		this.setClientId(Integer.parseInt(nmdPropertyMap.get("id")));
 		this.setNmd2DbPath(nmdPropertyMap.get("nmd2Path"));
 		this.setMappingDbPath(nmdPropertyMap.get("mappingDbPath"));
 		this.setNlsfbAlterantivesFilePath(nmdPropertyMap.get("nlsfbAlternativesPath"));
 		this.setCommonWordFilePath(nmdPropertyMap.get("commonWordExclusionPath"));
-		
-		this.rootPath = nmdPropertyMap.get("rootPath");
 	}
 	
 	public NmdUserDataConfigImpl() {
-		this(loadResources("nmd"));
+		this(loadResources(Paths.get(System.getProperty("user.dir")), rootNode));
+		this.rootPath = Paths.get(System.getProperty("user.dir")).toAbsolutePath().toString();
 	}
 	
 	public NmdUserDataConfigImpl(Path rootPath) {
-		this(loadResources(rootPath, "nmd"));
-	}
-
-	private static Map<String, String> loadResources(String rootNode) {
-		Map<String, String> res = new HashMap<String, String>();
-		
-		List<String> keyNames = Arrays.asList(new String[]
-			{"token", "id", "nmd2Path" , "mappingDbPath", "nlsfbAlternativesPath", "rootPath", "commonWordExclusionPath"});
-		
-		URL urlRes = NmdUserDataConfigImpl.class.getClassLoader().getResource("nmdConfig.xml");
-		if (urlRes != null) {
-			try {
-				File file = Paths.get(urlRes.toURI()).toFile();
-				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
-				        .newInstance();
-				DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-				Document doc = documentBuilder.parse(file);
-				
-				keyNames.forEach(key -> {
-					res.put(key, doc.getElementsByTagName(key).item(0).getTextContent());	
-				});
-
-			} catch (Exception e) {
-				System.err.println(e.getMessage());
-			} 
-		}
-
-		return res;
+		this(loadResources(rootPath, rootNode));
+		this.rootPath = rootPath.toAbsolutePath().toString();
 	}
 
 	private static Map<String, String> loadResources(Path rootPath, String rootNode) {
