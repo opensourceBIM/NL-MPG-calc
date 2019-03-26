@@ -21,6 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.opensourcebim.dataservices.SqliteDataService;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.NmdMappingDataService;
 import org.opensourcebim.nmd.NmdUserDataConfig;
@@ -34,13 +35,13 @@ import com.opencsv.CSVReader;
  * @author vijj
  * 
  */
-public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdMappingDataService {
+public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implements NmdMappingDataService {
 
 	private final String mat_keyword_table = "ifc_material_keywords";
 	private final String ifc_to_nlsfb_table = "ifc_to_nlsfb_map";
 	private final String common_word_dutch_table = "common_words_dutch_table";
 
-	public NmdMappingDataServiceImpl(NmdUserDataConfig config) {
+	public NmdMappingDataServiceSqliteImpl(NmdUserDataConfig config) {
 		super(config);
 	}
 
@@ -48,6 +49,12 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 	public void addUserMap(NmdUserMap map) {
 		// TODO Auto-generated method stub
 
+	}
+	
+	@Override
+	public void addMappingSet(NmdMappingSet set) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -189,7 +196,7 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 		}
 		
 		// group the words by occurence and remove any common words from the found keywords
-		List<String> common_words = getCommonWordsDutch();
+		List<String> common_words = getCommonWords();
 		Map<String, Long> wordCount = allMaterials.stream()
 				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
@@ -204,7 +211,8 @@ public class NmdMappingDataServiceImpl extends SqliteDataService implements NmdM
 		writeKeyWordsToDB(filteredWordCount);
 	}
 
-	private List<String> getCommonWordsDutch() {
+	@Override
+	public List<String> getCommonWords() {
 		List<String> commonWords = new ArrayList<String>();
 		try {
 			Statement statement = connection.createStatement();

@@ -1,4 +1,4 @@
-package org.opensourcebim.mapping;
+package org.opensourcebim.dataservices;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
