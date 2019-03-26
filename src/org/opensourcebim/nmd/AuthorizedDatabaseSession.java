@@ -14,6 +14,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.bimserver.shared.reflector.KeyValuePair;
+import org.opensourcebim.dataservices.RestDataService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author vijj
  * ToDo: there are currently a lot of methods in here that should be in a lower level class. move these.
  */
-public class AuthorizedDatabaseSession  {
+public class AuthorizedDatabaseSession extends RestDataService  {
 	protected String scheme = "https";
 	private String host;
 	protected HttpClient httpClient = HttpClients.createDefault();
@@ -35,9 +36,8 @@ public class AuthorizedDatabaseSession  {
 
 		params.forEach(p -> builder.addParameter(p.getFieldName(), p.getValue().toString()));
 		HttpResponse response = null;
-		URI uri;
 		try {
-			uri = builder.build();
+			URI uri = builder.build();
 			HttpGet request = new HttpGet(uri);
 			request.addHeader("Access_Token", this.token);
 

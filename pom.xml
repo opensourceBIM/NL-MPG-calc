@@ -52,6 +52,7 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
+							<overwrite>true</overwrite>
 							<outputDirectory>${basedir}</outputDirectory>
 							<resources>
 								<resource>
