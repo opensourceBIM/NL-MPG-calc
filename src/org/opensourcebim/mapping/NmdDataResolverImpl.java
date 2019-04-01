@@ -122,12 +122,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// without parsed geometry
 		this.resolveUnknownGeometries();
 		
-		this.tryApplyEarlierMappings();
-		
 		// start nmd service and
 		try {
 			getService().login();
 			getService().preLoadData();
+			
+			this.tryApplyEarlierMappings();
 
 			MappingSet newMappings = new MappingSet();
 			newMappings.setProjectId(store.getProjectId());
@@ -174,26 +174,28 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 							List<Long> ids = nmdMap.getAllNmdProductIds();
 							if (ids.size() > 0) {
 								List<NmdProductCard> cards = this.getService().getProductCardsByIds(ids);
-								
-								// first check if a totaal product needs to be mapped
-								Long totId = nmdMap.getNmdTotaalProductId();
-								Optional<NmdProductCard> totCard = cards.parallelStream().filter(c -> (long)c.getProductId() == totId).findFirst();
-								if (totId != null && totId > 0 && totCard.isPresent()) {
-									el.mapProductCard(new MaterialSource("-1", "totaal map", "mapService"), totCard.get());									
-								}
-										
-								// next check for the material mappings and apply these
-								nmdMap.getMaterialMappings().forEach(mMap -> {
-									el.getMpgObject().getListedMaterials().forEach(mat -> {
-										if (mat.getName().toLowerCase().trim().equals(mMap.getMaterialName().toLowerCase().trim())) {
-											Optional<NmdProductCard> matCard = cards.parallelStream().filter(c -> (long)c.getProductId() == totId).findFirst();
-											if(matCard.isPresent()) {
-												el.mapProductCard(mat, matCard.get());
-												el.setMappingMethod(NmdMapping.UserMapping);
-											}
+								if (cards != null) {
+									// first check if a totaal product needs to be mapped
+									Long totId = nmdMap.getNmdTotaalProductId();
+									if (totId != null && totId > 0) {
+										Optional<NmdProductCard> totCard = cards.parallelStream().filter(c -> (long)c.getProductId() == totId).findFirst();
+										if (totCard.isPresent()) {
+											el.mapProductCard(new MaterialSource("-1", "totaal map", "mapService"), totCard.get());									
 										}
+									}
+									// next check for the material mappings and apply these
+									nmdMap.getMaterialMappings().forEach(mMap -> {
+										el.getMpgObject().getListedMaterials().forEach(mat -> {
+											if (mat.getName().toLowerCase().trim().equals(mMap.getMaterialName().toLowerCase().trim())) {
+												Optional<NmdProductCard> matCard = cards.parallelStream().filter(c -> (long)c.getProductId() == mMap.getNmdProductId()).findFirst();
+												if(matCard.isPresent()) {
+													el.mapProductCard(mat, matCard.get());
+													el.setMappingMethod(NmdMapping.UserMapping);
+												}
+											}
+										});
 									});
-								});
+								}
 							}
 						}
 					}

@@ -177,12 +177,6 @@ public class Nmd2DataService implements BaseNmdDataService {
 	}
 	
 	@Override
-	public List<NmdProductCard> getProductCardsByIds(List<Long> ids) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Boolean getAdditionalProfileDataForCard(NmdProductCard c) {
 
 		// check if data has already been loaded
