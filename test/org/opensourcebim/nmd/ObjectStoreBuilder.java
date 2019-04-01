@@ -15,7 +15,6 @@ import org.opensourcebim.ifccollection.MpgSpaceImpl;
 import org.opensourcebim.mapping.NlsfbCode;
 import org.opensourcebim.nmd.scaling.NmdLinearScaler;
 
-
 public class ObjectStoreBuilder {
 	private MpgObjectStoreImpl store;
 	private int lastIdCreated;
@@ -32,7 +31,7 @@ public class ObjectStoreBuilder {
 	private String getUUID() {
 		return UUID.randomUUID().toString();
 	}
-	
+
 	/**
 	 * add element for calculation purposes (not for resolving as it is missing
 	 * relevant info for that purpose.
@@ -56,10 +55,18 @@ public class ObjectStoreBuilder {
 	/**
 	 * Add element that will still need to be mapped. contains a single MpgObject
 	 * and any information needed for mapping
+	 * @param ifcName - the description of the IfcProduct
+	 * @param createLayers flag to indicate whether to create a layer for each material
+	 * @param ifcMatSpecs map with name and volume ratio of each material spec
+	 * @param dims dimensions of the IfcProduct
+	 * @param nlsfb nlsfb code 
+	 * @param type IfcProduct type (IfcWall, IfcSlab etc.)
+	 * @param parentUUID guid of the object it should be decomposed by in the IfcProject file
+	 * @return an Mpgelement object with above properties
 	 */
 	public MpgElement AddUnmappedMpgElement(String ifcName, Boolean createLayers, Map<String, Double> ifcMatSpecs,
 			Double[] dims, String nlsfb, String type, String parentUUID) {
-		MpgGeometry geom = this.createDummyGeom(dims[0], dims[1], dims[2] );
+		MpgGeometry geom = this.createDummyGeom(dims[0], dims[1], dims[2]);
 		MpgElement el = getStore().addElement(ifcName);
 		MpgObjectImpl obj = new MpgObjectImpl();
 		obj.setObjectName(ifcName);
@@ -137,7 +144,6 @@ public class ObjectStoreBuilder {
 		return el;
 	}
 
-
 	public NmdProductCardImpl createDummyProductCard(String description, int category, String unit, int lifetime,
 			NmdElement el) {
 		NmdProductCardImpl card = new NmdProductCardImpl();
@@ -147,7 +153,7 @@ public class ObjectStoreBuilder {
 		card.setIsScalable(true);
 		card.setIsTotaalProduct(false);
 		card.setLifetime(lifetime);
-		if(el != null) {
+		if (el != null) {
 			card.setNlsfbCode(el.getNlsfbCode());
 		}
 		card.setParentProductId(0);
@@ -176,7 +182,7 @@ public class ObjectStoreBuilder {
 
 		// as a dummy add a scaler that will do no adjustment
 		spec.setScaler(new NmdLinearScaler("m", new Double[] { 1.0, 0.0, 0.0 },
-				new Double[] { 0.0, Double.POSITIVE_INFINITY, Double.NaN, Double.NaN},
+				new Double[] { 0.0, Double.POSITIVE_INFINITY, Double.NaN, Double.NaN },
 				new Double[] { 1.0, Double.NaN }));
 		spec.setName(name);
 
@@ -188,11 +194,11 @@ public class ObjectStoreBuilder {
 		profile.setAll(1.0);
 		return profile;
 	}
-		
+
 	public MpgObjectImpl createDummyObject(String name, String type, String parentId, String nlsfb) {
 		MpgObjectImpl obj = new MpgObjectImpl(getNewUniqueId(), UUID.randomUUID().toString(), name, type, parentId);
 		obj.setNLsfbCode(nlsfb);
-		obj.setGeometry(createDummyGeom(1.0,  1.0,  1.0));
+		obj.setGeometry(createDummyGeom(1.0, 1.0, 1.0));
 		return obj;
 	}
 
