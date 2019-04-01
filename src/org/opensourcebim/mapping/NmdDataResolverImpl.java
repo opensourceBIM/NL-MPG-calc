@@ -122,7 +122,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// without parsed geometry
 		this.resolveUnknownGeometries();
 		
-		this.tryFindEarlierMappings();
+		this.tryApplyEarlierMappings();
 		
 		// start nmd service and
 		try {
@@ -160,7 +160,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * Check whether there is already a mappingset available for the given project/revision combination and
 	 * apply any earlier stored mappings based on the ifc GUID matches.
 	 */
-	private void tryFindEarlierMappings() {
+	private void tryApplyEarlierMappings() {
 		MappingSet set = null;
 		try {
 			set = getMappingService().getMappingSetByProjectIdAndRevisionId(store.getProjectId(), store.getRevisionId());
@@ -202,7 +202,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		} catch(Exception e) {
 			System.err.println("Map service error: " + e.getMessage());
 		}	
-		
 	}
 
 	/**
