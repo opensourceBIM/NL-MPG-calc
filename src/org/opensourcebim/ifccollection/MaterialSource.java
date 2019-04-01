@@ -17,18 +17,29 @@ public class MaterialSource {
 	private Integer mapId;
 	private String mapName;
 	
+	/**
+	 * the object id of the IfcMaterial object 
+	 */
 	public String getOid() {
 		return oid;
 	}
 	private void setOid(String oid) {
 		this.oid = oid;
 	}
+	
+	/**
+	 * the material description as in the IfcMaterial object
+	 */
 	public String getName() {
 		return name;
 	}
 	private void setName(String name) {
 		this.name = name;
 	}
+	
+	/**
+	 * 
+	 */
 	public String getSource() {
 		return source;
 	}
@@ -36,10 +47,16 @@ public class MaterialSource {
 		this.source = source;
 	}
 	
+	/**
+	 * the NMD product card id that has been used for the map
+	 */
 	public Integer getMapId() {
 		return this.mapId;
 	}
 
+	/**
+	 * descrption of the nmd product card used fir the mapping
+	 */
 	public String getMapName() {
 		return this.mapName;
 	}

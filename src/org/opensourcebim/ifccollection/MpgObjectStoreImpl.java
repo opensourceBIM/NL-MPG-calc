@@ -219,6 +219,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		return element.isPresent() ? element.get() : null;
 	}
 
+	@Override
 	public List<MpgElement> getElementsByProductType(String productType) {
 		List<MpgObject> objectsByProductType = this.getObjectsByProductType(productType);
 		List<String> materialNames = objectsByProductType.stream()
@@ -227,6 +228,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		return materialNames.stream().map(mat -> this.getElementByName(mat)).collect(Collectors.toList());
 	}
 
+	@Override
 	public MpgElement getElementByObjectGuid(String guid) {
 		Optional<MpgElement> el = this.getElements().stream().filter(e -> e.getMpgObject().getGlobalId().equals(guid))
 				.findFirst();

@@ -34,16 +34,14 @@ public interface MpgObjectStore {
 	Optional<MpgObject> getObjectByGuid(String guid);
 	Stream<MpgObject> getChildren(String parentGuid);
 	
-	
 	LengthUnit getLengthUnit();
 	AreaUnit getAreaUnit();
 	VolumeUnit getVolumeUnit();
 	
-	
 	MpgElement addElement(String string);
 	MpgElement getElementByName(String name);
 	List<MpgElement> getElementsByProductType(String productType);
-	
+	MpgElement getElementByObjectGuid(String guid);
 	
 	void addProductCard(NmdProductCard card);
 	NmdProductCard getProductCard(Integer id);
@@ -53,7 +51,6 @@ public interface MpgObjectStore {
 	void addSpace(MpgSpace space);
 	double getTotalVolumeOfMaterial(String name);
 	double getTotalFloorArea();
-	
 	
 	boolean isIfcDataComplete();
 	
