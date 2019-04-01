@@ -1,11 +1,8 @@
 package org.opensourcebim.dataservices;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
 import org.bimserver.shared.reflector.KeyValuePair;
 
 /**

@@ -6,13 +6,13 @@ import java.util.stream.Collectors;
 
 import org.opensourcebim.mapping.NlsfbCode;
 
-public abstract class BaseNmdDataService implements NmdDataService {
+public interface BaseNmdDataService extends NmdDataService {
 	
-	public abstract List<NmdElement> getData();
+	abstract List<NmdElement> getData();
 	
-	public abstract void preLoadData();
+	abstract void preLoadData();
 	
-	public List<NmdProductCard> getProductsForNLsfbCodes(Set<NlsfbCode> codes) {
+	default List<NmdProductCard> getProductsForNLsfbCodes(Set<NlsfbCode> codes) {
 		if (getData().size() == 0) {
 			preLoadData();
 		}
@@ -26,7 +26,7 @@ public abstract class BaseNmdDataService implements NmdDataService {
 	/**
 	 * Quick lookup for preloaded elements
 	 */
-	public List<NmdElement> getElementsForNLsfbCodes(Set<NlsfbCode> codes) {
+	default List<NmdElement> getElementsForNLsfbCodes(Set<NlsfbCode> codes) {
 		if (getData().size() == 0) {
 			preLoadData();
 		}
@@ -34,6 +34,12 @@ public abstract class BaseNmdDataService implements NmdDataService {
 		return getData().stream()
 				.filter(el -> codes.stream()
 						.anyMatch(code -> code == null ? false : el.getNlsfbCode().isSubCategoryOf(code) ))
+				.collect(Collectors.toList());
+	}
+	
+	default List<NmdProductCard> getProductCardsByIds(List<Long> ids) {
+		return getData().stream().flatMap(el -> el.getProducts().stream())
+				.filter(pc -> ids.contains((long)pc.getProductId()))
 				.collect(Collectors.toList());
 	}
 }

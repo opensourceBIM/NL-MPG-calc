@@ -10,7 +10,7 @@ import org.opensourcebim.nmd.NmdElement;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProfileSet;
 
-public class MockDataService extends BaseNmdDataService {
+public class MockDataService implements BaseNmdDataService {
 
 	private List<NmdElement> elements;
 	private Boolean connected;
@@ -67,10 +67,9 @@ public class MockDataService extends BaseNmdDataService {
 	public List<NmdProductCard> getProductsForElement(NmdElement element) {
 		return element.getProducts().stream().collect(Collectors.toList());
 	}
-
+	
 	@Override
 	public Boolean getAdditionalProfileDataForCard(NmdProductCard c) {
 		return true;
 	}
-
 }

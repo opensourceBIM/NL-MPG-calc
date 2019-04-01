@@ -12,7 +12,7 @@ import java.util.List;
 
 import org.opensourcebim.mapping.NlsfbCode;
 
-public class Nmd2DataService extends BaseNmdDataService {
+public class Nmd2DataService implements BaseNmdDataService {
 
 	private Connection connection;
 	
@@ -174,6 +174,12 @@ public class Nmd2DataService extends BaseNmdDataService {
 		}
 
 		return products;
+	}
+	
+	@Override
+	public List<NmdProductCard> getProductCardsByIds(List<Long> ids) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override

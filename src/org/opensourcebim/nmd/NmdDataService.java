@@ -34,8 +34,11 @@ public interface NmdDataService {
 	HashMap<Integer, NmdProfileSet> getProfileSetsByIds(List<Integer> ids);
 
 	List<NmdProductCard> getProductsForElement(NmdElement element);
+	List<NmdProductCard> getProductCardsByIds(List<Long> ids);
 	List<NmdProductCard> getProductsForNLsfbCodes(Set<NlsfbCode> codes);
 	List<NmdElement> getElementsForNLsfbCodes(Set<NlsfbCode> codes); 
 
 	Boolean getAdditionalProfileDataForCard(NmdProductCard c);
+
+
 }

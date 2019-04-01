@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpResponse;
@@ -32,7 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  * @author vijj
  *
  */
-public class Nmd3DataService extends AuthorizedRestDataService implements NmdDataService {
+public class Nmd3DataService extends AuthorizedRestDataService implements BaseNmdDataService {
 // ToDo: implement class AUthorizedBAseDatabaseSession
 	
 	private static final DateFormat dbDateFormat = new SimpleDateFormat("yyyyMMdd");
@@ -311,36 +310,6 @@ public class Nmd3DataService extends AuthorizedRestDataService implements NmdDat
 		return products.stream().map(p -> (NmdProductCard)p).collect(Collectors.toList());
 	}
 	
-	/**
-	 * Quick lookup for preloaded product cards
-	 */
-	@Override
-	public List<NmdProductCard> getProductsForNLsfbCodes(Set<NlsfbCode> codes) {
-		if (getData().size() == 0) {
-			preLoadData();
-		}
-				
-		List<NmdProductCard> res = getElementsForNLsfbCodes(codes).stream()
-				.flatMap(el -> el.getProducts().stream()).collect(Collectors.toList());
-		
-		return res;
-	}
-	
-	/**
-	 * Quick lookup for preloaded elements
-	 */
-	@Override
-	public List<NmdElement> getElementsForNLsfbCodes(Set<NlsfbCode> codes) {
-		if (getData().size() == 0) {
-			preLoadData();
-		}
-				
-		return getData().stream()
-				.filter(el -> codes.stream()
-						.anyMatch(code -> code == null ? false : el.getNlsfbCode().isSubCategoryOf(code) ))
-				.collect(Collectors.toList());
-	}
-
 	public HashMap<Integer, Double> getQuantitiesOfProfileSetsForProduct(Integer productId) {
 		List<KeyValuePair> params = new ArrayList<KeyValuePair>();
 		params.add(new KeyValuePair("ZoekDatum", dbDateFormat.format(this.getRequestDate().getTime())));
