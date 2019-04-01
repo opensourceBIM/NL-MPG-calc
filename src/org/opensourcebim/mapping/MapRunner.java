@@ -8,7 +8,7 @@ public class MapRunner {
 	 */
 	public static void main(String[] args) {
 		
-		MappingDataServiceSqliteImpl mapper = new MappingDataServiceSqliteImpl(new NmdUserDataConfigImpl());
+		MappingDataServiceRestImpl mapper = new MappingDataServiceRestImpl(new NmdUserDataConfigImpl());
 
 		mapper.regenerateMappingData();
 

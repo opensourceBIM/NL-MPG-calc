@@ -129,7 +129,7 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 	 */
 	@Override
 	public String getNlsfbAlternativesFilePath() {
-		return this.rootPath + "//" + this.nlsfbAlternativesPath;
+		return Paths.get(this.rootPath + "/" + this.nlsfbAlternativesPath).toAbsolutePath().toString();
 	}
 	
 	public void setNlsfbAlterantivesFilePath(String path) {

@@ -271,7 +271,8 @@ public class MappingDataServiceSqliteImpl extends SqliteDataService implements M
 	/**
 	 * reload the ifc to NLsfb mapping based on a csv of mapping codes.
 	 */
-	private void regenerateIfcToNlsfbMappings() {
+	@Override
+	public void regenerateIfcToNlsfbMappings() {
 		try {
 			String tableName = this.ifc_to_nlsfb_table;
 			CSVReader reader = new CSVReader(new FileReader(config.getNlsfbAlternativesFilePath()));

@@ -15,6 +15,7 @@ import java.util.UUID;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensourcebim.nmd.NmdUserDataConfigImpl;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
@@ -31,7 +32,7 @@ public class MappingDataServiceIntegrationTest {
 	private MappingDataServiceRestImpl mapService;
 
 	public MappingDataServiceIntegrationTest() {
-		mapService = new MappingDataServiceRestImpl();
+		mapService = new MappingDataServiceRestImpl(new NmdUserDataConfigImpl());
 		// make sure we're not adding data to a dev or prod
 		mapService.setHost("localhost");
 		mapService.setPort(8090);

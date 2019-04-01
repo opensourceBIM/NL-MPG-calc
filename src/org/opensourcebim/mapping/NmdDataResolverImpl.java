@@ -214,7 +214,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	public static void addMappingToMappingSet(MappingSet set, MpgElement el) {
 		// create the mapping from the element
 		Mapping map = new Mapping();
-		map.setNlsfbCode(el.getMpgObject().getNLsfbCode().toString());
+		
+		String nlsfb = el.getMpgObject().getNLsfbCode() ==  null ? "" : el.getMpgObject().getNLsfbCode().toString();
+		map.setNlsfbCode(nlsfb);
 		map.setOwnIfcType(el.getMpgObject().getObjectType());
 		if (!el.getMpgObject().getParentId().isEmpty()) {
 			map.setQueryIfcType("different");

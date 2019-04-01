@@ -26,6 +26,8 @@ public interface MappingDataService {
 	
 	Map<String, List<String>> getNlsfbMappings();
 	
+	void regenerateIfcToNlsfbMappings();
+	
 	Map<String, Long> getKeyWordMappings(Integer minOccurence);
 
 	List<String> getCommonWords();

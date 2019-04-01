@@ -49,7 +49,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 		HttpResponse resp = this.performPostRequestWithParams(path, null, null, map);
 		return this.handleHttpResponse(resp, Mapping.class);
 	}
-	
+
 	@Override
 	public Mapping getMappingById(Long id) {
 		String path = "/api/mapping/" + id;
@@ -63,22 +63,33 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 		HttpResponse resp = this.performPostRequestWithParams(path, null, null, set);
 		return this.handleHttpResponse(resp, MappingSet.class);
 	}
-	
+
 	@Override
 	public MappingSet getMappingSetByProjectIdAndRevisionId(Long pid, Long rid) {
 		String path = "/api/mappingset/" + rid + "/" + pid + "/mappingsetmap";
 		HttpResponse resp = this.performGetRequestWithParams(path, null);
 		return handleHttpResponse(resp, MappingSet.class);
 	}
-	
+
 	private <T> T handleHttpResponse(HttpResponse resp, Class<T> classType) {
 		T obj = null;
-		if (resp.getStatusLine().getStatusCode() != 200) {
-			System.err.println("error encountered posting " + classType.getName());
-		} else {
+		if (resp.getStatusLine().getStatusCode() == 200) {
 			try {
 				String body = respHandler.handleResponse(resp);
 				obj = mapper.readValue(body, classType);
+			} catch (IOException e) {
+				System.out.println("Error encountered retrieving response " + e.getMessage());
+			}
+		}
+		return obj;
+	}
+
+	private <T> List<T> handleHttpResponse(HttpResponse resp, Class<T> classType, CollectionType collType) {
+		List<T> obj = null;
+		if (resp.getStatusLine().getStatusCode() == 200) {
+			try {
+				String body = respHandler.handleResponse(resp);
+				obj = mapper.readValue(body, collType);
 			} catch (IOException e) {
 				System.out.println("Error encountered retrieving response " + e.getMessage());
 			}
