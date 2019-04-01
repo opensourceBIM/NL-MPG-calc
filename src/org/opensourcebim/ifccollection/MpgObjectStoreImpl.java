@@ -39,6 +39,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	private HashMap<Integer, NmdProductCard> productCards;
 
 	private List<MpgSpace> spaces;
+	
+	private Long projectId;
+	private Long revisionId;
 
 	/**
 	 * list to store the guids with any MpgObjects that the object linked to that
@@ -67,6 +70,24 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		spaces.clear();
 	}
 
+	@Override
+	public Long getProjectId() {
+		return projectId;
+	}
+
+	public void setProjectId(Long projectId) {
+		this.projectId = projectId;
+	}
+
+	@Override
+	public Long getRevisionId() {
+		return revisionId;
+	}
+
+	public void setRevisionId(Long revisionId) {
+		this.revisionId = revisionId;
+	}
+	
 	@Override
 	public VolumeUnit getVolumeUnit() {
 		return this.volumeUnit;
@@ -500,6 +521,5 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		boolean childCheck = includeChildren
 				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedLayers(o, includeChildren));
 		return ownCheck || childCheck;
-	}
-	
+	}	
 }

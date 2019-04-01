@@ -36,6 +36,7 @@ import org.bimserver.models.ifc2x3tc1.IfcOpeningElement;
 import org.bimserver.models.ifc2x3tc1.IfcPhysicalQuantity;
 import org.bimserver.models.ifc2x3tc1.IfcPhysicalSimpleQuantity;
 import org.bimserver.models.ifc2x3tc1.IfcProduct;
+import org.bimserver.models.ifc2x3tc1.IfcProject;
 import org.bimserver.models.ifc2x3tc1.IfcProperty;
 import org.bimserver.models.ifc2x3tc1.IfcPropertySet;
 import org.bimserver.models.ifc2x3tc1.IfcPropertySetDefinition;
@@ -97,8 +98,8 @@ public class MpgIfcObjectCollector {
 
 	public MpgIfcObjectCollector() {
 		objectStore = new MpgObjectStoreImpl();
-		objectStore.setUnits(volumeUnit, areaUnit, lengthUnit);
-
+		objectStore.setUnits(volumeUnit, areaUnit, lengthUnit);	
+		
 		ignoredProducts = Arrays.asList(IfcSite.class, IfcSiteImpl.class, IfcBuilding.class, IfcBuildingImpl.class,
 				IfcBuildingStorey.class, IfcBuildingStoreyImpl.class, IfcFurnishingElement.class,
 				IfcFurnishingElementImpl.class, IfcOpeningElement.class, IfcOpeningElementImpl.class,
@@ -118,6 +119,13 @@ public class MpgIfcObjectCollector {
 	 */
 	public MpgObjectStore collectIfcModelObjects(IfcModelInterface ifcModel) {
 		objectStore.reset();
+		
+		// there is always a single ifcproject in the file. get the project and revision id
+		IfcProject proj = ifcModel.getAllWithSubTypes(IfcProject.class).get(0);
+		if (proj != null) {
+			objectStore.setProjectId((long)proj.getPid());
+			objectStore.setRevisionId((long)proj.getRid());
+		}
 
 		// get project wide parameters
 		modelVolumeUnit = IfcUtils.getVolumeUnit(ifcModel);

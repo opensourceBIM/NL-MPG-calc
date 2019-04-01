@@ -81,4 +81,8 @@ public interface MpgObjectStore {
 	boolean hasUndefinedLayers(MpgObject obj, boolean includeChildren);
 
 	boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren);
+
+	Long getProjectId();
+
+	Long getRevisionId();
 }
