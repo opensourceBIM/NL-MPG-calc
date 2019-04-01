@@ -3,6 +3,7 @@ package org.opensourcebim.mapping;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,11 @@ import org.opensourcebim.nmd.NmdUserDataConfig;
 import org.opensourcebim.nmd.NmdUserDataConfigImpl;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
+
+import nl.tno.bim.mapping.domain.Mapping;
+import nl.tno.bim.mapping.domain.MappingSet;
+import nl.tno.bim.mapping.domain.MappingSetMap;
+import nl.tno.bim.mapping.domain.MaterialMapping;
 
 /**
  * This implementation allows one of the services to be an editable data service
@@ -115,13 +121,31 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// pre process: try fill in dimensions by producttype relations for products
 		// without parsed geometry
 		this.resolveUnknownGeometries();
-
+		
+		MappingSet set = null;
 		try {
-			// start subscribed services
+			set = getMappingService().getMappingSetByProjectIdAndRevisionId(store.getProjectId(), store.getRevisionId());
+			if (set != null) {
+				for (MappingSetMap map : set.getMappingSetMaps()) {
+					if(map.getMapping() != null) {
+						// apply the mapping
+					}
+				}
+			}
+		} catch(Exception e) {
+			System.err.println("Map service error: " + e.getMessage());
+		}	
+		
+		// start nmd service and
+		try {
 			getService().login();
 			getService().preLoadData();
 
-			//
+			MappingSet newMappings = new MappingSet();
+			newMappings.setProjectId(store.getProjectId());
+			newMappings.setRevisionId(store.getRevisionId());
+			newMappings.setDate(new Date());
+			
 			// ToDo: group the elements that are 'equal' for sake of the mapping process
 			// (geometry, type, ..) to avoid a lot of duplication
 			for (MpgElement element : getStore().getElements()) {
@@ -129,15 +153,58 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				// in that case skip to the next one.
 				if (!element.hasMapping()) {
 					resolveNmdMappingForElement(element);
+					
+					// add the newly created mapping to the mappingset
+					NmdDataResolverImpl.addMappingToMappingSet(newMappings, element);
 				}
 			}
-		} catch (ArrayIndexOutOfBoundsException ex) {
+			
+			// tried to map a new item on every unmapped nmd element. now push it to the db
+			getMappingService().postMappingSet(newMappings);
+		} catch (Exception e) {
 			System.out.println("Error occured in retrieving material data");
 		} finally {
 			getService().logout();
 		}
 	}
-
+	
+	/**
+	 * ToDo: add logic that checks to which mappingsetMap the maps hould be added.
+	 * For now add a new set for each guid
+	 * @param set MappingSet to add the Mapping to.
+	 * @param el NmdElement that has just been mapped
+	 */
+	public static void addMappingToMappingSet(MappingSet set, MpgElement el) {
+		// create the mapping from the element
+		Mapping map = new Mapping();
+		map.setNlsfbCode(el.getMpgObject().getNLsfbCode().toString());
+		map.setOwnIfcType(el.getMpgObject().getObjectType());
+		if (!el.getMpgObject().getParentId().isEmpty()) {
+			map.setQueryIfcType("different");
+		} else {
+			map.setQueryIfcType(el.getMpgObject().getObjectType());
+		}
+		
+		List<MaterialMapping> matMaps = new ArrayList<>();
+		for(MaterialSource mat : el.getMpgObject().getListedMaterials()) {
+			MaterialMapping matMap = new MaterialMapping();
+			matMap.setMaterialName(mat.getName());
+			matMap.setNmdProductId((long)mat.getMapId());
+			matMaps.add(matMap);
+		}
+		map.setMaterialMappings(matMaps);	
+		
+		// if this is a new mapping create a new mappingset map and add it
+		MappingSetMap msm = new MappingSetMap();
+		msm.setElementGuid(el.getMpgObject().getGlobalId());
+				
+		msm.setMapping(map);
+		if (set.getMappingSetMaps() == null) {
+			set.setMappingSetMaps(new ArrayList<>());
+		}
+		set.getMappingSetMaps().add(msm);
+	}
+	
 	/**
 	 * Try find Nlsfb codes in the ifcName and IFcMaterials and try find materials
 	 * in the the IFcName when these fields are not defined already.
@@ -234,7 +301,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// ToDo: implement correct user mapping....
 		// first try to find any user defined mappings
-		NmdUserMap map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject());
+		Mapping map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject());
 		if (map != null) {
 			// get products in map and exit if succeeded.
 		}
