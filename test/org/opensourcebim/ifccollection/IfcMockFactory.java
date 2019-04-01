@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -58,6 +59,11 @@ public class IfcMockFactory {
 		addIfcProjectMock(model);
 		when(model.getAllWithSubTypes(IfcBuildingElement.class)).thenReturn(new ArrayList<IfcBuildingElement>());
 
+		IfcProject proj = mock(IfcProject.class);
+		when(proj.getPid()).thenReturn(0);
+		when(proj.getRid()).thenReturn(0);
+		when(model.getAllWithSubTypes(IfcProject.class)).thenReturn(Arrays.asList(proj));
+		
 		return model;
 	}
 
