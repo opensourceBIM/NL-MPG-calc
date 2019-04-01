@@ -1,5 +1,6 @@
 package org.opensourcebim.nmd;
 
+import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,12 +38,16 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 	
 	public NmdUserDataConfigImpl() {
 		this(loadResources(Paths.get(System.getProperty("user.dir")), rootNode));
-		this.rootPath = Paths.get(System.getProperty("user.dir")).getParent().toAbsolutePath().toString();
+		
+		String parentPath = (new File(System.getProperty("user.dir"))).getParentFile().toString();
+		this.rootPath = parentPath;
 	}
 	
 	public NmdUserDataConfigImpl(Path rootPath) {
 		this(loadResources(rootPath, rootNode));
-		this.rootPath = rootPath.toAbsolutePath().toString();
+		
+		String parentPath = (new File( rootPath.toAbsolutePath().toString())).getParentFile().toString();
+		this.rootPath = parentPath;
 	}
 
 	private static Map<String, String> loadResources(Path rootPath, String rootNode) {
