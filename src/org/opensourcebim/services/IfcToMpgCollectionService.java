@@ -8,9 +8,9 @@ import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.plugins.PluginConfiguration;
 import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
 import org.opensourcebim.ifccollection.MpgObjectStore;
+import org.opensourcebim.mapping.MappingDataServiceRestImpl;
 import org.opensourcebim.mapping.NmdDataResolver;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
-import org.opensourcebim.mapping.NmdMappingDataServiceSqliteImpl;
 import org.opensourcebim.nmd.Nmd2DataService;
 
 public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
@@ -28,7 +28,7 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 		// resolve any ifc to nmd coupling
 		NmdDataResolver resolver = new NmdDataResolverImpl(getPluginContext().getRootPath());
 		resolver.setNmdService(new Nmd2DataService(resolver.getConfig()));
-		resolver.setMappingService(new NmdMappingDataServiceSqliteImpl(resolver.getConfig()));
+		resolver.setMappingService(new MappingDataServiceRestImpl());
 		resolver.setStore(ifcResults);
 		resolver.NmdToMpg();
 				

@@ -1,75 +1,100 @@
 package org.opensourcebim.dataservices;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.logging.Logger;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.ParseException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.bimserver.shared.reflector.KeyValuePair;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RestDataService {
 
-	protected String scheme = "https";
-	protected String host;
+	protected ObjectMapper mapper = new ObjectMapper();
+	
+	private String scheme;
+	private String host;
+	private Integer port;
 	protected HttpClient httpClient = HttpClients.createDefault();
+	HttpUriRequest request;
 
 	protected HttpResponse performGetRequestWithParams(String path, List<KeyValuePair> params) {
 		HttpResponse response = null;
-		try {
-			HttpGet request = this.createHttpGetRequest(path, params);
+		request = this.createHttpGetRequest(path, params);
 
-			// Execute and get the response.
-			try {
-				response = this.httpClient.execute(request);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} catch (URISyntaxException e1) {
-			System.out.println("Incorrect URI for NMD request");
-			e1.printStackTrace();
+		// Execute and get the response.
+		try {
+			response = this.httpClient.execute(request);
+		} catch (Exception e) {
+			System.out.println("failed to perform get request: " + e.getMessage());
 		}
+
 		return response;
 	}
 
-	protected HttpResponse performPostRequestWithParams(String path, List<NameValuePair> params, List<NameValuePair> headers) {
+	protected HttpResponse performPostRequestWithParams(String path, List<KeyValuePair> params, List<NameValuePair> headers, Object body) {
 		// Try add a Post request to the base class.
-		HttpPost httppost = new HttpPost(path);
+		request = new HttpPost(createUri(path, params));
 
-		for (NameValuePair header : headers) {
-			httppost.addHeader(header.getName(), header.getValue().toString());
+		if (headers != null) {
+			for (NameValuePair header : headers) {
+				request.addHeader(header.getName(), header.getValue().toString());
+			}
 		}
-
+	
 		// Execute and get the response.
 		HttpResponse response = null;
 		try {
-			httppost.setEntity(new UrlEncodedFormEntity(params));
-			response = httpClient.execute(httppost);
-			httppost.releaseConnection();
+			if(body != null) {
+				String jsonBody = mapper.writeValueAsString(body);
+				StringEntity entity = new StringEntity(jsonBody);
+				((HttpPost)request).setEntity(entity);
+				request.setHeader("Accept", "application/json");
+				request.setHeader("Content-type", "application/json");
+			}
+			
+			response = httpClient.execute(request);
 		} catch(Exception e) {
 			System.out.println("post request failed " + response.getStatusLine().toString());
 		}
 		return response;
 	}
 
-	protected HttpGet createHttpGetRequest(String path, List<KeyValuePair> params) throws URISyntaxException {
-		URIBuilder builder = new URIBuilder();
-		builder.setScheme(this.scheme).setHost(this.host).setPath(path);
-
-		params.forEach(p -> builder.addParameter(p.getFieldName(), p.getValue().toString()));
-
-		URI uri = builder.build();
-		HttpGet request = new HttpGet(uri);
-
+	protected HttpGet createHttpGetRequest(String path, List<KeyValuePair> params){
+		HttpGet request = new HttpGet(createUri(path, params));
 		return request;
+	}
+	
+	protected URI createUri(String path, List<KeyValuePair> params) {
+		URIBuilder builder = new URIBuilder();
+		builder.setScheme(this.getScheme()).setHost(this.host).setPort(this.port).setPath(path);
+		if (params != null) {
+			params.forEach(p -> builder.addParameter(p.getFieldName(), p.getValue().toString()));
+		}
+
+		try {
+			return builder.build();
+		} catch (URISyntaxException e) {
+			System.out.println("encountered error in creating URI: " + e.getMessage());
+			return null;
+		}
 	}
 
 	protected Integer TryParseJsonNode(JsonNode node, Integer defaultValue) {
@@ -92,8 +117,48 @@ public class RestDataService {
 		return host;
 	}
 
-	protected void setHost(String host) {
+	public void setHost(String host) {
 		this.host = host;
 	}
+	
+	public Integer getPort() {
+		return port;
+	}
 
+	public void setPort(Integer port) {
+		this.port = port;
+	}
+	
+	public String getScheme() {
+		return scheme;
+	}
+
+	public void setScheme(String scheme) {
+		this.scheme = scheme;
+	}
+	
+	public URI getConnectionString() {
+		URIBuilder builder = new URIBuilder();
+		builder.setScheme(this.getScheme()).setHost(this.host).setPort(this.port);
+		try {
+			return builder.build();
+		} catch (URISyntaxException e) {
+			return null;
+		}
+	}
+	
+	protected JsonNode responseToJson(HttpResponse response) {
+		HttpEntity entity = response.getEntity();
+
+		// do something with the entity to get the token
+		JsonNode responseNode = null;
+		try {
+			responseNode = mapper.readTree(EntityUtils.toString(entity));
+		} catch (ParseException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			return null;
+		}
+		return responseNode;
+	}
 }

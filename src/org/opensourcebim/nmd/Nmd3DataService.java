@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 import org.bimserver.shared.reflector.KeyValuePair;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
+import org.opensourcebim.dataservices.AuthorizedRestDataService;
 import org.opensourcebim.mapping.NlsfbCode;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalerFactory;
@@ -31,7 +32,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  * @author vijj
  *
  */
-public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDataService {
+public class Nmd3DataService extends AuthorizedRestDataService implements NmdDataService {
 // ToDo: implement class AUthorizedBAseDatabaseSession
 	
 	private static final DateFormat dbDateFormat = new SimpleDateFormat("yyyyMMdd");
@@ -46,7 +47,9 @@ public class Nmd3DataService extends AuthorizedDatabaseSession implements NmdDat
 	private List<NmdElement> data;
 
 	public Nmd3DataService(NmdUserDataConfig config) {
+		this.setPort(-1);
 		this.setHost("www.Milieudatabase-datainvoer.nl");
+		this.setScheme("https");
 		this.apiPath = "/NMD_30_API_v0.2/api/NMD30_Web_API/";
 		this.config = config;
 		this.requestDate = Calendar.getInstance();

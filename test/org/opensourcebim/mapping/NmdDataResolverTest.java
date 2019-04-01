@@ -19,7 +19,7 @@ import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
 import org.opensourcebim.nmd.NmdDataService;
 import org.opensourcebim.nmd.NmdElement;
-import org.opensourcebim.nmd.NmdMappingDataService;
+import org.opensourcebim.nmd.MappingDataService;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.ObjectStoreBuilder;
 
@@ -164,8 +164,8 @@ public class NmdDataResolverTest {
 		return db;
 	}
 	
-	private NmdMappingDataService getMockMappings() {
-		NmdMappingDataService mapService = mock(NmdMappingDataService.class);
+	private MappingDataService getMockMappings() {
+		MappingDataService mapService = mock(MappingDataService.class);
 		when(mapService.getNlsfbMappings()).thenReturn(new HashMap<String, List<String>>());
 		when(mapService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum)).thenReturn(new HashMap<String, Long>() {{
 			put("baksteen", (long)4321);

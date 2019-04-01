@@ -23,43 +23,54 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.opensourcebim.dataservices.SqliteDataService;
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.nmd.NmdMappingDataService;
+import org.opensourcebim.nmd.MappingDataService;
 import org.opensourcebim.nmd.NmdUserDataConfig;
 
 import com.opencsv.CSVReader;
 
+import nl.tno.bim.mapping.domain.Mapping;
+import nl.tno.bim.mapping.domain.MappingSet;
+
 /**
- * Class to provide an interface between java code and a mapping database
- * The mapping database will store any data that is required to resolve what (Nmd) products to choose
- * based on ifc file data.
+ * Class to provide an interface between java code and a mapping database The
+ * mapping database will store any data that is required to resolve what (Nmd)
+ * products to choose based on ifc file data.
+ * 
  * @author vijj
  * 
  */
-public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implements NmdMappingDataService {
+public class MappingDataServiceSqliteImpl extends SqliteDataService implements MappingDataService {
 
 	private final String mat_keyword_table = "ifc_material_keywords";
 	private final String ifc_to_nlsfb_table = "ifc_to_nlsfb_map";
 	private final String common_word_dutch_table = "common_words_dutch_table";
 
-	public NmdMappingDataServiceSqliteImpl(NmdUserDataConfig config) {
+	public MappingDataServiceSqliteImpl(NmdUserDataConfig config) {
 		super(config);
 	}
 
 	@Override
-	public void addUserMap(NmdUserMap map) {
-		// TODO Auto-generated method stub
-
+	public Mapping postMapping(Mapping map) {
+		return null;
 	}
 	
 	@Override
-	public void addMappingSet(NmdMappingSet set) {
-		// TODO Auto-generated method stub
-		
+	public Mapping getMappingById(Long id) {
+		return null;
 	}
 
 	@Override
-	public NmdUserMap getApproximateMapForObject(MpgObject object) {
-		// TODO Auto-generated method stub
+	public MappingSet postMappingSet(MappingSet set) {
+		return null;
+	}
+	
+	@Override
+	public MappingSet getMappingSetByProjectIdAndRevisionId(Long pid, Long rid) {
+		return null;
+	}
+
+	@Override
+	public Mapping getApproximateMapForObject(MpgObject object) {
 		return null;
 	}
 
@@ -86,7 +97,7 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 
 		return elementMap;
 	}
-	
+
 	@Override
 	public Map<String, Long> getKeyWordMappings(Integer minOccurence) {
 		HashMap<String, Long> keyWordMap = new HashMap<String, Long>();
@@ -95,11 +106,10 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 			statement.setQueryTimeout(30);
 
 			ResultSet rs = statement.executeQuery(
-					"Select * from " + this.mat_keyword_table + " "
-					+ "where count >= " + minOccurence.toString());
+					"Select * from " + this.mat_keyword_table + " " + "where count >= " + minOccurence.toString());
 			while (rs.next()) {
 				String keyWord = rs.getString("keyword").trim();
-				Long keyCount = (long)rs.getInt("count");
+				Long keyCount = (long) rs.getInt("count");
 				keyWordMap.putIfAbsent(keyWord, keyCount);
 			}
 
@@ -117,11 +127,12 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 	}
 
 	/**
-	 * load common word files into the database. These can be used to remove often used words from keyword selection
+	 * load common word files into the database. These can be used to remove often
+	 * used words from keyword selection
 	 */
 	private void createCommonWordsTable() {
 		try {
-			String tableName = this.common_word_dutch_table ;
+			String tableName = this.common_word_dutch_table;
 			CSVReader reader = new CSVReader(new FileReader(config.getCommonWordFilePath()));
 			List<String[]> myEntries = reader.readAll();
 			reader.close();
@@ -132,8 +143,7 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 				deleteTable(tableName);
 
 				String createTableSql = "CREATE TABLE IF NOT EXISTS " + tableName + " (\n"
-						+ "	id integer PRIMARY KEY AUTOINCREMENT,\n"
-						+ "	word text NOT NULL\n" + ");";
+						+ "	id integer PRIMARY KEY AUTOINCREMENT,\n" + "	word text NOT NULL\n" + ");";
 				this.executeAndCommitCommand(createTableSql);
 				this.executeAndCommitCommand(createSqlInsertStatement(tableName, headers, values));
 
@@ -141,7 +151,7 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 				// our import file does not seem to be in the assumed structure.
 				System.out.println("incorrect input data encountered.");
 			}
-		} catch (SQLException|IOException e) {
+		} catch (SQLException | IOException e) {
 			System.err.println("error occured with creating common word table " + e.getMessage());
 		}
 	}
@@ -159,12 +169,10 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 		List<String> allMaterials = new ArrayList<String>();
 		try {
 			Files.walk(Paths.get(config.getIfcFilesForKeyWordMapRootPath()))
-					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc"))
-					.filter(p -> {
+					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc")).filter(p -> {
 						// filter on max file size. example: 50 MB limit on 5e7
-						return (new File(p.toAbsolutePath().toString())).length() < 1e8; 
-					})
-					.forEach(p -> {
+						return (new File(p.toAbsolutePath().toString())).length() < 1e8;
+					}).forEach(p -> {
 						foundFiles.add(p);
 					});
 
@@ -178,8 +186,8 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 						if (matRes != null) {
 							for (int i = 0; i < matRes.length; i++) {
 								if (matRes[i] != null) {
-									List<String> words = Arrays.asList(matRes[i].split(" |-|,|_|\\|(|)|<|>|:|;")).stream()
-											.filter(w -> w != null && !w.isEmpty()).map(w -> w.toLowerCase())
+									List<String> words = Arrays.asList(matRes[i].split(" |-|,|_|\\|(|)|<|>|:|;"))
+											.stream().filter(w -> w != null && !w.isEmpty()).map(w -> w.toLowerCase())
 											.collect(Collectors.toList());
 									fileMaterials.addAll(words);
 								}
@@ -190,21 +198,26 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 				allMaterials.addAll(fileMaterials);
 				scanner.close();
 			}
-			
+
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
-		
-		// group the words by occurence and remove any common words from the found keywords
+
+		// group the words by occurence and remove any common words from the found
+		// keywords
 		List<String> common_words = getCommonWords();
 		Map<String, Long> wordCount = allMaterials.stream()
 				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
 		List<Entry<String, Long>> filteredWordCount = wordCount.entrySet().stream()
 				.filter(w -> w.getKey().toCharArray().length > 2) // remove items that are simply too short
-				.filter(w -> 2 * w.getKey().replaceAll("[^a-zA-Z]", "").length() >= w.getKey().length() ) // remove items with too large ratio of non-text content
-				.filter(w -> !common_words.contains(w.getKey()))
-				.sorted((w1, w2) -> {
+				.filter(w -> 2 * w.getKey().replaceAll("[^a-zA-Z]", "").length() >= w.getKey().length()) // remove items
+																											// with too
+																											// large
+																											// ratio of
+																											// non-text
+																											// content
+				.filter(w -> !common_words.contains(w.getKey())).sorted((w1, w2) -> {
 					return w1.getValue().compareTo(w2.getValue());
 				}).collect(Collectors.toList());
 
@@ -234,24 +247,24 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 	private Boolean writeKeyWordsToDB(List<Entry<String, Long>> words) {
 		String tableName = this.mat_keyword_table;
 		String[] headers = new String[] { "keyword", "count" };
-		
-		List<String[]> values = words.stream()
-				.map(w -> new String[] { w.getKey(), w.getValue().toString() })
+
+		List<String[]> values = words.stream().map(w -> new String[] { w.getKey(), w.getValue().toString() })
 				.collect(Collectors.toList());
-		
+
 		try {
 			deleteTable(tableName);
-	
+
 			String createTableSql = "CREATE TABLE IF NOT EXISTS " + tableName + " (\n"
 					+ "	id integer PRIMARY KEY AUTOINCREMENT,\n" + " keyword text NOT NULL,\n"
 					+ "	count integer NOT NULL\n" + ");";
 			this.executeAndCommitCommand(createTableSql);
 			this.executeAndCommitCommand(createSqlInsertStatement(tableName, headers, values));
-		} catch(SQLException e) {
-			System.err.println("Error occured while cleaning or writing data to " + this.mat_keyword_table + " : " + e.getMessage());
+		} catch (SQLException e) {
+			System.err.println("Error occured while cleaning or writing data to " + this.mat_keyword_table + " : "
+					+ e.getMessage());
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -280,7 +293,7 @@ public class NmdMappingDataServiceSqliteImpl extends SqliteDataService implement
 				// our import file does not seem to be in the assumed structure.
 				System.out.println("incorrect input data encountered.");
 			}
-		} catch (SQLException|IOException e) {
+		} catch (SQLException | IOException e) {
 			System.err.println("error occured with creating NLSfb alternatives map: " + e.getMessage());
 		}
 	}

@@ -10,10 +10,9 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
-import org.opensourcebim.mapping.BaseDataService;
 import org.opensourcebim.mapping.NlsfbCode;
 
-public class Nmd2DataService extends BaseDataService {
+public class Nmd2DataService extends BaseNmdDataService {
 
 	private Connection connection;
 	

@@ -5,11 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.opensourcebim.nmd.BaseNmdDataService;
 import org.opensourcebim.nmd.NmdElement;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProfileSet;
 
-public class MockDataService extends BaseDataService {
+public class MockDataService extends BaseNmdDataService {
 
 	private List<NmdElement> elements;
 	private Boolean connected;

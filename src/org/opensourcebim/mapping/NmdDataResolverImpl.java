@@ -26,10 +26,10 @@ import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
+import org.opensourcebim.nmd.MappingDataService;
 import org.opensourcebim.nmd.NmdDataService;
 import org.opensourcebim.nmd.NmdElement;
 import org.opensourcebim.nmd.NmdMapping;
-import org.opensourcebim.nmd.NmdMappingDataService;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProfileSet;
 import org.opensourcebim.nmd.NmdUserDataConfig;
@@ -48,7 +48,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 	private NmdDataService service;
 	private NmdUserDataConfig config;
-	private NmdMappingDataService mappingService;
+	private MappingDataService mappingService;
 	private MpgObjectStore store;
 	private Set<String> keyWords;
 
@@ -73,12 +73,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		return config;
 	}
 
-	public NmdMappingDataService getMappingService() {
+	public MappingDataService getMappingService() {
 		return mappingService;
 	}
 
 	@Override
-	public void setMappingService(NmdMappingDataService mappingService) {
+	public void setMappingService(MappingDataService mappingService) {
 		this.mappingService = mappingService;
 		keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet();
 	}

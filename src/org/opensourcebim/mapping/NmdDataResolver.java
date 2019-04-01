@@ -1,8 +1,8 @@
 package org.opensourcebim.mapping;
 
 import org.opensourcebim.ifccollection.MpgObjectStore;
+import org.opensourcebim.nmd.MappingDataService;
 import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.NmdMappingDataService;
 import org.opensourcebim.nmd.NmdUserDataConfig;
 
 /**
@@ -20,7 +20,7 @@ public interface NmdDataResolver {
 
 	void setNmdService(NmdDataService nmdDataService);
 	
-	void setMappingService(NmdMappingDataService nmdMappingService);
+	void setMappingService(MappingDataService nmdMappingService);
 
 	MpgObjectStore getStore();
 	

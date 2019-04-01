@@ -1,14 +1,12 @@
-package org.opensourcebim.mapping;
+package org.opensourcebim.nmd;
 
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.NmdElement;
-import org.opensourcebim.nmd.NmdProductCard;
+import org.opensourcebim.mapping.NlsfbCode;
 
-public abstract class BaseDataService implements NmdDataService {
+public abstract class BaseNmdDataService implements NmdDataService {
 	
 	public abstract List<NmdElement> getData();
 	
