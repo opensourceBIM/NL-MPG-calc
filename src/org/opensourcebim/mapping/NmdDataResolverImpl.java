@@ -122,19 +122,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// without parsed geometry
 		this.resolveUnknownGeometries();
 		
-		MappingSet set = null;
-		try {
-			set = getMappingService().getMappingSetByProjectIdAndRevisionId(store.getProjectId(), store.getRevisionId());
-			if (set != null) {
-				for (MappingSetMap map : set.getMappingSetMaps()) {
-					if(map.getMapping() != null) {
-						// apply the mapping
-					}
-				}
-			}
-		} catch(Exception e) {
-			System.err.println("Map service error: " + e.getMessage());
-		}	
+		this.tryFindEarlierMappings();
 		
 		// start nmd service and
 		try {
@@ -168,6 +156,55 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 	}
 	
+	/**
+	 * Check whether there is already a mappingset available for the given project/revision combination and
+	 * apply any earlier stored mappings based on the ifc GUID matches.
+	 */
+	private void tryFindEarlierMappings() {
+		MappingSet set = null;
+		try {
+			set = getMappingService().getMappingSetByProjectIdAndRevisionId(store.getProjectId(), store.getRevisionId());
+			if (set != null) {
+				for (MappingSetMap map : set.getMappingSetMaps()) {
+					Mapping nmdMap = map.getMapping();
+					if(nmdMap != null) {
+						// check whether the element still exists and the nmd product references are valid
+						MpgElement el = store.getElementByObjectGuid(map.getElementGuid());
+						if (el != null) {
+							List<Long> ids = nmdMap.getAllNmdProductIds();
+							if (ids.size() > 0) {
+								List<NmdProductCard> cards = this.getService().getProductCardsByIds(ids);
+								
+								// first check if a totaal product needs to be mapped
+								Long totId = nmdMap.getNmdTotaalProductId();
+								Optional<NmdProductCard> totCard = cards.parallelStream().filter(c -> (long)c.getProductId() == totId).findFirst();
+								if (totId != null && totId > 0 && totCard.isPresent()) {
+									el.mapProductCard(new MaterialSource("-1", "totaal map", "mapService"), totCard.get());									
+								}
+										
+								// next check for the material mappings and apply these
+								nmdMap.getMaterialMappings().forEach(mMap -> {
+									el.getMpgObject().getListedMaterials().forEach(mat -> {
+										if (mat.getName().toLowerCase().trim().equals(mMap.getMaterialName().toLowerCase().trim())) {
+											Optional<NmdProductCard> matCard = cards.parallelStream().filter(c -> (long)c.getProductId() == totId).findFirst();
+											if(matCard.isPresent()) {
+												el.mapProductCard(mat, matCard.get());
+												el.setMappingMethod(NmdMapping.UserMapping);
+											}
+										}
+									});
+								});
+							}
+						}
+					}
+				}
+			}
+		} catch(Exception e) {
+			System.err.println("Map service error: " + e.getMessage());
+		}	
+		
+	}
+
 	/**
 	 * ToDo: add logic that checks to which mappingsetMap the maps hould be added.
 	 * For now add a new set for each guid
