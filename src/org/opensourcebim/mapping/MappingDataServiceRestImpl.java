@@ -1,7 +1,10 @@
 package org.opensourcebim.mapping;
 
+import java.io.FileReader;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +14,12 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.opensourcebim.dataservices.RestDataService;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.MappingDataService;
+import org.opensourcebim.nmd.NmdUserDataConfig;
 
+import com.fasterxml.jackson.databind.type.CollectionType;
+import com.opencsv.CSVReader;
+
+import nl.tno.bim.mapping.domain.IfcToNlsfb;
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
 
@@ -25,9 +33,11 @@ import nl.tno.bim.mapping.domain.MappingSet;
  */
 public class MappingDataServiceRestImpl extends RestDataService implements MappingDataService {
 
-	private BasicResponseHandler respHandler  = new BasicResponseHandler();
-	
-	public MappingDataServiceRestImpl() {
+	private BasicResponseHandler respHandler = new BasicResponseHandler();
+	private NmdUserDataConfig config;
+
+	public MappingDataServiceRestImpl(NmdUserDataConfig config) {
+		this.config = config;
 		setScheme("http");
 		setHost("localhost");
 		setPort(8090);
@@ -83,8 +93,29 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 
 	@Override
 	public Map<String, List<String>> getNlsfbMappings() {
-		return new HashMap<>();
+		String path = "/api/ifctonlsfb";
+		HttpResponse resp = this.performGetRequestWithParams(path, null);
+		List<IfcToNlsfb> maps = new ArrayList<>();
+		maps = this.handleHttpResponse(resp, IfcToNlsfb.class,
+				mapper.getTypeFactory().constructCollectionType(List.class, IfcToNlsfb.class));
 
+		Map<String, List<String>> res = new HashMap<>();
+
+		for (IfcToNlsfb dbMap : maps) {
+
+			String nlsfbCode = dbMap.getNlsfbCode();
+			String productType = dbMap.getIfcProductType();
+
+			if (res.containsKey(productType)) {
+				res.get(productType).add(nlsfbCode);
+			} else {
+				List<String> vals = new ArrayList<>();
+				vals.add(nlsfbCode);
+				res.put(productType, vals);
+			}
+		};
+
+		return res;
 	}
 
 	@Override
@@ -108,4 +139,48 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 		// TODO Auto-generated method stub
 
 	}
+
+	public void regenerateMappingData() {
+		regenerateIfcToNlsfbMappings();
+
+	}
+
+	@Override
+	public void regenerateIfcToNlsfbMappings() {
+
+		try {
+			System.err.println("");
+			FileReader fReader = new FileReader(config.getNlsfbAlternativesFilePath());
+			CSVReader reader = new CSVReader(fReader);
+			List<String[]> myEntries = reader.readAll();
+			reader.close();
+
+			String[] headers = myEntries.get(0);
+			List<String[]> values = myEntries.subList(1, myEntries.size());
+
+			if (headers.length == 2) {
+				List<IfcToNlsfb> nlsfbMaps = new ArrayList<>();
+				for (String[] entry : values) {
+					IfcToNlsfb map = new IfcToNlsfb();
+					map.setIfcProductType(entry[1]);
+					map.setNlsfbCode(entry[0]);
+					nlsfbMaps.add(map);
+				}
+
+				String path = "/api/ifctonlsfb";
+				HttpResponse resp = this.performPostRequestWithParams(path, null, null, nlsfbMaps);
+				if (resp.getStatusLine().getStatusCode() != 200) {
+					System.out.println("error encountered posting nlsfb alternative map");
+				}
+
+			} else {
+				// our import file does not seem to be in the assumed structure.
+				System.out.println("incorrect input data encountered.");
+			}
+		} catch (Exception e) {
+			System.err.println("error encountered regenerating mappings: " + e.getMessage());
+		}
+
+	}
+
 }
