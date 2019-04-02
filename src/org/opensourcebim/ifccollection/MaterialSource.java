@@ -70,5 +70,11 @@ public class MaterialSource {
 		this.mapId = -1;
 		this.mapName = "";
 	}
+	public MaterialSource copy() {
+		MaterialSource res = new MaterialSource(this.getOid(), this.getName(), this.getSource());
+		res.mapId = this.getMapId();
+		res.mapName = this.getMapName();
+		return res;
+	}
 	
 }

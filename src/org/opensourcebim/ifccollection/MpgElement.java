@@ -127,4 +127,23 @@ public class MpgElement {
 				&& this.getMpgObject().getListedMaterials().size() > 0)
 				|| this.getNmdProductCards().stream().anyMatch(pc -> pc.getIsTotaalProduct()));
 	}
+ 
+	/**
+	 * determines whether an element is equal in values to another element for the sake of mapping grouping
+	 * This will therefore not include an equality 
+	 * @return
+	 */
+	public String getValueHash() {
+		// TODO Auto-generated method stub
+		return this.getMpgObject().getValueHash();
+	}
+
+	public boolean copyMappingFromElement(MpgElement element) {
+		if (this.getValueHash().equals(element.getValueHash())) {
+			this.setMappingMethod(element.getMappingMethod());
+			
+			return this.getMpgObject().copyMappingFromObject(element.getMpgObject());
+		}
+		return false;
+	}
 }

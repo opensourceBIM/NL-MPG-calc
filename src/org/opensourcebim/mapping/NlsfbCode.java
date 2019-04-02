@@ -99,8 +99,6 @@ public class NlsfbCode {
 					res += "." + getMinorId().toString();
 				}
 			}
-		} else {
-			System.out.println();
 		}
 		return res;
 	}

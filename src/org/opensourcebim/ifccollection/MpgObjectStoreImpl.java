@@ -238,6 +238,17 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			return null;
 		}
 	}
+	
+	/**
+	 * Group the elements by an equalByValues
+	 */
+	@JsonIgnore
+	@Override
+	public Map<String, List<MpgElement>> getElementGroups() {
+		return this.mpgElements.stream().collect(Collectors.groupingBy(el -> {
+			return el.getValueHash();
+		}));
+	}
 
 	@Override
 	public double getTotalVolumeOfMaterial(String name) {

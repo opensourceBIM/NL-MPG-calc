@@ -43,6 +43,9 @@ public interface MpgObject {
 	boolean hasDuplicateMaterialNames();
 	
 	void addTag(MpgInfoTagType tagType, String message);
+	
+	String getValueHash();
+	boolean copyMappingFromObject(MpgObject mpgObject);
 
 
 }
