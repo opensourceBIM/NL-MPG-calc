@@ -16,10 +16,9 @@ import org.junit.Test;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.mapping.NmdDataResolverImpl;
+import org.opensourcebim.nmd.MappingDataService;
 import org.opensourcebim.nmd.NmdDataService;
 import org.opensourcebim.nmd.NmdElement;
-import org.opensourcebim.nmd.MappingDataService;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.ObjectStoreBuilder;
 

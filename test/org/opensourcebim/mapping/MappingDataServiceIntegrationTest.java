@@ -1,15 +1,14 @@
 package org.opensourcebim.mapping;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.After;
@@ -90,7 +89,7 @@ public class MappingDataServiceIntegrationTest {
 		set.setProjectId((long)1);
 		set.setRevisionId((long)1);
 		
-		this.addMapToMappingSet(set, createDummyMap(), "some guid");
+		set.addMappingToMappingSet(createDummyMap(), "some guid");
 
 		set = mapService.postMappingSet(set);
 		assertTrue(set != null);
@@ -107,8 +106,8 @@ public class MappingDataServiceIntegrationTest {
 		Mapping map = createDummyMap();
 		map = mapService.postMapping(map);
 		
-		this.addMapToMappingSet(set, map, "some guid");
-		this.addMapToMappingSet(set, map, "another guid");
+		set.addMappingToMappingSet(map, "some guid");
+		set.addMappingToMappingSet(map, "another guid");
 		
 		set = mapService.postMappingSet(set);
 		assertEquals(2, set.getMappingSetMaps().size());
@@ -123,7 +122,7 @@ public class MappingDataServiceIntegrationTest {
 		set.setDate(new Date());
 
 		Mapping map = createDummyMap();
-		this.addMapToMappingSet(set, map, UUID.randomUUID().toString());
+		set.addMappingToMappingSet(map, UUID.randomUUID().toString());
 		set = mapService.postMappingSet(set);
 		
 		MappingSet sameSet = mapService.getMappingSetByProjectIdAndRevisionId((long)1, (long)1);
@@ -131,17 +130,38 @@ public class MappingDataServiceIntegrationTest {
 		assertEquals(set.getId(), sameSet.getId());
 		assertEquals(set.getMappingSetMaps().get(0).getMapping().getId(), sameSet.getMappingSetMaps().get(0).getMapping().getId());
 	}
+	
+	@Test
+	public void testSetNewMappingSetMapUpdatesMappingRevisionId() {
+		MappingSet set = new MappingSet();
+		set.setProjectId((long)1);
+		set.setRevisionId((long)1);
+		set.setDate(new Date());
 
-	private void addMapToMappingSet(MappingSet set, Mapping map, String guid) {
-		if (set.getMappingSetMaps() == null) {
-			set.setMappingSetMaps(new ArrayList<>());
-		}
-		MappingSetMap msm = new MappingSetMap();
-		msm.setElementGuid(guid);
-		msm.setMapping(map);
-		set.getMappingSetMaps().add(msm);		
+		String guid = UUID.randomUUID().toString();
+		Mapping map = createDummyMap();
+		set.addMappingToMappingSet(map, guid);
+		set = mapService.postMappingSet(set);
+
+		// add another mapping
+		Mapping newMap = createDummyMap();
+		newMap.setNmdTotaalProductId((long)99);
+		set.addMappingToMappingSet(newMap, guid);
+		
+		// this post will return the full mappingset
+		set = mapService.postMappingSet(set);
+		
+		assertEquals(2, set.getMappingSetMaps().size());
+		assertFalse(set.getMappingSetMaps().get(0).getId() == set.getMappingSetMaps().get(1).getId());
+		
+		MappingSetMap revisedMapping = set.getMappingSetMaps().stream()
+				.filter(msm -> msm.getMapping().getNmdTotaalProductId() != null )
+				.findFirst().get();
+		
+		assertTrue(1 == revisedMapping.getMappingRevisionId());
+		assertTrue(revisedMapping.getElementGuid().equals(guid));
 	}
-
+	
 	private Mapping createDummyMap() {
 		Mapping map = new Mapping();
 		map.setNlsfbCode("11.22");
