@@ -87,7 +87,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	@Override
 	public void setMappingService(MappingDataService mappingService) {
 		this.mappingService = mappingService;
-		keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet();
+		if (mappingService != null) {
+			keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet();
+		}
 	}
 
 	@Override

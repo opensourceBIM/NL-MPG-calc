@@ -10,9 +10,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.http.ProtocolVersion;
+import org.apache.http.message.BasicStatusLine;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
@@ -21,6 +24,9 @@ import org.opensourcebim.nmd.NmdDataService;
 import org.opensourcebim.nmd.NmdElement;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.ObjectStoreBuilder;
+
+import nl.tno.bim.mapping.domain.Mapping;
+import nl.tno.bim.mapping.domain.MappingSet;
 
 @SuppressWarnings("serial")
 public class NmdDataResolverTest {
@@ -66,7 +72,7 @@ public class NmdDataResolverTest {
 	}
 	
 	@Test
-	public void testCannotResolvePRoductWhenNoNlsfbCodeMatches() {
+	public void testCannotResolveProductWhenNoNlsfbCodeMatches() {
 		builder.AddUnmappedMpgElement("baksteen muur", false,
 				new HashMap<String, Double>() {{
 				    put("baksteen", 1.0);
@@ -172,8 +178,15 @@ public class NmdDataResolverTest {
 			put("staal", (long)42);
 			}
 		});
-		// there are no mappings yet, so return null
-		when(mapService.getApproximateMapForObject(any(MpgObject.class))).thenReturn(null);
+		
+		// for now omit any mappings.
+		ResponseWrapper<Mapping> emptyMap = new ResponseWrapper<>(null, new BasicStatusLine(new ProtocolVersion("http", 1, 1), 404, ""));
+		ResponseWrapper<MappingSet> emptyMapSet = new ResponseWrapper<>(null, new BasicStatusLine(new ProtocolVersion("http", 1, 1), 404, ""));
+		when(mapService.getMappingById(any(Long.class))).thenReturn(emptyMap);
+		when(mapService.getMappingSetByProjectIdAndRevisionId(any(Long.class), any(Long.class))).thenReturn(emptyMapSet);
+		when(mapService.postMapping(any(Mapping.class))).thenReturn(emptyMap);
+		when(mapService.postMappingSet(any(MappingSet.class))).thenReturn(emptyMapSet);
+		when(mapService.getApproximateMapForObject(any(MpgObject.class))).thenReturn(emptyMap);
 		return mapService;
 	}
 }
