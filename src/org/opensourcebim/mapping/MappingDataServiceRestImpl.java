@@ -197,10 +197,36 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	}
 
 	@Override
-	public boolean postCommonWords(List<String[]> words) {
+	public boolean postCommonWords(List<String[]> entries) {
+		try {
+			List<CommonWord> cWords = new ArrayList<>();
+
+			String[] headers = entries.get(0);
+			List<String[]> values = entries.subList(1, entries.size());
+			if (headers.length == 1) {
+				for (String[] word : entries) {
+					cWords.add(new CommonWord(word[0]));
+				}
+				String apiPath = "/api/commonword";
+				HttpResponse resp = this.performPostRequestWithParams(apiPath, null, null, cWords);
+				if (resp.getStatusLine().getStatusCode() == 200) {
+					return true;
+				}
+			} else {
+				System.out.println("incorrect input data encountered.");
+			}
+		} catch (Exception e) {
+			System.out.println("error encountered posting common words: " + e.getMessage());
+		}
 		return false;
 	}
-	
+
+	/**
+	 * Convert the body of the httpResponse to a java object of an input class and wraps that with the response status
+	 * @param resp HttpResponse returned from api call (json)
+	 * @param classType class to convert the json body to
+	 * @return a Wrapper object combining parsed class and status of the http response
+	 */
 	private <T> ResponseWrapper<T> handleHttpResponse(HttpResponse resp, Class<T> classType) {
 		T obj = null;
 		if (resp.getStatusLine().getStatusCode() == 200) {
@@ -214,6 +240,13 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 		return new ResponseWrapper<T>(obj, resp.getStatusLine());
 	}
 
+	/**
+	 * Similar to the regular handleHttpResponse method, but then used for deserializing collections of objects
+	 * @param resp HttpResponse returned from api call (json)
+	 * @param classType class to convert the json body to
+	 * @param collType collection type to serialize from <? extends Iterable>
+	 * @return a Wrapper object combining parsed List<Class> collections and status of the http response
+	 */
 	private <T> ResponseWrapper<List<T>> handleHttpResponse(HttpResponse resp, Class<T> classType,
 			CollectionType collType) {
 		List<T> obj = null;
