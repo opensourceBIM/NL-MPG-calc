@@ -34,8 +34,8 @@ import org.opensourcebim.nmd.NmdElement;
 import org.opensourcebim.nmd.NmdMapping;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProfileSet;
-import org.opensourcebim.nmd.NmdUserDataConfig;
-import org.opensourcebim.nmd.NmdUserDataConfigImpl;
+import org.opensourcebim.nmd.UserConfig;
+import org.opensourcebim.nmd.UserConfigImpl;
 import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
@@ -54,17 +54,17 @@ import nl.tno.bim.mapping.domain.MaterialMapping;
 public class NmdDataResolverImpl implements NmdDataResolver {
 
 	private NmdDataService service;
-	private NmdUserDataConfig config;
+	private UserConfig config;
 	private MappingDataService mappingService;
 	private MpgObjectStore store;
 	private Set<String> keyWords;
 
 	public NmdDataResolverImpl(Path rootPath) {
-		config = new NmdUserDataConfigImpl(rootPath);
+		config = new UserConfigImpl(rootPath);
 	}
 
 	public NmdDataResolverImpl() {
-		config = new NmdUserDataConfigImpl();
+		config = new UserConfigImpl();
 	}
 
 	public MpgObjectStore getStore() {
@@ -76,7 +76,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	@Override
-	public NmdUserDataConfig getConfig() {
+	public UserConfig getConfig() {
 		return config;
 	}
 

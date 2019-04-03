@@ -5,17 +5,17 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
-public class NmdUserDataConfigImpl implements NmdUserDataConfig {
+public class UserConfigImpl implements UserConfig {
 
 	private String token;
 	private int id;
@@ -27,7 +27,7 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 	private String rootPath;
 	private static final String rootNode = "nmd";
 	
-	private NmdUserDataConfigImpl(Map<String, String> nmdPropertyMap) {
+	private UserConfigImpl(Map<String, String> nmdPropertyMap) {
 		this.setToken(nmdPropertyMap.get("token"));
 		this.setClientId(Integer.parseInt(nmdPropertyMap.get("id")));
 		this.setNmd2DbPath(nmdPropertyMap.get("nmd2Path"));
@@ -36,14 +36,14 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 		this.setCommonWordFilePath(nmdPropertyMap.get("commonWordExclusionPath"));
 	}
 	
-	public NmdUserDataConfigImpl() {
+	public UserConfigImpl() {
 		this(loadResources(Paths.get(System.getProperty("user.dir")), rootNode));
 		
 		String parentPath = (new File(System.getProperty("user.dir"))).getParentFile().toString();
 		this.rootPath = parentPath;
 	}
 	
-	public NmdUserDataConfigImpl(Path rootPath) {
+	public UserConfigImpl(Path rootPath) {
 		this(loadResources(rootPath, rootNode));
 		
 		String parentPath = (new File( rootPath.toAbsolutePath().toString())).getParentFile().toString();
@@ -52,21 +52,24 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 
 	private static Map<String, String> loadResources(Path rootPath, String rootNode) {
 		Map<String, String> res = new HashMap<String, String>();
-		
-		List<String> keyNames = Arrays.asList(new String[]
-				{"token", "id", "nmd2Path" , "mappingDbPath", "nlsfbAlternativesPath", "rootPath", "commonWordExclusionPath"});
-		
+				
 		Path configPath = rootPath.resolve("nmdConfig.xml");
 		if (Files.exists(configPath)) {
 			try {
+				
 				DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
 						.newInstance();
 				DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 				try (InputStream newInputStream = Files.newInputStream(configPath)) {
 					Document doc = documentBuilder.parse(newInputStream);
-					keyNames.forEach(key -> {
-						res.put(key, doc.getElementsByTagName(key).item(0).getTextContent());	
-					});
+					Consumer<Node> addNodedata = (node) -> {
+						res.put(node.getNodeName(), node.getTextContent());
+					};
+					
+					for(int i = 0; i < doc.getChildNodes().getLength(); i++) {
+						Node node = doc.getChildNodes().item(i);
+						performMethodForRecursiveNode(node, addNodedata);
+					}
 				}					
 			} catch (Exception e) {
 				System.err.println(e.getMessage());
@@ -76,6 +79,14 @@ public class NmdUserDataConfigImpl implements NmdUserDataConfig {
 		}
 		
 		return res;
+	}
+	
+	private static void performMethodForRecursiveNode(Node node, Consumer<Node> method) {
+		method.accept(node);
+		for(int i = 0; i < node.getChildNodes().getLength(); i++) {
+			Node child = node.getChildNodes().item(i);
+			performMethodForRecursiveNode(child, method);
+		}
 	}
 
 	@Override

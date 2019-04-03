@@ -37,7 +37,7 @@ public class Nmd3DataService extends AuthorizedRestDataService implements BaseNm
 	private static final DateFormat dbDateFormat = new SimpleDateFormat("yyyyMMdd");
 	private String apiPath;
 	private Calendar requestDate;
-	private NmdUserDataConfig config = null;
+	private UserConfig config = null;
 	private boolean isConnected = false;
 	private NmdReferenceResources resources;
 
@@ -45,7 +45,7 @@ public class Nmd3DataService extends AuthorizedRestDataService implements BaseNm
 
 	private List<NmdElement> data;
 
-	public Nmd3DataService(NmdUserDataConfig config) {
+	public Nmd3DataService(UserConfig config) {
 		this.setPort(-1);
 		this.setHost("www.Milieudatabase-datainvoer.nl");
 		this.setScheme("https");

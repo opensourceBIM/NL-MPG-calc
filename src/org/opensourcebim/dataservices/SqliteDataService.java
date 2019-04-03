@@ -8,19 +8,19 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.opensourcebim.nmd.NmdUserDataConfig;
+import org.opensourcebim.nmd.UserConfig;
 
 public abstract class SqliteDataService {
 
 	protected Connection connection;
-	protected NmdUserDataConfig config;
+	protected UserConfig config;
 	
-	public SqliteDataService(NmdUserDataConfig config) {
+	public SqliteDataService(UserConfig config) {
 		this.config = config;
 		connect();
 	}
 	
-	public NmdUserDataConfig getConfig() {return config;}
+	public UserConfig getConfig() {return config;}
 
 	public void connect() {
 		try {

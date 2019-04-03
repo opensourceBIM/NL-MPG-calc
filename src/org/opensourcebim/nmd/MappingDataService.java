@@ -22,7 +22,7 @@ public interface MappingDataService {
 
 	void disconnect();
 
-	NmdUserDataConfig getConfig();
+	UserConfig getConfig();
 
 	ResponseWrapper<Mapping> postMapping(Mapping map);
 

@@ -14,7 +14,7 @@ import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.dataservices.RestDataService;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.MappingDataService;
-import org.opensourcebim.nmd.NmdUserDataConfig;
+import org.opensourcebim.nmd.UserConfig;
 
 import com.fasterxml.jackson.databind.type.CollectionType;
 
@@ -35,16 +35,16 @@ import nl.tno.bim.mapping.domain.MappingSet;
 public class MappingDataServiceRestImpl extends RestDataService implements MappingDataService {
 
 	private BasicResponseHandler respHandler = new BasicResponseHandler();
-	private NmdUserDataConfig config;
+	private UserConfig config;
 
-	public MappingDataServiceRestImpl(NmdUserDataConfig config) {
+	public MappingDataServiceRestImpl(UserConfig config) {
 		this.config = config;
 		setScheme("http");
 		setHost("localhost");
 		setPort(8090);
 	}
 
-	public NmdUserDataConfig getConfig() {
+	public UserConfig getConfig() {
 		return config;
 	}
 
@@ -134,7 +134,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 		String path = "/api/commonword";
 		HttpResponse resp = this.performGetRequestWithParams(path, null);
 		List<String> res = null;
-		
+
 		ResponseWrapper<List<CommonWord>> maps = this.handleHttpResponse(resp, CommonWord.class,
 				mapper.getTypeFactory().constructCollectionType(List.class, CommonWord.class));
 		if (maps.succes()) {

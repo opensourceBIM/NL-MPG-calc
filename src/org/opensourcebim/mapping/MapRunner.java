@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.opensourcebim.nmd.MappingDataService;
-import org.opensourcebim.nmd.NmdUserDataConfigImpl;
+import org.opensourcebim.nmd.UserConfigImpl;
 
 import com.opencsv.CSVReader;
 
@@ -27,14 +27,17 @@ public class MapRunner {
 	 * @param args: not required.
 	 */
 	public static void main(String[] args) {
-		
-		MappingDataServiceRestImpl service = new MappingDataServiceRestImpl(new NmdUserDataConfigImpl());
+
+		MappingDataServiceRestImpl service = new MappingDataServiceRestImpl(new UserConfigImpl());
+		// we're not checking for whether the service is available or not.
+		// the first method is rather lightweight however and will throw a timeout
+		// quickly if the service is not available
 		MapRunner.regenerateCommonWordsList(service);
 		MapRunner.regenerateMaterialKeyWords(service);
 		MapRunner.regenerateIfcToNlsfbMappings(service);
 		service.disconnect();
 	}
-	
+
 	/**
 	 * load common word files into the database. These can be used to remove often
 	 * used words from keyword selection
@@ -48,7 +51,7 @@ public class MapRunner {
 
 			service.postCommonWords(myEntries);
 
-		} catch ( IOException e) {
+		} catch (IOException e) {
 			System.err.println("error occured with creating common word table " + e.getMessage());
 		}
 	}
@@ -116,7 +119,7 @@ public class MapRunner {
 
 		service.postKeyWords(filteredWordCount);
 	}
-	
+
 	/**
 	 * reload the ifc to NLsfb mapping based on a csv of mapping codes.
 	 */
@@ -132,5 +135,5 @@ public class MapRunner {
 			System.err.println("error occured with creating NLSfb alternatives map: " + e.getMessage());
 		}
 	}
-	
+
 }

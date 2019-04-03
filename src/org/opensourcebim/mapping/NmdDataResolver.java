@@ -3,7 +3,7 @@ package org.opensourcebim.mapping;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.nmd.MappingDataService;
 import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.NmdUserDataConfig;
+import org.opensourcebim.nmd.UserConfig;
 
 /**
  * Interface to combine different data sources and help the user seelct the right
@@ -26,5 +26,5 @@ public interface NmdDataResolver {
 	
 	void setStore(MpgObjectStore store);
 
-	NmdUserDataConfig getConfig();
+	UserConfig getConfig();
 }

@@ -15,7 +15,7 @@ import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.dataservices.SqliteDataService;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.MappingDataService;
-import org.opensourcebim.nmd.NmdUserDataConfig;
+import org.opensourcebim.nmd.UserConfig;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
@@ -34,7 +34,7 @@ public class MappingDataServiceSqliteImpl extends SqliteDataService implements M
 	private final String ifc_to_nlsfb_table = "ifc_to_nlsfb_map";
 	private final String common_word_dutch_table = "common_words_dutch_table";
 
-	public MappingDataServiceSqliteImpl(NmdUserDataConfig config) {
+	public MappingDataServiceSqliteImpl(UserConfig config) {
 		super(config);
 	}
 

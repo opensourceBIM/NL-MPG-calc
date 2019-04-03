@@ -5,7 +5,7 @@ package org.opensourcebim.nmd;
  * In order to get the tests working implement this class (Named NmdDatabaseConfigImpl) and make 
  * sure the implementation is on the git ignore list.
  */
-public interface NmdUserDataConfig {
+public interface UserConfig {
 
 	/*
 	 * refresh token for authorization to request a new OAuth token

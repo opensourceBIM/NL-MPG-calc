@@ -16,11 +16,11 @@ public class Nmd2DataService implements BaseNmdDataService {
 
 	private Connection connection;
 	
-	private NmdUserDataConfig config;
+	private UserConfig config;
 	private List<NmdElement> data;
 	private NmdReferenceResources resources;
 
-	public Nmd2DataService(NmdUserDataConfig config) {
+	public Nmd2DataService(UserConfig config) {
 		this.config = config;
 		this.data = new ArrayList<NmdElement>();
 	}

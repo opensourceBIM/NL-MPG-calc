@@ -27,7 +27,7 @@ public class Nmd2DataServiceIntegrationTest {
 	}
 
 	public void connect() {
-		db = new Nmd2DataService(new NmdUserDataConfigImpl());
+		db = new Nmd2DataService(new UserConfigImpl());
 		db.login();
 		db.preLoadData();
 	}
