@@ -2,6 +2,7 @@ package org.opensourcebim.mapping;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
@@ -9,11 +10,14 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.nmd.NmdUserDataConfigImpl;
 
 import nl.tno.bim.mapping.domain.Mapping;
@@ -53,8 +57,8 @@ public class MappingDataServiceIntegrationTest {
             		 "bbAdmin",  "bbPass_8737812hoih98h");
             stmt = con.createStatement();
 
-            stmt.executeUpdate("DELETE FROM material_mappings");
             stmt.executeUpdate("DELETE FROM mapping_set_map");
+            stmt.executeUpdate("DELETE FROM material_mappings");
             stmt.executeUpdate("DELETE FROM mappings");
             stmt.executeUpdate("DELETE FROM mapping_set");
             con.close();
@@ -66,21 +70,21 @@ public class MappingDataServiceIntegrationTest {
 	@Test
 	public void testMapServiceCanAddMapping() {
 		Mapping map = createDummyMap();
-		map = mapService.postMapping(map);
+		ResponseWrapper<Mapping> res = mapService.postMapping(map);
 		
-		assertTrue(map.getId() != null && map.getId() > 0);
+		assertTrue(res.getObject().getId() != null && res.getObject().getId() > 0);
 	}
 	
 	@Test
 	public void testMapServiceCanGetMappingById() {
 		// first we need to add a map
 		Mapping map = createDummyMap();
-		map = mapService.postMapping(map);
-		Long id = map.getId();
+		ResponseWrapper<Mapping> firstMap = mapService.postMapping(map);
+		Long id = firstMap.getObject().getId();
 				
-		Mapping sameMap = mapService.getMappingById(id);
+		ResponseWrapper<Mapping> res = mapService.getMappingById(id);
 		
-		assertTrue(map.getNlsfbCode().equals(sameMap.getNlsfbCode()));
+		assertTrue(firstMap.getObject().getNlsfbCode().equals(res.getObject().getNlsfbCode()));
 	}
 
 	@Test
@@ -91,9 +95,44 @@ public class MappingDataServiceIntegrationTest {
 		
 		set.addMappingToMappingSet(createDummyMap(), "some guid");
 
-		set = mapService.postMappingSet(set);
+		set = mapService.postMappingSet(set).getObject();
 		assertTrue(set != null);
 		assertTrue(set.getId() != null && set.getId() > 0);
+	}
+	
+	@Test
+	public void testMapServiceCannotAddMappingSetWithSameProjectAndRevisionId() {
+		MappingSet set = new MappingSet();
+		set.setProjectId((long)1);
+		set.setRevisionId((long)1);
+		
+		set.addMappingToMappingSet(createDummyMap(), "some guid");
+
+		mapService.postMappingSet(set);
+		ResponseWrapper<MappingSet> respSet = mapService.postMappingSet(set);
+		
+		assertFalse(respSet.succes());
+	}
+	
+	@Test
+	public void testMapServiceWillAddNewMappingSetOnNewRevision() {
+		Mapping map = createDummyMap();
+		
+		MappingSet set1 = new MappingSet();
+		set1.setProjectId((long)1);
+		set1.setRevisionId((long)1);
+		set1.addMappingToMappingSet(map, "some guid");
+		ResponseWrapper<MappingSet> respSet1 = mapService.postMappingSet(set1);
+		
+		MappingSet set2 = new MappingSet();
+		set2.setProjectId((long)1);
+		set2.setRevisionId((long)2);
+		set2.addMappingToMappingSet(map, "some other guid");
+		ResponseWrapper<MappingSet> respSet2 = mapService.postMappingSet(set2);
+		
+		// check that there are two unique mappingsets created
+		assertTrue(respSet2.succes());
+		assertNotEquals(respSet1.getObject().getId(), respSet2.getObject().getId());
 	}
 	
 	@Test
@@ -104,14 +143,15 @@ public class MappingDataServiceIntegrationTest {
 		
 		// have to post the map first to get an id (otherwise two different records will be created)
 		Mapping map = createDummyMap();
-		map = mapService.postMapping(map);
+		ResponseWrapper<Mapping> resp = mapService.postMapping(map);
 		
-		set.addMappingToMappingSet(map, "some guid");
-		set.addMappingToMappingSet(map, "another guid");
+		set.addMappingToMappingSet(resp.getObject(), "some guid");
+		set.addMappingToMappingSet(resp.getObject(), "another guid");
 		
-		set = mapService.postMappingSet(set);
-		assertEquals(2, set.getMappingSetMaps().size());
-		assertEquals(set.getMappingSetMaps().get(0).getMapping().getId(), set.getMappingSetMaps().get(1).getMapping().getId());
+		ResponseWrapper<MappingSet> respSet = mapService.postMappingSet(set);
+		assertEquals(2, respSet.getObject().getMappingSetMaps().size());
+		assertEquals(respSet.getObject().getMappingSetMaps().get(0).getMapping().getId(),
+				respSet.getObject().getMappingSetMaps().get(1).getMapping().getId());
 	}
 	
 	@Test
@@ -123,9 +163,9 @@ public class MappingDataServiceIntegrationTest {
 
 		Mapping map = createDummyMap();
 		set.addMappingToMappingSet(map, UUID.randomUUID().toString());
-		set = mapService.postMappingSet(set);
+		set = mapService.postMappingSet(set).getObject();
 		
-		MappingSet sameSet = mapService.getMappingSetByProjectIdAndRevisionId((long)1, (long)1);
+		MappingSet sameSet = mapService.getMappingSetByProjectIdAndRevisionId((long)1, (long)1).getObject();
 		
 		assertEquals(set.getId(), sameSet.getId());
 		assertEquals(set.getMappingSetMaps().get(0).getMapping().getId(), sameSet.getMappingSetMaps().get(0).getMapping().getId());
@@ -141,7 +181,7 @@ public class MappingDataServiceIntegrationTest {
 		String guid = UUID.randomUUID().toString();
 		Mapping map = createDummyMap();
 		set.addMappingToMappingSet(map, guid);
-		set = mapService.postMappingSet(set);
+		set = mapService.postMappingSet(set).getObject();
 
 		// add another mapping
 		Mapping newMap = createDummyMap();
@@ -149,7 +189,7 @@ public class MappingDataServiceIntegrationTest {
 		set.addMappingToMappingSet(newMap, guid);
 		
 		// this post will return the full mappingset
-		set = mapService.postMappingSet(set);
+		set = mapService.postMappingSet(set).getObject();
 		
 		assertEquals(2, set.getMappingSetMaps().size());
 		assertFalse(set.getMappingSetMaps().get(0).getId() == set.getMappingSetMaps().get(1).getId());
@@ -161,6 +201,25 @@ public class MappingDataServiceIntegrationTest {
 		assertTrue(1 == revisedMapping.getMappingRevisionId());
 		assertTrue(revisedMapping.getElementGuid().equals(guid));
 	}
+	
+	@Test
+	public void testCanRetrieveNLsfbMappings() {
+		Map<String, List<String>> nlsfbMappings = mapService.getNlsfbMappings();
+		assertTrue(nlsfbMappings != null);
+	}
+	
+	@Test
+	public void testCanRetrieveKeyWords() {
+		Map<String, Long> keyWords = mapService.getKeyWordMappings(1);
+		assertTrue(keyWords != null);
+	}
+	
+	@Test
+	public void testCanRetrieveCommonWords() {
+		List<String> words = mapService.getCommonWords();
+		assertTrue(words != null);
+	}
+	
 	
 	private Mapping createDummyMap() {
 		Mapping map = new Mapping();
