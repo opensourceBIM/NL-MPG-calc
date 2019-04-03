@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.impl.client.BasicResponseHandler;
@@ -17,6 +18,7 @@ import org.opensourcebim.nmd.NmdUserDataConfig;
 
 import com.fasterxml.jackson.databind.type.CollectionType;
 
+import nl.tno.bim.mapping.domain.CommonWord;
 import nl.tno.bim.mapping.domain.IfcMaterialKeyword;
 import nl.tno.bim.mapping.domain.IfcToNlsfb;
 import nl.tno.bim.mapping.domain.Mapping;
@@ -129,19 +131,24 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 
 	@Override
 	public List<String> getCommonWords() {
-		return null;
+		String path = "/api/commonword";
+		HttpResponse resp = this.performGetRequestWithParams(path, null);
+		List<String> res = null;
+		
+		ResponseWrapper<List<CommonWord>> maps = this.handleHttpResponse(resp, CommonWord.class,
+				mapper.getTypeFactory().constructCollectionType(List.class, CommonWord.class));
+		if (maps.succes()) {
+			res = maps.getObject().stream().map(w -> w.getWord()).collect(Collectors.toList());
+		}
+		return res;
 	}
 
 	@Override
 	public void connect() {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void disconnect() {
-		// TODO Auto-generated method stub
-
 	}
 
 	public boolean postNlsfbMappings(List<String[]> entries) {
