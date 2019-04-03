@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
@@ -136,10 +137,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			set.setRevisionId(store.getRevisionId());
 			set.setDate(new Date());
 
-			// ToDo: group the elements that are 'equal' for sake of the mapping process
-			// (geometry, type, ..) to avoid a lot of duplication
 			Map<String, List<MpgElement>> elGroups = store.getElementGroups();
-
 			boolean addedNewMapping = false;
 			for (List<MpgElement> elGroup : elGroups.values()) {
 				MpgElement element = elGroup.get(0);
@@ -152,7 +150,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					if (element.hasMapping()) {
 						addedNewMapping = true;
 						Mapping map = createMappingFromMappedElement(element);
-						map = mappingService.postMapping(map);
+						map = mappingService.postMapping(map).getObject();
 
 						// add the newly created mapping to the mappingset
 						set.addMappingToMappingSet(map, element.getMpgObject().getGlobalId());
@@ -183,12 +181,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * the ifc GUID matches.
 	 */
 	private MappingSet tryApplyEarlierMappings() {
-		MappingSet set = null;
+		ResponseWrapper<MappingSet> respSet = null;
 		try {
-			set = getMappingService().getMappingSetByProjectIdAndRevisionId(store.getProjectId(),
+			respSet = getMappingService().getMappingSetByProjectIdAndRevisionId(store.getProjectId(),
 					store.getRevisionId());
-			if (set != null) {
-				for (MappingSetMap map : set.getMappingSetMaps()) {
+			if (respSet.succes()) {
+				for (MappingSetMap map : respSet.getObject().getMappingSetMaps()) {
 					Mapping nmdMap = map.getMapping();
 					if (nmdMap != null) {
 						// check whether the element still exists and the nmd product references are
@@ -203,7 +201,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		} catch (Exception e) {
 			System.err.println("Map service error: " + e.getMessage());
 		}
-		return set;
+		return respSet.getObject();
 	}
 
 	/**
@@ -371,7 +369,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// ToDo: implement correct user mapping....
 		// first try to find any user defined mappings
-		Mapping map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject());
+		Mapping map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject()).getObject();
 		if (map != null) {
 			// get products in map and exit if succeeded.
 		}
