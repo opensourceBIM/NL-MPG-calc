@@ -19,6 +19,8 @@ public abstract class SqliteDataService {
 		this.config = config;
 		connect();
 	}
+	
+	public NmdUserDataConfig getConfig() {return config;}
 
 	public void connect() {
 		try {

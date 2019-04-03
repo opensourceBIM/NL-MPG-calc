@@ -1,32 +1,21 @@
 package org.opensourcebim.mapping;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.http.message.BasicStatusLine;
+import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.dataservices.SqliteDataService;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.nmd.MappingDataService;
 import org.opensourcebim.nmd.NmdUserDataConfig;
-
-import com.opencsv.CSVReader;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
@@ -50,28 +39,28 @@ public class MappingDataServiceSqliteImpl extends SqliteDataService implements M
 	}
 
 	@Override
-	public Mapping postMapping(Mapping map) {
-		return null;
-	}
-	
-	@Override
-	public Mapping getMappingById(Long id) {
-		return null;
+	public ResponseWrapper<Mapping> postMapping(Mapping map) {
+		return new ResponseWrapper<>(null, new BasicStatusLine(null, 404, "method not implemented"));
 	}
 
 	@Override
-	public MappingSet postMappingSet(MappingSet set) {
-		return null;
-	}
-	
-	@Override
-	public MappingSet getMappingSetByProjectIdAndRevisionId(Long pid, Long rid) {
-		return null;
+	public ResponseWrapper<Mapping> getMappingById(Long id) {
+		return new ResponseWrapper<>(null, new BasicStatusLine(null, 404, "method not implemented"));
 	}
 
 	@Override
-	public Mapping getApproximateMapForObject(MpgObject object) {
-		return null;
+	public ResponseWrapper<MappingSet> postMappingSet(MappingSet set) {
+		return new ResponseWrapper<>(null, new BasicStatusLine(null, 404, "method not implemented"));
+	}
+
+	@Override
+	public ResponseWrapper<MappingSet> getMappingSetByProjectIdAndRevisionId(Long pid, Long rid) {
+		return new ResponseWrapper<>(null, new BasicStatusLine(null, 404, "method not implemented"));
+	}
+
+	@Override
+	public ResponseWrapper<Mapping> getApproximateMapForObject(MpgObject object) {
+		return new ResponseWrapper<>(null, new BasicStatusLine(null, 404, "method not implemented"));
 	}
 
 	@Override
@@ -120,110 +109,6 @@ public class MappingDataServiceSqliteImpl extends SqliteDataService implements M
 		return keyWordMap;
 	}
 
-	public void regenerateMappingData() {
-		createCommonWordsTable();
-		regenerateMaterialKeyWords();
-		regenerateIfcToNlsfbMappings();
-	}
-
-	/**
-	 * load common word files into the database. These can be used to remove often
-	 * used words from keyword selection
-	 */
-	private void createCommonWordsTable() {
-		try {
-			String tableName = this.common_word_dutch_table;
-			CSVReader reader = new CSVReader(new FileReader(config.getCommonWordFilePath()));
-			List<String[]> myEntries = reader.readAll();
-			reader.close();
-
-			String[] headers = myEntries.get(0);
-			List<String[]> values = myEntries.subList(1, myEntries.size());
-			if (headers.length == 1) {
-				deleteTable(tableName);
-
-				String createTableSql = "CREATE TABLE IF NOT EXISTS " + tableName + " (\n"
-						+ "	id integer PRIMARY KEY AUTOINCREMENT,\n" + "	word text NOT NULL\n" + ");";
-				this.executeAndCommitCommand(createTableSql);
-				this.executeAndCommitCommand(createSqlInsertStatement(tableName, headers, values));
-
-			} else {
-				// our import file does not seem to be in the assumed structure.
-				System.out.println("incorrect input data encountered.");
-			}
-		} catch (SQLException | IOException e) {
-			System.err.println("error occured with creating common word table " + e.getMessage());
-		}
-	}
-
-	/**
-	 * re-evaluate a series of ifcFiles and check what kind of materials are present
-	 * in these files. Based on the result determine the most common/important
-	 * keywords to be used in the mapping
-	 * 
-	 * @throws FileNotFoundException
-	 */
-	private void regenerateMaterialKeyWords() {
-
-		List<Path> foundFiles = new ArrayList<Path>();
-		List<String> allMaterials = new ArrayList<String>();
-		try {
-			Files.walk(Paths.get(config.getIfcFilesForKeyWordMapRootPath()))
-					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc")).filter(p -> {
-						// filter on max file size. example: 50 MB limit on 5e7
-						return (new File(p.toAbsolutePath().toString())).length() < 1e8;
-					}).forEach(p -> {
-						foundFiles.add(p);
-					});
-
-			for (Path path : foundFiles) {
-				List<String> fileMaterials = new ArrayList<String>();
-				Scanner scanner = new Scanner(new File(path.toAbsolutePath().toString()));
-				while (scanner.hasNextLine()) {
-					String line = scanner.nextLine();
-					if (line.contains("IFCMATERIAL(")) {
-						String[] matRes = StringUtils.substringsBetween(line, "\'", "\'");
-						if (matRes != null) {
-							for (int i = 0; i < matRes.length; i++) {
-								if (matRes[i] != null) {
-									List<String> words = Arrays.asList(matRes[i].split(" |-|,|_|\\|(|)|<|>|:|;"))
-											.stream().filter(w -> w != null && !w.isEmpty()).map(w -> w.toLowerCase())
-											.collect(Collectors.toList());
-									fileMaterials.addAll(words);
-								}
-							}
-						}
-					}
-				}
-				allMaterials.addAll(fileMaterials);
-				scanner.close();
-			}
-
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-		}
-
-		// group the words by occurence and remove any common words from the found
-		// keywords
-		List<String> common_words = getCommonWords();
-		Map<String, Long> wordCount = allMaterials.stream()
-				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-
-		List<Entry<String, Long>> filteredWordCount = wordCount.entrySet().stream()
-				.filter(w -> w.getKey().toCharArray().length > 2) // remove items that are simply too short
-				.filter(w -> 2 * w.getKey().replaceAll("[^a-zA-Z]", "").length() >= w.getKey().length()) // remove items
-																											// with too
-																											// large
-																											// ratio of
-																											// non-text
-																											// content
-				.filter(w -> !common_words.contains(w.getKey())).sorted((w1, w2) -> {
-					return w1.getValue().compareTo(w2.getValue());
-				}).collect(Collectors.toList());
-
-		writeKeyWordsToDB(filteredWordCount);
-	}
-
 	@Override
 	public List<String> getCommonWords() {
 		List<String> commonWords = new ArrayList<String>();
@@ -244,7 +129,37 @@ public class MappingDataServiceSqliteImpl extends SqliteDataService implements M
 		return commonWords;
 	}
 
-	private Boolean writeKeyWordsToDB(List<Entry<String, Long>> words) {
+	/**
+	 * write the found entries to the database
+	 * 
+	 * @param entries
+	 */
+	public boolean postNlsfbMappings(List<String[]> entries) {
+		try {
+			String tableName = this.ifc_to_nlsfb_table;
+			String[] headers = entries.get(0);
+			List<String[]> values = entries.subList(1, entries.size());
+			if (headers.length == 2) {
+				deleteTable(tableName);
+
+				String createTableSql = "CREATE TABLE IF NOT EXISTS " + tableName + " (\n"
+						+ "	id integer PRIMARY KEY AUTOINCREMENT,\n" + " code text NOT NULL,\n"
+						+ "	ifcproducttype text NOT NULL\n" + ");";
+				this.executeAndCommitCommand(createTableSql);
+				this.executeAndCommitCommand(createSqlInsertStatement(tableName, headers, values));
+				return true;
+			} else {
+				// our import file does not seem to be in the assumed structure.
+				System.out.println("incorrect input data encountered.");
+			}
+		} catch (Exception e) {
+			System.out.println("unaccounted error occured in posting nlsfb mappings to sqlite db: " + e.getMessage());
+		}
+		return false;
+	}
+
+	@Override
+	public boolean postKeyWords(List<Entry<String, Long>> words) {
 		String tableName = this.mat_keyword_table;
 		String[] headers = new String[] { "keyword", "count" };
 
@@ -268,34 +183,28 @@ public class MappingDataServiceSqliteImpl extends SqliteDataService implements M
 		return true;
 	}
 
-	/**
-	 * reload the ifc to NLsfb mapping based on a csv of mapping codes.
-	 */
 	@Override
-	public void regenerateIfcToNlsfbMappings() {
-		try {
-			String tableName = this.ifc_to_nlsfb_table;
-			CSVReader reader = new CSVReader(new FileReader(config.getNlsfbAlternativesFilePath()));
-			List<String[]> myEntries = reader.readAll();
-			reader.close();
+	public boolean postCommonWords(List<String[]> entries) {
 
-			String[] headers = myEntries.get(0);
-			List<String[]> values = myEntries.subList(1, myEntries.size());
-			if (headers.length == 2) {
+		try {
+			String[] headers = entries.get(0);
+			List<String[]> values = entries.subList(1, entries.size());
+			if (headers.length == 1) {
+				String tableName = this.common_word_dutch_table;
 				deleteTable(tableName);
 
 				String createTableSql = "CREATE TABLE IF NOT EXISTS " + tableName + " (\n"
-						+ "	id integer PRIMARY KEY AUTOINCREMENT,\n" + " code text NOT NULL,\n"
-						+ "	ifcproducttype text NOT NULL\n" + ");";
+						+ "	id integer PRIMARY KEY AUTOINCREMENT,\n" + "	word text NOT NULL\n" + ");";
 				this.executeAndCommitCommand(createTableSql);
 				this.executeAndCommitCommand(createSqlInsertStatement(tableName, headers, values));
-
+				return true;
 			} else {
 				// our import file does not seem to be in the assumed structure.
 				System.out.println("incorrect input data encountered.");
 			}
-		} catch (SQLException | IOException e) {
-			System.err.println("error occured with creating NLSfb alternatives map: " + e.getMessage());
+		} catch (Exception e) {
+			System.out.println("error encountered posting common words: " + e.getMessage());
 		}
+		return false;
 	}
 }
