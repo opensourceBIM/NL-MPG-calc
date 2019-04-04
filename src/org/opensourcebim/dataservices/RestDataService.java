@@ -61,10 +61,9 @@ public class RestDataService {
 		try {
 			if(body != null) {
 				String jsonBody = mapper.writeValueAsString(body);
-				StringEntity entity = new StringEntity(jsonBody);
-				((HttpPost)request).setEntity(entity);
+				((HttpPost)request).setEntity(new StringEntity(jsonBody,"UTF-8"));
 				request.setHeader("Accept", "application/json");
-				request.setHeader("Content-type", "application/json");
+				request.setHeader("Content-type", "application/json;charset=UTF-8");
 			}
 			
 			response = httpClient.execute(request);
