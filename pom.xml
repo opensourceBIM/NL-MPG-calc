@@ -132,5 +132,10 @@
 			<artifactId>bcf</artifactId>
 			<version>0.0.35</version>
 		</dependency>
+		<dependency>
+			<groupId>org.opensourcebim</groupId>
+			<artifactId>bimmappingservice</artifactId>
+			<version>1.0</version>
+		</dependency>
 	</dependencies>
 </project>

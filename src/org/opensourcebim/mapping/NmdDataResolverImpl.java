@@ -373,7 +373,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// first try to find any user defined mappings
 		Mapping map = mappingService.getApproximateMapForObject(mpgElement.getMpgObject()).getObject();
 		if (map != null) {
-			// get products in map and exit if succeeded.
+			// apply mapping and exit the resolve stage
 		}
 
 		// first try to resolve for explicitly indicated nlsfb code
