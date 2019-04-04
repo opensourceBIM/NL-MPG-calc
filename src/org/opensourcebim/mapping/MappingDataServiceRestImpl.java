@@ -9,7 +9,9 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolVersion;
 import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.message.BasicStatusLine;
 import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.dataservices.RestDataService;
 import org.opensourcebim.ifccollection.MpgObject;
@@ -78,7 +80,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 
 	@Override
 	public ResponseWrapper<Mapping> getApproximateMapForObject(MpgObject object) {
-		return null;
+		return new ResponseWrapper<Mapping>(null,  new BasicStatusLine(new ProtocolVersion("http",1, 1), 404, "not implemented yet"));
 	}
 
 	@Override
@@ -204,7 +206,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 			String[] headers = entries.get(0);
 			List<String[]> values = entries.subList(1, entries.size());
 			if (headers.length == 1) {
-				for (String[] word : entries) {
+				for (String[] word : values) {
 					cWords.add(new CommonWord(word[0]));
 				}
 				String apiPath = "/api/commonword";
