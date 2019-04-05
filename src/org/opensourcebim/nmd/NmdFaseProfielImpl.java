@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.opensourcebim.mpgcalculation.MpgCostFactor;
-
 public class NmdFaseProfielImpl implements NmdFaseProfiel {
 
 	private HashMap<String, Double> profielCoefficienten;
@@ -43,14 +41,14 @@ public class NmdFaseProfielImpl implements NmdFaseProfiel {
 	}
 
 	@Override
-	public Set<MpgCostFactor> calculateFactors(double cost) {
-		Set<MpgCostFactor> results = new HashSet<MpgCostFactor>();
+	public Set<NmdCostFactor> calculateFactors(double cost) {
+		Set<NmdCostFactor> results = new HashSet<NmdCostFactor>();
 		for (Entry<Integer, NmdMilieuCategorie> entry : this.refData.getMilieuCategorieMapping().entrySet()) {
 			String description = entry.getValue().getDescription();
 			Double profielValue = profielCoefficienten.getOrDefault(description, Double.NaN);
 			if (!profielValue.isNaN()) {
 				results.add(
-						new MpgCostFactor(this.fase, description, cost * profielValue * entry.getValue().getWeight()));
+						new NmdCostFactor(this.fase, description, cost * profielValue * entry.getValue().getWeight()));
 			}
 		}
 		return results;

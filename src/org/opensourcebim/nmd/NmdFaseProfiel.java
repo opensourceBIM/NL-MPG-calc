@@ -2,8 +2,6 @@ package org.opensourcebim.nmd;
 
 import java.util.Set;
 
-import org.opensourcebim.mpgcalculation.MpgCostFactor;
-
 /**
  * Interface class to provide the impact factor coefficients for a single
  * Lifecycle stage. For instance: every NmdMaterialSpecification will have
@@ -17,7 +15,7 @@ public interface NmdFaseProfiel {
 	
 	String getFase();
 	
-	Set<MpgCostFactor> calculateFactors(double cost);
+	Set<NmdCostFactor> calculateFactors(double cost);
 
 	double getProfielCoefficient(String milieuCategorie);
 	

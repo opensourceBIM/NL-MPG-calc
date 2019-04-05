@@ -5,6 +5,7 @@ import java.util.Set;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
+import org.opensourcebim.nmd.NmdCostFactor;
 import org.opensourcebim.nmd.NmdProductCard;
 import org.opensourcebim.nmd.NmdProfileSet;
 import org.opensourcebim.nmd.scaling.NmdScaler;
@@ -91,7 +92,7 @@ public class MpgCalculator {
 
 							// example for production
 							profielSet.getAllFaseProfielen().values().forEach(fp -> {
-								Set<MpgCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfiel);
+								Set<NmdCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfiel);
 								Long objectId = element.getMpgObject().getObjectId();
 								results.addCostFactors(factors, product.getDescription(), profielSet.getName(), objectId);
 							});

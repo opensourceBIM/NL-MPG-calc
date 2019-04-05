@@ -1,6 +1,6 @@
-package org.opensourcebim.mpgcalculation;
+package org.opensourcebim.nmd;
 
-public class MpgCostFactor {
+public class NmdCostFactor {
 	private Long objectId;
 	private String fase;
 	private String milieuCategorie;
@@ -8,7 +8,7 @@ public class MpgCostFactor {
 	private String profielSetName; // name of meterialSpec
 	private double value;
 
-	public MpgCostFactor(String fase, String milieuCategorie, double value) {
+	public NmdCostFactor(String fase, String milieuCategorie, double value) {
 		this.fase = fase;
 		this.milieuCategorie = milieuCategorie;
 		this.value = value;
@@ -59,10 +59,10 @@ public class MpgCostFactor {
 	 */
 	@Override
 	public boolean equals(Object otherFactor) {
-		if (!(otherFactor instanceof MpgCostFactor)) {
+		if (!(otherFactor instanceof NmdCostFactor)) {
 			return false;
 		}
-		MpgCostFactor testFactor = (MpgCostFactor) otherFactor;
+		NmdCostFactor testFactor = (NmdCostFactor) otherFactor;
 
 		return testFactor.getObjectId() == this.getObjectId()
 				&& testFactor.getMilieuCategorie() == this.getMilieuCategorie() 
