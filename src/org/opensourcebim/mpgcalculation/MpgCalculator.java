@@ -59,7 +59,7 @@ public class MpgCalculator {
 
 					// get number of product units based on geometry of ifcproduct and unit of
 					// productcard
-					double unitsRequired = product.getRequiredNumberOfUnits(element.getMpgObject());
+					double unitsRequired = element.getRequiredNumberOfUnits(product);
 
 					for (NmdProfileSet profielSet : product.getProfileSets()) {
 						if (profielSet.getQuantity() > 0.0) {

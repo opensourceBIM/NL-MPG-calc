@@ -41,7 +41,7 @@ public class Nmd3DataService extends AuthorizedRestDataService implements BaseNm
 	private boolean isConnected = false;
 	private NmdReferenceResources resources;
 
-	NmdScalerFactory scalerFactor = new NmdScalerFactory();
+	NmdScalerFactory scalerFactory = new NmdScalerFactory();
 
 	private List<NmdElement> data;
 
@@ -435,7 +435,7 @@ public class Nmd3DataService extends AuthorizedRestDataService implements BaseNm
 			String scalerUnitName = this.getResources().getUnitMapping().get(scalerUnit);
 			NmdScaler scaler;
 			try {
-				scaler = scalerFactor.create(scalerTypeName, scalerUnitName,
+				scaler = scalerFactory.create(scalerTypeName, scalerUnitName,
 						new Double[] { scalerCoeffA, scalerCoeffB, scalerCoeffC },
 						new Double[] { scalerMinDim1, scalerMaxDim1, scalerMinDim2, scalerMaxDim2 },
 						new Double[] { scalerDim1, scalerDim2 });

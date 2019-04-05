@@ -43,8 +43,6 @@ public interface NmdProductCard{
 
 	Integer getProductId();
 
-	double getRequiredNumberOfUnits(MpgObject mpgObject);
-	
 	@JsonIgnore
 	Double getProfileSetsCoeficientSum();
 }

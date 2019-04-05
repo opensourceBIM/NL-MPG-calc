@@ -107,7 +107,6 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 					res.put(productType, vals);
 				}
 			}
-			;
 		}
 		return res;
 	}
