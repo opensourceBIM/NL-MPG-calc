@@ -17,10 +17,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.opensourcebim.nmd.MappingDataService;
-import org.opensourcebim.nmd.UserConfigImpl;
 
 import com.opencsv.CSVReader;
+
+import nl.tno.bim.nmd.config.UserConfigImpl;
 
 public class MapRunner {
 	/**

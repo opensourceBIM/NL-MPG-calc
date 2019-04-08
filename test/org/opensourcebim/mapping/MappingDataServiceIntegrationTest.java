@@ -18,12 +18,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.dataservices.ResponseWrapper;
-import org.opensourcebim.nmd.UserConfigImpl;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
 import nl.tno.bim.mapping.domain.MappingSetMap;
 import nl.tno.bim.mapping.domain.MaterialMapping;
+import nl.tno.bim.nmd.config.UserConfigImpl;
 
 /**
  * Test adding and retrieving objects from the Mapping Service 

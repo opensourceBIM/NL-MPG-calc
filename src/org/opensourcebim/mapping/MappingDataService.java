@@ -1,4 +1,4 @@
-package org.opensourcebim.nmd;
+package org.opensourcebim.mapping;
 
 import java.util.List;
 import java.util.Map;
@@ -9,6 +9,7 @@ import org.opensourcebim.ifccollection.MpgObject;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
+import nl.tno.bim.nmd.config.UserConfig;
 
 /**
  * Interface to provide generic read and write access to a Mapping Dataservice

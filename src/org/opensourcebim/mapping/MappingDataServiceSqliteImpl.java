@@ -14,11 +14,10 @@ import org.apache.http.message.BasicStatusLine;
 import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.dataservices.SqliteDataService;
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.nmd.MappingDataService;
-import org.opensourcebim.nmd.UserConfig;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
+import nl.tno.bim.nmd.config.UserConfig;
 
 /**
  * Class to provide an interface between java code and a mapping database The

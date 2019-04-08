@@ -15,8 +15,6 @@ import org.apache.http.message.BasicStatusLine;
 import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.dataservices.RestDataService;
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.nmd.MappingDataService;
-import org.opensourcebim.nmd.UserConfig;
 
 import com.fasterxml.jackson.databind.type.CollectionType;
 
@@ -25,6 +23,7 @@ import nl.tno.bim.mapping.domain.IfcMaterialKeyword;
 import nl.tno.bim.mapping.domain.IfcToNlsfb;
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
+import nl.tno.bim.nmd.config.UserConfig;
 
 /**
  * Class to provide an interface between java code and a mapping database The
@@ -43,7 +42,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 		this.config = config;
 		setScheme("http");
 		setHost("localhost");
-		setPort(8090);
+		setPort(8085);
 	}
 
 	public UserConfig getConfig() {
