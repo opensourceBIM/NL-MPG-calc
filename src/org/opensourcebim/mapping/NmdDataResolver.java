@@ -2,7 +2,6 @@ package org.opensourcebim.mapping;
 
 import org.opensourcebim.ifccollection.MpgObjectStore;
 
-import nl.tno.bim.nmd.config.UserConfig;
 import nl.tno.bim.nmd.services.NmdDataService;
 
 /**
@@ -16,7 +15,7 @@ import nl.tno.bim.nmd.services.NmdDataService;
  */
 public interface NmdDataResolver {
 
-	void NmdToMpg();
+	void nmdToMpg();
 
 	void setNmdService(NmdDataService nmdDataService);
 	

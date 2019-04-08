@@ -34,7 +34,7 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 		resolver.setNmdService(new Nmd2DataService());
 		resolver.setMappingService(new MappingDataServiceRestImpl());
 		resolver.setStore(ifcResults);
-		resolver.NmdToMpg();
+		resolver.nmdToMpg();
 		
 		// calculate the mpg scores
 		MpgCalculator calculator = new MpgCalculator();

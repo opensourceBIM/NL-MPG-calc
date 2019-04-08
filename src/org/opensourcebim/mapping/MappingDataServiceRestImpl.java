@@ -23,7 +23,6 @@ import nl.tno.bim.mapping.domain.IfcMaterialKeyword;
 import nl.tno.bim.mapping.domain.IfcToNlsfb;
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
-import nl.tno.bim.nmd.config.UserConfig;
 
 /**
  * Class to provide an interface between java code and a mapping database The

@@ -1,6 +1,5 @@
 package org.opensourcebim.mapping;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -34,8 +33,6 @@ import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
 import nl.tno.bim.mapping.domain.MappingSetMap;
 import nl.tno.bim.mapping.domain.MaterialMapping;
-import nl.tno.bim.nmd.config.UserConfig;
-import nl.tno.bim.nmd.config.UserConfigImpl;
 import nl.tno.bim.nmd.domain.NlsfbCode;
 import nl.tno.bim.nmd.domain.NmdElement;
 import nl.tno.bim.nmd.domain.NmdProductCard;
@@ -94,7 +91,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * productcards for every MpgObject found
 	 */
 	@Override
-	public void NmdToMpg() {
+	public void nmdToMpg() {
 
 		if (this.getStore() == null) {
 			return;

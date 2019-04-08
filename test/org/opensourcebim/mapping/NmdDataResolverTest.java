@@ -55,7 +55,7 @@ public class NmdDataResolverTest {
 	@Test
 	public void testResolverDoesNotBreakOnEmptyStore() {
 		this.resolver.setStore(null);
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 	}
 	
 	@Test
@@ -65,7 +65,7 @@ public class NmdDataResolverTest {
 				    put("baksteen", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "21.12", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur");
 		assertTrue(el.hasMapping());
 	}
@@ -77,7 +77,7 @@ public class NmdDataResolverTest {
 				    put("baksteen", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "21.99", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur");
 		assertTrue(el.getMpgObject().getAllTags().stream().anyMatch(t -> t.getType().equals(MpgInfoTagType.nmdProductCardWarning)));
 		assertFalse(el.hasMapping());
@@ -90,7 +90,7 @@ public class NmdDataResolverTest {
 				    put("empty", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "99.99", "IfcTest", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("test mpg element");
 		assertTrue(el.getMpgObject().getAllTags().stream().anyMatch(t -> t.getType().equals(MpgInfoTagType.nmdProductCardWarning)));
 		assertFalse(el.hasMapping());
@@ -104,7 +104,7 @@ public class NmdDataResolverTest {
 				    put("baksteen", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur-21.12");
 		assertTrue(el.hasMapping());
 	}
@@ -117,7 +117,7 @@ public class NmdDataResolverTest {
 				    put("21.12 baksteen", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur");
 		assertTrue(el.hasMapping());
 	}
@@ -128,7 +128,7 @@ public class NmdDataResolverTest {
 		builder.AddUnmappedMpgElement("baksteen muur", false,
 				new HashMap<String, Double>(),
 				new Double[] {1.0, 1.0, 1.0}, "21.12", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur");
 		assertTrue(el.hasMapping());
 	}

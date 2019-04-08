@@ -31,7 +31,7 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 		resolver.setNmdService(new Nmd2DataService());
 		resolver.setMappingService(new MappingDataServiceRestImpl());
 		resolver.setStore(ifcResults);
-		resolver.NmdToMpg();
+		resolver.nmdToMpg();
 				
 		return this.toBimBotsJsonOutput(resolver.getStore(), "results object collection");
 	}
