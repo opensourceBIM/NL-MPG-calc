@@ -7,8 +7,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.nmd.NmdMapping;
-import org.opensourcebim.nmd.ObjectStoreBuilder;
+import org.opensourcebim.mapping.NmdMappingType;
 
 public class MpgObjectStoreTest {
 
@@ -46,9 +45,9 @@ public class MpgObjectStoreTest {
 		el.setMpgObject(mpgObject);
 		objectStore.addObject(mpgObject);
 		
-		el.setMappingMethod(NmdMapping.DirectTotaalProduct);
+		el.setMappingMethod(NmdMappingType.DirectTotaalProduct);
 		
-		assertEquals(NmdMapping.DirectTotaalProduct,
+		assertEquals(NmdMappingType.DirectTotaalProduct,
 				objectStore.getElementsByProductType("Wall").get(0).getMappingMethod());
 	}
 	

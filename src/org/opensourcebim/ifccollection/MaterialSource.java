@@ -1,6 +1,6 @@
 package org.opensourcebim.ifccollection;
 
-import org.opensourcebim.nmd.NmdProductCard;
+import nl.tno.bim.nmd.domain.NmdProductCard;
 
 public class MaterialSource {
 

@@ -13,7 +13,8 @@ import org.opensourcebim.mapping.NmdDataResolver;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
 import org.opensourcebim.mpgcalculation.MpgCalculationResults;
 import org.opensourcebim.mpgcalculation.MpgCalculator;
-import org.opensourcebim.nmd.Nmd2DataService;
+
+import nl.tno.bim.nmd.services.Nmd2DataService;
 
 public class MpgCalculationResultsService extends IfcObjectCollectionBaseService {
 

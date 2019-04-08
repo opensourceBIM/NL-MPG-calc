@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.opensourcebim.nmd.NmdMapping;
-import org.opensourcebim.nmd.NmdProductCard;
+import org.opensourcebim.mapping.NmdMappingType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import nl.tno.bim.nmd.domain.NmdProductCard;
 
 /**
  * Storage container to map mpgOject to the Nmdproducts
@@ -20,11 +21,11 @@ public class MpgElement {
 	private String ifcName;
 	private MpgObject mpgObject;
 	private MpgObjectStore store;
-	private NmdMapping mappingMethod;
+	private NmdMappingType mappingMethod;
 
 	public MpgElement(String name, MpgObjectStore store) {
 		ifcName = name;
-		this.mappingMethod = NmdMapping.None;
+		this.mappingMethod = NmdMappingType.None;
 		this.store = store;
 	}
 
@@ -50,14 +51,14 @@ public class MpgElement {
 		return this.ifcName;
 	}
 
-	public void setMappingMethod(NmdMapping mapping) {
+	public void setMappingMethod(NmdMappingType mapping) {
 		if (mapping != this.mappingMethod) {
 			this.mappingMethod = mapping;
-			if (mapping == NmdMapping.None) {
+			if (mapping == NmdMappingType.None) {
 				// remove any mappings that were added through hierarchical constraints
 				store.toggleMappingDependencies(this.getMpgObject().getGlobalId(), false);
-			} else if (!(mapping == NmdMapping.IndirectThroughChildren
-					|| mapping == NmdMapping.IndirectThroughParent)) {
+			} else if (!(mapping == NmdMappingType.IndirectThroughChildren
+					|| mapping == NmdMappingType.IndirectThroughParent)) {
 				// add hierarchical constraint mappings,
 				// but not when this items is already set through hierarchical constaints
 				store.toggleMappingDependencies(this.getMpgObject().getGlobalId(), true);
@@ -65,12 +66,12 @@ public class MpgElement {
 		}
 	}
 
-	public NmdMapping getMappingMethod() {
+	public NmdMappingType getMappingMethod() {
 		return mappingMethod;
 	}
 
 	public boolean hasMapping() {
-		return this.mappingMethod != NmdMapping.None;
+		return this.mappingMethod != NmdMappingType.None;
 	}
 
 	public List<Integer> getProductIds() {

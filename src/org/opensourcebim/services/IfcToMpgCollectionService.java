@@ -11,7 +11,8 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.mapping.MappingDataServiceRestImpl;
 import org.opensourcebim.mapping.NmdDataResolver;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
-import org.opensourcebim.nmd.Nmd2DataService;
+
+import nl.tno.bim.nmd.services.Nmd2DataService;
 
 public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 

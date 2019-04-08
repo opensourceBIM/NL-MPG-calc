@@ -1,9 +1,9 @@
 package org.opensourcebim.mapping;
 
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.nmd.MappingDataService;
-import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.UserConfig;
+
+import nl.tno.bim.nmd.config.UserConfig;
+import nl.tno.bim.nmd.services.NmdDataService;
 
 /**
  * Interface to combine different data sources and help the user seelct the right

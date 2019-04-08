@@ -5,11 +5,12 @@ import java.util.Set;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
-import org.opensourcebim.nmd.NmdCostFactor;
-import org.opensourcebim.nmd.NmdProductCard;
-import org.opensourcebim.nmd.NmdProfileSet;
-import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
+
+import nl.tno.bim.nmd.domain.NmdCostFactor;
+import nl.tno.bim.nmd.domain.NmdProductCard;
+import nl.tno.bim.nmd.domain.NmdProfileSet;
+import nl.tno.bim.nmd.scaling.NmdScaler;
 
 /**
  * Do the MPG calculations based on a read in object model. with material data

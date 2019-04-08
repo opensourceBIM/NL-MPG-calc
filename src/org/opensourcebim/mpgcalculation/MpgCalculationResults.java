@@ -6,9 +6,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.opensourcebim.nmd.NmdCostFactor;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import nl.tno.bim.nmd.domain.NmdCostFactor;
 
 /**
  * Class to store all the calculation results broken down by a series of

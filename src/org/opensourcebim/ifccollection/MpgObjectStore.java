@@ -11,9 +11,10 @@ import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.opensourcebim.ifcanalysis.GuidCollection;
-import org.opensourcebim.nmd.NmdProductCard;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import nl.tno.bim.nmd.domain.NmdProductCard;
 
 public interface MpgObjectStore {
 

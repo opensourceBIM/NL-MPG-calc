@@ -5,7 +5,8 @@ import static org.junit.Assert.assertEquals;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opensourcebim.nmd.NmdCostFactor;
+
+import nl.tno.bim.nmd.domain.NmdCostFactor;
 
 public class MpgCalculationResultsTest {
 

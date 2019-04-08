@@ -28,21 +28,20 @@ import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
-import org.opensourcebim.nmd.MappingDataService;
-import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.NmdElement;
-import org.opensourcebim.nmd.NmdMapping;
-import org.opensourcebim.nmd.NmdProductCard;
-import org.opensourcebim.nmd.NmdProfileSet;
-import org.opensourcebim.nmd.UserConfig;
-import org.opensourcebim.nmd.UserConfigImpl;
-import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
 import nl.tno.bim.mapping.domain.MappingSetMap;
 import nl.tno.bim.mapping.domain.MaterialMapping;
+import nl.tno.bim.nmd.config.UserConfig;
+import nl.tno.bim.nmd.config.UserConfigImpl;
+import nl.tno.bim.nmd.domain.NlsfbCode;
+import nl.tno.bim.nmd.domain.NmdElement;
+import nl.tno.bim.nmd.domain.NmdProductCard;
+import nl.tno.bim.nmd.domain.NmdProfileSet;
+import nl.tno.bim.nmd.scaling.NmdScaler;
+import nl.tno.bim.nmd.services.NmdDataService;
 
 /**
  * This implementation allows one of the services to be an editable data service
@@ -236,7 +235,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 									.filter(c -> (long) c.getProductId() == mMap.getNmdProductId()).findFirst();
 							if (matCard.isPresent()) {
 								el.mapProductCard(mat, matCard.get());
-								el.setMappingMethod(NmdMapping.UserMapping);
+								el.setMappingMethod(NmdMappingType.UserMapping);
 							}
 						}
 					});
@@ -422,9 +421,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// material and add a mapping
 		Set<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
 		if (selectedProducts.size() > 0) {
-			mpgElement.setMappingMethod(NmdMapping.DirectDeelProduct);
+			mpgElement.setMappingMethod(NmdMappingType.DirectDeelProduct);
 		} else {
-			mpgElement.setMappingMethod(NmdMapping.None);
+			mpgElement.setMappingMethod(NmdMappingType.None);
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NMD productCard matching the selection criteria.");
 		}

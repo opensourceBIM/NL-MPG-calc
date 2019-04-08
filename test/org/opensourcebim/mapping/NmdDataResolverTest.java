@@ -19,14 +19,13 @@ import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.nmd.MappingDataService;
-import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.NmdElement;
-import org.opensourcebim.nmd.NmdProductCard;
-import org.opensourcebim.nmd.ObjectStoreBuilder;
+import org.opensourcebim.ifccollection.ObjectStoreBuilder;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
+import nl.tno.bim.nmd.domain.NmdElement;
+import nl.tno.bim.nmd.domain.NmdProductCard;
+import nl.tno.bim.nmd.services.NmdDataService;
 
 @SuppressWarnings("serial")
 public class NmdDataResolverTest {

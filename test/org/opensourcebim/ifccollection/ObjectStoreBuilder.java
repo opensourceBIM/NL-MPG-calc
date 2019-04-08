@@ -1,4 +1,4 @@
-package org.opensourcebim.nmd;
+package org.opensourcebim.ifccollection;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,8 +12,19 @@ import org.opensourcebim.ifccollection.MpgLayerImpl;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
-import org.opensourcebim.mapping.NlsfbCode;
-import org.opensourcebim.nmd.scaling.NmdLinearScaler;
+
+import nl.tno.bim.nmd.domain.NlsfbCode;
+import nl.tno.bim.nmd.domain.NmdElement;
+import nl.tno.bim.nmd.domain.NmdElementImpl;
+import nl.tno.bim.nmd.domain.NmdFaseProfiel;
+import nl.tno.bim.nmd.domain.NmdFaseProfielImpl;
+import nl.tno.bim.nmd.domain.NmdMilieuCategorie;
+import nl.tno.bim.nmd.domain.NmdProductCard;
+import nl.tno.bim.nmd.domain.NmdProductCardImpl;
+import nl.tno.bim.nmd.domain.NmdProfileSet;
+import nl.tno.bim.nmd.domain.NmdProfileSetImpl;
+import nl.tno.bim.nmd.domain.NmdReferenceResources;
+import nl.tno.bim.nmd.scaling.NmdLinearScaler;
 
 public class ObjectStoreBuilder {
 	private MpgObjectStoreImpl store;

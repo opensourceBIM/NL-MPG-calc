@@ -17,10 +17,11 @@ import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.BasicEList;
 import org.opensourcebim.ifcanalysis.GuidCollection;
-import org.opensourcebim.nmd.NmdMapping;
-import org.opensourcebim.nmd.NmdProductCard;
+import org.opensourcebim.mapping.NmdMappingType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import nl.tno.bim.nmd.domain.NmdProductCard;
 
 /**
  * Storage container for collected ifc objects. Only data relevant for Mpg
@@ -328,27 +329,27 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		if (flag) {
 			// override all the children mappings
 			children.forEach(el -> {
-				el.setMappingMethod(NmdMapping.IndirectThroughParent);
+				el.setMappingMethod(NmdMappingType.IndirectThroughParent);
 				el.removeProductCards();
 			});
 			
 			parents.forEach(el -> {
-				if (el.getMappingMethod() == NmdMapping.None && allChildrenAreMapped(el)) {
-					el.setMappingMethod(NmdMapping.IndirectThroughChildren);
+				if (el.getMappingMethod() == NmdMappingType.None && allChildrenAreMapped(el)) {
+					el.setMappingMethod(NmdMappingType.IndirectThroughChildren);
 				}
 			});
 		} else {
 			// revert all hierarchical child mappings 
 			// (as there can only be a single parent with a direct mapping)
 			children.forEach(el -> {
-				if (el.getMappingMethod() == NmdMapping.IndirectThroughParent) {
-					el.setMappingMethod(NmdMapping.None);
+				if (el.getMappingMethod() == NmdMappingType.IndirectThroughParent) {
+					el.setMappingMethod(NmdMappingType.None);
 				}
 			});
 			// any parents that had a indirect through children mapping will be reverted
 			parents.forEach(el -> {
-				if (el.getMappingMethod() == NmdMapping.IndirectThroughChildren) {
-					el.setMappingMethod(NmdMapping.None);
+				if (el.getMappingMethod() == NmdMappingType.IndirectThroughChildren) {
+					el.setMappingMethod(NmdMappingType.None);
 				}
 			});
 		}
