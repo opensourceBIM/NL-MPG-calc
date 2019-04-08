@@ -2,7 +2,6 @@ package org.opensourcebim.nmd;
 import java.util.Collection;
 import java.util.Set;
 
-import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.mapping.NlsfbCode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
