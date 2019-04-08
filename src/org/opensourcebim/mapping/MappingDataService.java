@@ -23,8 +23,6 @@ public interface MappingDataService {
 
 	void disconnect();
 
-	UserConfig getConfig();
-
 	ResponseWrapper<Mapping> postMapping(Mapping map);
 
 	ResponseWrapper<Mapping> getMappingById(Long id);

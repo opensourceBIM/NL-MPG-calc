@@ -53,18 +53,11 @@ import nl.tno.bim.nmd.services.NmdDataService;
 public class NmdDataResolverImpl implements NmdDataResolver {
 
 	private NmdDataService service;
-	private UserConfig config;
 	private MappingDataService mappingService;
 	private MpgObjectStore store;
 	private Set<String> keyWords;
 
-	public NmdDataResolverImpl(Path rootPath) {
-		config = new UserConfigImpl(rootPath);
-	}
-
-	public NmdDataResolverImpl() {
-		config = new UserConfigImpl();
-	}
+	public NmdDataResolverImpl() {	}
 
 	public MpgObjectStore getStore() {
 		return store;
@@ -72,11 +65,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 	public void setStore(MpgObjectStore store) {
 		this.store = store;
-	}
-
-	@Override
-	public UserConfig getConfig() {
-		return config;
 	}
 
 	public MappingDataService getMappingService() {

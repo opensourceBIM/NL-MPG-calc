@@ -25,6 +25,4 @@ public interface NmdDataResolver {
 	MpgObjectStore getStore();
 	
 	void setStore(MpgObjectStore store);
-
-	UserConfig getConfig();
 }

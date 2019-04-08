@@ -35,14 +35,17 @@ public class MappingDataServiceIntegrationTest {
 	private MappingDataServiceRestImpl mapService;
 
 	public MappingDataServiceIntegrationTest() {
-		mapService = new MappingDataServiceRestImpl(new UserConfigImpl());
+		mapService = new MappingDataServiceRestImpl();
 		// make sure we're not adding data to a dev or prod
 		mapService.setHost("localhost");
-		mapService.setPort(8090);
+		mapService.setPort(8085);
+
 	}
 	
 	@Before
-	public void setUp() throws Exception { }
+	public void setUp() throws Exception {
+		mapService.connect();
+	}
 
 	@After
 	public void tearDown() throws Exception {
@@ -54,7 +57,7 @@ public class MappingDataServiceIntegrationTest {
         try {
         	Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
             con = DriverManager.getConnection("jdbc:mysql://localhost:3306/bim-mapping-db", 
-            		 "bbAdmin",  "bbPass_8737812hoih98h");
+            		 "dummy_admin",  "dummy_pass");
             stmt = con.createStatement();
 
             stmt.executeUpdate("DELETE FROM mapping_set_map");

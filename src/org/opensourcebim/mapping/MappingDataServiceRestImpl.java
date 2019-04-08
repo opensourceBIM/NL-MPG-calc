@@ -36,17 +36,11 @@ import nl.tno.bim.nmd.config.UserConfig;
 public class MappingDataServiceRestImpl extends RestDataService implements MappingDataService {
 
 	private BasicResponseHandler respHandler = new BasicResponseHandler();
-	private UserConfig config;
 
-	public MappingDataServiceRestImpl(UserConfig config) {
-		this.config = config;
+	public MappingDataServiceRestImpl() {
 		setScheme("http");
 		setHost("localhost");
 		setPort(8085);
-	}
-
-	public UserConfig getConfig() {
-		return config;
 	}
 
 	@Override

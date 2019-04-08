@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -23,18 +24,28 @@ import com.opencsv.CSVReader;
 import nl.tno.bim.nmd.config.UserConfigImpl;
 
 public class MapRunner {
+		
 	/**
 	 * @param args: not required.
 	 */
 	public static void main(String[] args) {
+		
+		//parse arguments for mapper.
+		
 
-		MappingDataServiceRestImpl service = new MappingDataServiceRestImpl(new UserConfigImpl());
+		MappingDataServiceRestImpl service = new MappingDataServiceRestImpl();
+		
 		// we're not checking for whether the service is available or not.
 		// the first method is rather lightweight however and will throw a timeout
 		// quickly if the service is not available
-		MapRunner.regenerateCommonWordsList(service);
-		MapRunner.regenerateMaterialKeyWords(service);
-		MapRunner.regenerateIfcToNlsfbMappings(service);
+		String rootPath = "C://Users//vijj//Java//bim_workspace";
+		String commonWordPath = "data//top1000_common_words_dutch.csv";
+		String nlsfbAlternativePath = "data/IfcToNlsfbMappings.csv";
+		
+		
+		MapRunner.regenerateCommonWordsList(service, rootPath + commonWordPath);
+		MapRunner.regenerateMaterialKeyWords(service, rootPath);
+		MapRunner.regenerateIfcToNlsfbMappings(service, rootPath + nlsfbAlternativePath);
 		service.disconnect();
 	}
 
@@ -42,10 +53,10 @@ public class MapRunner {
 	 * load common word files into the database. These can be used to remove often
 	 * used words from keyword selection
 	 */
-	private static void regenerateCommonWordsList(MappingDataService service) {
+	private static void regenerateCommonWordsList(MappingDataService service, String path) {
 		try {
 
-			CSVReader reader = new CSVReader(new FileReader(service.getConfig().getCommonWordFilePath()));
+			CSVReader reader = new CSVReader(new FileReader(path));
 			List<String[]> myEntries = reader.readAll();
 			reader.close();
 
@@ -63,11 +74,11 @@ public class MapRunner {
 	 * 
 	 * @throws FileNotFoundException
 	 */
-	private static void regenerateMaterialKeyWords(MappingDataService service) {
+	private static void regenerateMaterialKeyWords(MappingDataService service, String pathToFolder) {
 		List<Path> foundFiles = new ArrayList<Path>();
 		List<String> allMaterials = new ArrayList<String>();
 		try {
-			Files.walk(Paths.get(service.getConfig().getIfcFilesForKeyWordMapRootPath()))
+			Files.walk(Paths.get(pathToFolder))
 					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc")).filter(p -> {
 						// filter on max file size. example: 50 MB limit on 5e7
 						return (new File(p.toAbsolutePath().toString())).length() < 1e8;
@@ -123,9 +134,9 @@ public class MapRunner {
 	/**
 	 * reload the ifc to NLsfb mapping based on a csv of mapping codes.
 	 */
-	private static void regenerateIfcToNlsfbMappings(MappingDataService service) {
+	private static void regenerateIfcToNlsfbMappings(MappingDataService service, String path) {
 		try {
-			CSVReader reader = new CSVReader(new FileReader(service.getConfig().getNlsfbAlternativesFilePath()));
+			CSVReader reader = new CSVReader(new FileReader(path));
 			List<String[]> entries = reader.readAll();
 			reader.close();
 
