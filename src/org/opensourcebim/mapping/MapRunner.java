@@ -16,33 +16,80 @@ import java.util.Scanner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 
 import com.opencsv.CSVReader;
 
 public class MapRunner {
-		
+
 	/**
-	 * @param args: not required.
+	 * @param args: not required. PREREQUISITE: make sure a mappingservice is
+	 *        runnning as otherwise you will get no response errors
 	 */
 	public static void main(String[] args) {
-		
-		//parse arguments for mapper.
-		
+
+		Options options = new Options();
+
+		Option rootPathOption = new Option("root", "rootfolder", true,
+				"root file path from where the rest of the files should be available");
+		rootPathOption.setRequired(true);
+		options.addOption(rootPathOption);
+
+		Option wordPathOption = new Option("words", "wordsFilePath", true,
+				"file location with common words csv file relative to rootPath");
+		wordPathOption.setRequired(false);
+		options.addOption(wordPathOption);
+
+		Option nlsfbAlternativesPathOption = new Option("nlsfb", "nlsfbFilePath", true,
+				"file location with nlsfb alternatives csv file relative to rootPath");
+		nlsfbAlternativesPathOption.setRequired(false);
+		options.addOption(nlsfbAlternativesPathOption);
+
+		Option reprocessKeywords = new Option("keyWords", "reprocessKeyword", false,
+				"flag to determine whether material keywords will be overwritten. "
+				+ "Presence of this keyword will trigger a search for all IFC files "
+				+ "within a (sub-) directory of the rootpath");
+		reprocessKeywords.setRequired(false);
+		options.addOption(reprocessKeywords);
+
+		CommandLineParser parser = new DefaultParser();
+		HelpFormatter formatter = new HelpFormatter();
+		CommandLine cmd = null;
+		try {
+			cmd = parser.parse(options, args);
+		} catch (ParseException e) {
+			System.out.println(e.getMessage());
+			formatter.printHelp("MapRunner", options);
+
+			System.exit(1);
+		}
 
 		MappingDataServiceRestImpl service = new MappingDataServiceRestImpl();
-		
+
 		// we're not checking for whether the service is available or not.
 		// the first method is rather lightweight however and will throw a timeout
 		// quickly if the service is not available
-		String rootPath = "C://Users//vijj//Java//bim_workspace";
-		String commonWordPath = "data//top1000_common_words_dutch.csv";
-		String nlsfbAlternativePath = "data/IfcToNlsfbMappings.csv";
-		
-		
-		MapRunner.regenerateCommonWordsList(service, rootPath + commonWordPath);
-		MapRunner.regenerateMaterialKeyWords(service, rootPath);
-		MapRunner.regenerateIfcToNlsfbMappings(service, rootPath + nlsfbAlternativePath);
+		String rootPath = cmd.getOptionValue("root");
+
+		if (cmd.hasOption("words")) {
+			MapRunner.regenerateCommonWordsList(service, rootPath + cmd.getOptionValue("words"));
+		}
+
+		if (cmd.hasOption("keyWords")) {
+			MapRunner.regenerateMaterialKeyWords(service, rootPath);
+		}
+
+		if (cmd.hasOption("nlsfb")) {
+			MapRunner.regenerateIfcToNlsfbMappings(service, rootPath + cmd.getOptionValue("nlsfb"));
+		}
+
 		service.disconnect();
 	}
 
@@ -75,8 +122,8 @@ public class MapRunner {
 		List<Path> foundFiles = new ArrayList<Path>();
 		List<String> allMaterials = new ArrayList<String>();
 		try {
-			Files.walk(Paths.get(pathToFolder))
-					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc")).filter(p -> {
+			Files.walk(Paths.get(pathToFolder)).filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc"))
+					.filter(p -> {
 						// filter on max file size. example: 50 MB limit on 5e7
 						return (new File(p.toAbsolutePath().toString())).length() < 1e8;
 					}).forEach(p -> {
