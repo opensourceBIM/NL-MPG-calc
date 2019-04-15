@@ -9,8 +9,9 @@ import org.junit.Test;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
-import org.opensourcebim.nmd.NmdProductCardImpl;
-import org.opensourcebim.nmd.ObjectStoreBuilder;
+import org.opensourcebim.ifccollection.ObjectStoreBuilder;
+
+import nl.tno.bim.nmd.domain.NmdProductCardImpl;
 
 public class MpgCalculatorTest {
 

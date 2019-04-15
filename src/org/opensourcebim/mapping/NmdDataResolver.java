@@ -1,9 +1,8 @@
 package org.opensourcebim.mapping;
 
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.NmdMappingDataService;
-import org.opensourcebim.nmd.NmdUserDataConfig;
+
+import nl.tno.bim.nmd.services.NmdDataService;
 
 /**
  * Interface to combine different data sources and help the user seelct the right
@@ -16,15 +15,13 @@ import org.opensourcebim.nmd.NmdUserDataConfig;
  */
 public interface NmdDataResolver {
 
-	void NmdToMpg();
+	void nmdToMpg();
 
 	void setNmdService(NmdDataService nmdDataService);
 	
-	void setMappingService(NmdMappingDataService nmdMappingService);
+	void setMappingService(MappingDataService nmdMappingService);
 
 	MpgObjectStore getStore();
 	
 	void setStore(MpgObjectStore store);
-
-	NmdUserDataConfig getConfig();
 }

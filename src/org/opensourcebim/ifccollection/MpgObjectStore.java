@@ -11,9 +11,10 @@ import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.opensourcebim.ifcanalysis.GuidCollection;
-import org.opensourcebim.nmd.NmdProductCard;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import nl.tno.bim.nmd.domain.NmdProductCard;
 
 public interface MpgObjectStore {
 
@@ -34,16 +35,15 @@ public interface MpgObjectStore {
 	Optional<MpgObject> getObjectByGuid(String guid);
 	Stream<MpgObject> getChildren(String parentGuid);
 	
-	
 	LengthUnit getLengthUnit();
 	AreaUnit getAreaUnit();
 	VolumeUnit getVolumeUnit();
 	
-	
 	MpgElement addElement(String string);
 	MpgElement getElementByName(String name);
 	List<MpgElement> getElementsByProductType(String productType);
-	
+	MpgElement getElementByObjectGuid(String guid);
+	Map<String, List<MpgElement>> getElementGroups();
 	
 	void addProductCard(NmdProductCard card);
 	NmdProductCard getProductCard(Integer id);
@@ -53,7 +53,6 @@ public interface MpgObjectStore {
 	void addSpace(MpgSpace space);
 	double getTotalVolumeOfMaterial(String name);
 	double getTotalFloorArea();
-	
 	
 	boolean isIfcDataComplete();
 	
@@ -81,4 +80,8 @@ public interface MpgObjectStore {
 	boolean hasUndefinedLayers(MpgObject obj, boolean includeChildren);
 
 	boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren);
+
+	Long getProjectId();
+
+	Long getRevisionId();
 }

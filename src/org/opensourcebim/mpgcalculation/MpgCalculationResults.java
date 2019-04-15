@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import nl.tno.bim.nmd.domain.NmdCostFactor;
+
 /**
  * Class to store all the calculation results broken down by a series of
  * properties as defined in the CostFactor class. This class will also
@@ -19,13 +21,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class MpgCalculationResults {
 
 	private ResultStatus status;
-	private Set<MpgCostFactor> costFactors;
+	private Set<NmdCostFactor> costFactors;
 	private double totalFloorArea;
 	private double totalLifeTime;
 
 	public MpgCalculationResults() {
 		status = ResultStatus.NotRun;
-		costFactors = new HashSet<MpgCostFactor>();
+		costFactors = new HashSet<NmdCostFactor>();
 		this.reset();
 	}
 
@@ -75,7 +77,7 @@ public class MpgCalculationResults {
 	 * @param product       product card name of the factor
 	 * @param specName      material spec name of the factor
 	 */
-	public void addCostFactor(MpgCostFactor mpgCostFactor, String product, String specName, Long objectId) {
+	public void addCostFactor(NmdCostFactor mpgCostFactor, String product, String specName, Long objectId) {
 
 		mpgCostFactor.setProductName(product);
 		mpgCostFactor.setProfielSetName(specName);
@@ -86,37 +88,37 @@ public class MpgCalculationResults {
 	}
 
 	@JsonIgnore
-	public Set<MpgCostFactor> getCostFactors() {
+	public Set<NmdCostFactor> getCostFactors() {
 		return this.costFactors;
 	}
 	
 	public HashMap<Long, Double> getCostPerObjectId() {
 		HashMap<Long, Double> grouping = new HashMap<Long, Double>();
 		this.costFactors.stream()
-			.collect(Collectors.groupingBy(MpgCostFactor::getObjectId))
+			.collect(Collectors.groupingBy(NmdCostFactor::getObjectId))
 			.forEach((key, g) -> grouping.put(key, g.stream().collect(Collectors.summingDouble(cf -> cf.getValue()))));
 		return grouping;
 	}
 	
 	public HashMap<String, Double> getCostPerMilieuCategorie() {
-		return this.getCostPerCategory(MpgCostFactor::getMilieuCategorie);
+		return this.getCostPerCategory(NmdCostFactor::getMilieuCategorie);
 	}
 	
 	public HashMap<String, Double> getCostPerFase() {
-		return this.getCostPerCategory(MpgCostFactor::getFase);
+		return this.getCostPerCategory(NmdCostFactor::getFase);
 	}
 	
 	public HashMap<String, Double> getCostPerProduct() {
-		return this.getCostPerCategory(MpgCostFactor::getProductName);
+		return this.getCostPerCategory(NmdCostFactor::getProductName);
 	}
 	
 
 	public HashMap<String, Double> getCostPerProfiel() {
-		return this.getCostPerCategory(MpgCostFactor::getProfielSetName);
+		return this.getCostPerCategory(NmdCostFactor::getProfielSetName);
 	}
 	
 
-	private HashMap<String, Double> getCostPerCategory(Function<? super MpgCostFactor, ? extends String> groupingFunc) {
+	private HashMap<String, Double> getCostPerCategory(Function<? super NmdCostFactor, ? extends String> groupingFunc) {
 		HashMap<String, Double> grouping = new HashMap<String, Double>();
 		this.costFactors.stream()
 			.collect(Collectors.groupingBy(groupingFunc))
@@ -144,8 +146,8 @@ public class MpgCalculationResults {
 				.collect(Collectors.summingDouble(f -> f.getValue()));
 	}
 
-	public void addCostFactors(Set<MpgCostFactor> factors, String product, String specName, Long objectId) {
-		for (MpgCostFactor costFactor : factors) {
+	public void addCostFactors(Set<NmdCostFactor> factors, String product, String specName, Long objectId) {
+		for (NmdCostFactor costFactor : factors) {
 			this.addCostFactor(costFactor, product, specName, objectId);
 		}
 	}

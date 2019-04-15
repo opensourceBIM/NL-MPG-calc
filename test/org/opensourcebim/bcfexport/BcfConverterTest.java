@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opensourcebim.bcf.BcfFile;
 import org.opensourcebim.bcf.TopicFolder;
-import org.opensourcebim.nmd.ObjectStoreBuilder;
+import org.opensourcebim.ifccollection.ObjectStoreBuilder;
 
 public class BcfConverterTest {
 

@@ -9,9 +9,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.emf.common.util.BasicEList;
-import org.opensourcebim.mapping.NlsfbCode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import nl.tno.bim.nmd.domain.NlsfbCode;
 
 public class MpgObjectImpl implements MpgObject {
 
@@ -207,5 +208,26 @@ public class MpgObjectImpl implements MpgObject {
 		if (!source.getName().isEmpty()) {
 			this.listedMaterials.add(source);
 		}
+	}
+
+	@Override
+	public String getValueHash() {
+		String nlsfbToText = this.nlsfb == null ? "" : this.getNLsfbCode().print();
+		
+		return this.getObjectName() + this.getObjectType()
+		+ String.join("-", this.getMaterialNamesBySource(null))
+		+ nlsfbToText;
+	}
+
+	@Override
+	public boolean copyMappingFromObject(MpgObject mpgObject) {
+		if (this.getValueHash().equals(mpgObject.getValueHash())) {
+			// the value hash should already confirm that the two lists are equals so no need to do another check
+			for (int i = 0; i < this.getListedMaterials().size(); i++) {
+				this.getListedMaterials().set(i, mpgObject.getListedMaterials().get(i).copy());
+			}	
+			return true;
+		}
+		return false;	
 	}
 }

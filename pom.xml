@@ -52,6 +52,7 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
+							<overwrite>true</overwrite>
 							<outputDirectory>${basedir}</outputDirectory>
 							<resources>
 								<resource>
@@ -90,7 +91,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>pluginbase</artifactId>
-			<version>1.5.125</version>
+			<version>1.5.132</version>
 		</dependency>
 		<dependency>
 			<scope>test</scope>
@@ -101,7 +102,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimserverclientlib</artifactId>
-			<version>1.5.125</version>
+			<version>1.5.132</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -130,6 +131,16 @@
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bcf</artifactId>
 			<version>0.0.35</version>
+		</dependency>
+		<dependency>
+			<groupId>org.opensourcebim</groupId>
+			<artifactId>bimmappingservice</artifactId>
+			<version>1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.opensourcebim</groupId>
+			<artifactId>bimnmdservice</artifactId>
+			<version>0.2</version>
 		</dependency>
 	</dependencies>
 </project>

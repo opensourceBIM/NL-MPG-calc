@@ -10,18 +10,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.http.ProtocolVersion;
+import org.apache.http.message.BasicStatusLine;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.mapping.NmdDataResolverImpl;
-import org.opensourcebim.nmd.NmdDataService;
-import org.opensourcebim.nmd.NmdElement;
-import org.opensourcebim.nmd.NmdMappingDataService;
-import org.opensourcebim.nmd.NmdProductCard;
-import org.opensourcebim.nmd.ObjectStoreBuilder;
+import org.opensourcebim.ifccollection.ObjectStoreBuilder;
+
+import nl.tno.bim.mapping.domain.Mapping;
+import nl.tno.bim.mapping.domain.MappingSet;
+import nl.tno.bim.nmd.domain.NmdElement;
+import nl.tno.bim.nmd.domain.NmdProductCard;
+import nl.tno.bim.nmd.services.NmdDataService;
 
 @SuppressWarnings("serial")
 public class NmdDataResolverTest {
@@ -51,7 +55,7 @@ public class NmdDataResolverTest {
 	@Test
 	public void testResolverDoesNotBreakOnEmptyStore() {
 		this.resolver.setStore(null);
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 	}
 	
 	@Test
@@ -61,19 +65,19 @@ public class NmdDataResolverTest {
 				    put("baksteen", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "21.12", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur");
 		assertTrue(el.hasMapping());
 	}
 	
 	@Test
-	public void testCannotResolvePRoductWhenNoNlsfbCodeMatches() {
+	public void testCannotResolveProductWhenNoNlsfbCodeMatches() {
 		builder.AddUnmappedMpgElement("baksteen muur", false,
 				new HashMap<String, Double>() {{
 				    put("baksteen", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "21.99", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur");
 		assertTrue(el.getMpgObject().getAllTags().stream().anyMatch(t -> t.getType().equals(MpgInfoTagType.nmdProductCardWarning)));
 		assertFalse(el.hasMapping());
@@ -86,7 +90,7 @@ public class NmdDataResolverTest {
 				    put("empty", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "99.99", "IfcTest", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("test mpg element");
 		assertTrue(el.getMpgObject().getAllTags().stream().anyMatch(t -> t.getType().equals(MpgInfoTagType.nmdProductCardWarning)));
 		assertFalse(el.hasMapping());
@@ -100,7 +104,7 @@ public class NmdDataResolverTest {
 				    put("baksteen", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur-21.12");
 		assertTrue(el.hasMapping());
 	}
@@ -113,7 +117,7 @@ public class NmdDataResolverTest {
 				    put("21.12 baksteen", 1.0);
 				}},
 				new Double[] {1.0, 1.0, 1.0}, "", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur");
 		assertTrue(el.hasMapping());
 	}
@@ -124,7 +128,7 @@ public class NmdDataResolverTest {
 		builder.AddUnmappedMpgElement("baksteen muur", false,
 				new HashMap<String, Double>(),
 				new Double[] {1.0, 1.0, 1.0}, "21.12", "IfcWall", "");
-		this.resolver.NmdToMpg();
+		this.resolver.nmdToMpg();
 		MpgElement el = this.resolver.getStore().getElementByName("baksteen muur");
 		assertTrue(el.hasMapping());
 	}
@@ -164,8 +168,8 @@ public class NmdDataResolverTest {
 		return db;
 	}
 	
-	private NmdMappingDataService getMockMappings() {
-		NmdMappingDataService mapService = mock(NmdMappingDataService.class);
+	private MappingDataService getMockMappings() {
+		MappingDataService mapService = mock(MappingDataService.class);
 		when(mapService.getNlsfbMappings()).thenReturn(new HashMap<String, List<String>>());
 		when(mapService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum)).thenReturn(new HashMap<String, Long>() {{
 			put("baksteen", (long)4321);
@@ -173,8 +177,15 @@ public class NmdDataResolverTest {
 			put("staal", (long)42);
 			}
 		});
-		// there are no mappings yet, so return null
-		when(mapService.getApproximateMapForObject(any(MpgObject.class))).thenReturn(null);
+		
+		// for now omit any mappings.
+		ResponseWrapper<Mapping> emptyMap = new ResponseWrapper<>(null, new BasicStatusLine(new ProtocolVersion("http", 1, 1), 404, ""));
+		ResponseWrapper<MappingSet> emptyMapSet = new ResponseWrapper<>(null, new BasicStatusLine(new ProtocolVersion("http", 1, 1), 404, ""));
+		when(mapService.getMappingById(any(Long.class))).thenReturn(emptyMap);
+		when(mapService.getMappingSetByProjectIdAndRevisionId(any(Long.class), any(Long.class))).thenReturn(emptyMapSet);
+		when(mapService.postMapping(any(Mapping.class))).thenReturn(emptyMap);
+		when(mapService.postMappingSet(any(MappingSet.class))).thenReturn(emptyMapSet);
+		when(mapService.getApproximateMapForObject(any(MpgObject.class))).thenReturn(emptyMap);
 		return mapService;
 	}
 }

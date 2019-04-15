@@ -17,10 +17,11 @@ import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.BasicEList;
 import org.opensourcebim.ifcanalysis.GuidCollection;
-import org.opensourcebim.nmd.NmdMapping;
-import org.opensourcebim.nmd.NmdProductCard;
+import org.opensourcebim.mapping.NmdMappingType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import nl.tno.bim.nmd.domain.NmdProductCard;
 
 /**
  * Storage container for collected ifc objects. Only data relevant for Mpg
@@ -39,6 +40,9 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	private HashMap<Integer, NmdProductCard> productCards;
 
 	private List<MpgSpace> spaces;
+	
+	private Long projectId;
+	private Long revisionId;
 
 	/**
 	 * list to store the guids with any MpgObjects that the object linked to that
@@ -67,6 +71,24 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		spaces.clear();
 	}
 
+	@Override
+	public Long getProjectId() {
+		return projectId;
+	}
+
+	public void setProjectId(Long projectId) {
+		this.projectId = projectId;
+	}
+
+	@Override
+	public Long getRevisionId() {
+		return revisionId;
+	}
+
+	public void setRevisionId(Long revisionId) {
+		this.revisionId = revisionId;
+	}
+	
 	@Override
 	public VolumeUnit getVolumeUnit() {
 		return this.volumeUnit;
@@ -198,6 +220,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		return element.isPresent() ? element.get() : null;
 	}
 
+	@Override
 	public List<MpgElement> getElementsByProductType(String productType) {
 		List<MpgObject> objectsByProductType = this.getObjectsByProductType(productType);
 		List<String> materialNames = objectsByProductType.stream()
@@ -206,6 +229,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		return materialNames.stream().map(mat -> this.getElementByName(mat)).collect(Collectors.toList());
 	}
 
+	@Override
 	public MpgElement getElementByObjectGuid(String guid) {
 		Optional<MpgElement> el = this.getElements().stream().filter(e -> e.getMpgObject().getGlobalId().equals(guid))
 				.findFirst();
@@ -214,6 +238,17 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		} else {
 			return null;
 		}
+	}
+	
+	/**
+	 * Group the elements by an equalByValues
+	 */
+	@JsonIgnore
+	@Override
+	public Map<String, List<MpgElement>> getElementGroups() {
+		return this.mpgElements.stream().collect(Collectors.groupingBy(el -> {
+			return el.getValueHash();
+		}));
 	}
 
 	@Override
@@ -294,27 +329,27 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		if (flag) {
 			// override all the children mappings
 			children.forEach(el -> {
-				el.setMappingMethod(NmdMapping.IndirectThroughParent);
+				el.setMappingMethod(NmdMappingType.IndirectThroughParent);
 				el.removeProductCards();
 			});
 			
 			parents.forEach(el -> {
-				if (el.getMappingMethod() == NmdMapping.None && allChildrenAreMapped(el)) {
-					el.setMappingMethod(NmdMapping.IndirectThroughChildren);
+				if (el.getMappingMethod() == NmdMappingType.None && allChildrenAreMapped(el)) {
+					el.setMappingMethod(NmdMappingType.IndirectThroughChildren);
 				}
 			});
 		} else {
 			// revert all hierarchical child mappings 
 			// (as there can only be a single parent with a direct mapping)
 			children.forEach(el -> {
-				if (el.getMappingMethod() == NmdMapping.IndirectThroughParent) {
-					el.setMappingMethod(NmdMapping.None);
+				if (el.getMappingMethod() == NmdMappingType.IndirectThroughParent) {
+					el.setMappingMethod(NmdMappingType.None);
 				}
 			});
 			// any parents that had a indirect through children mapping will be reverted
 			parents.forEach(el -> {
-				if (el.getMappingMethod() == NmdMapping.IndirectThroughChildren) {
-					el.setMappingMethod(NmdMapping.None);
+				if (el.getMappingMethod() == NmdMappingType.IndirectThroughChildren) {
+					el.setMappingMethod(NmdMappingType.None);
 				}
 			});
 		}
@@ -500,6 +535,5 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		boolean childCheck = includeChildren
 				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedLayers(o, includeChildren));
 		return ownCheck || childCheck;
-	}
-	
+	}	
 }

@@ -5,10 +5,12 @@ import java.util.Set;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
-import org.opensourcebim.nmd.NmdProductCard;
-import org.opensourcebim.nmd.NmdProfileSet;
-import org.opensourcebim.nmd.scaling.NmdScaler;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
+
+import nl.tno.bim.nmd.domain.NmdCostFactor;
+import nl.tno.bim.nmd.domain.NmdProductCard;
+import nl.tno.bim.nmd.domain.NmdProfileSet;
+import nl.tno.bim.nmd.scaling.NmdScaler;
 
 /**
  * Do the MPG calculations based on a read in object model. with material data
@@ -59,7 +61,7 @@ public class MpgCalculator {
 
 					// get number of product units based on geometry of ifcproduct and unit of
 					// productcard
-					double unitsRequired = product.getRequiredNumberOfUnits(element.getMpgObject());
+					double unitsRequired = element.getRequiredNumberOfUnits(product);
 
 					for (NmdProfileSet profielSet : product.getProfileSets()) {
 						if (profielSet.getQuantity() > 0.0) {
@@ -91,7 +93,7 @@ public class MpgCalculator {
 
 							// example for production
 							profielSet.getAllFaseProfielen().values().forEach(fp -> {
-								Set<MpgCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfiel);
+								Set<NmdCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfiel);
 								Long objectId = element.getMpgObject().getObjectId();
 								results.addCostFactors(factors, product.getDescription(), profielSet.getName(), objectId);
 							});
