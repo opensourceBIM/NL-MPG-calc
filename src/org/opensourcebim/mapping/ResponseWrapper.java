@@ -1,4 +1,4 @@
-package org.opensourcebim.dataservices;
+package org.opensourcebim.mapping;
 
 import org.apache.http.StatusLine;
 

@@ -12,7 +12,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.message.BasicStatusLine;
-import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.ifccollection.MpgObject;
 
 import com.fasterxml.jackson.databind.type.CollectionType;
