@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.ifccollection.MpgObject;
 
 import nl.tno.bim.mapping.domain.Mapping;

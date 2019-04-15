@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.opensourcebim.dataservices.ResponseWrapper;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
