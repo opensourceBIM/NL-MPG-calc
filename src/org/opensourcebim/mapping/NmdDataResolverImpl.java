@@ -108,7 +108,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// without parsed geometry
 		this.resolveUnknownGeometries();
 
-		// start nmd service and
+		// start nmd service
 		try {
 			getService().login();
 			getService().preLoadData();
@@ -376,7 +376,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param codeSet
 	 */
 	private void FindProductsForNlsfbCodes(MpgElement mpgElement, Set<NlsfbCode> codeSet) {
-		// STEP 1: check if there are relevant nlsfbcodes present in the inp[ut set
+		// STEP 1: check if there are relevant nlsfbcodes present in the input set
 		if (codeSet.size() == 0 || codeSet.stream().allMatch(c -> c == null)) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NLsfbcodes linked to the product");
