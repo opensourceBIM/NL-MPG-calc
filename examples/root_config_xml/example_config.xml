@@ -1,0 +1,7 @@
+<config>
+	<nmd>
+		<token>addYourNmd3TokenHere</token>
+		<id>NMD3UserID</id>
+		<nmd2Path>data//sqlLiteNMD2DatabaseFile.db</nmd2Path>
+	</nmd>
+</config>
