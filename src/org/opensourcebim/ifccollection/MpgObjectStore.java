@@ -81,7 +81,5 @@ public interface MpgObjectStore {
 
 	boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren);
 
-	Long getProjectId();
-
-	Long getRevisionId();
+	String getProjectId();
 }

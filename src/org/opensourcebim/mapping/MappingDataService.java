@@ -27,7 +27,7 @@ public interface MappingDataService {
 
 	ResponseWrapper<MappingSet> postMappingSet(MappingSet set);
 
-	ResponseWrapper<MappingSet> getMappingSetByProjectIdAndRevisionId(Long pid, Long rid);
+	ResponseWrapper<MappingSet> getMappingSetByProjectId(String pid);
 
 	ResponseWrapper<Mapping> getApproximateMapForObject(MpgObject object);
 

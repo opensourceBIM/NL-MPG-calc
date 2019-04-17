@@ -119,7 +119,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				set = new MappingSet();
 			}
 			set.setProjectId(store.getProjectId());
-			set.setRevisionId(store.getRevisionId());
 			set.setDate(new Date());
 
 			Map<String, List<MpgElement>> elGroups = store.getElementGroups();
@@ -168,8 +167,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private MappingSet tryApplyEarlierMappings() {
 		ResponseWrapper<MappingSet> respSet = null;
 		try {
-			respSet = getMappingService().getMappingSetByProjectIdAndRevisionId(store.getProjectId(),
-					store.getRevisionId());
+			respSet = getMappingService().getMappingSetByProjectId(store.getProjectId());
 			if (respSet.succes()) {
 				for (MappingSetMap map : respSet.getObject().getMappingSetMaps()) {
 					Mapping nmdMap = map.getMapping();

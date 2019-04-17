@@ -117,15 +117,10 @@ public class MpgIfcObjectCollector {
 	 * 
 	 * @param ifcModel for now only a ifc2x3tc1 IfcModel object
 	 */
-	public MpgObjectStore collectIfcModelObjects(IfcModelInterface ifcModel) {
+	public MpgObjectStore collectIfcModelObjects(IfcModelInterface ifcModel, String pId) {
 		objectStore.reset();
 		
-		// there is always a single ifcproject in the file. get the project and revision id
-		IfcProject proj = ifcModel.getAllWithSubTypes(IfcProject.class).get(0);
-		if (proj != null) {
-			objectStore.setProjectId((long)proj.getPid());
-			objectStore.setRevisionId((long)proj.getRid());
-		}
+		objectStore.setProjectId(pId);
 
 		// get project wide parameters
 		modelVolumeUnit = IfcUtils.getVolumeUnit(ifcModel);

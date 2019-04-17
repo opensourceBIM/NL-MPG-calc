@@ -32,8 +32,7 @@ public class ObjectStoreBuilder {
 
 	public ObjectStoreBuilder() {
 		this.setStore(new MpgObjectStoreImpl());
-		this.getStore().setProjectId(1L);
-		this.getStore().setRevisionId(1L);
+		this.getStore().setProjectId("SomeProjectUUID");
 		lastIdCreated = 0;
 	}
 

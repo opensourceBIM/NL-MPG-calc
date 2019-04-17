@@ -20,7 +20,7 @@ public class IfcToJsonDatasetService extends IfcObjectCollectionBaseService {
 
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
-		MpgObjectStore store = matParser.collectIfcModelObjects(ifcModel);
+		MpgObjectStore store = matParser.collectIfcModelObjects(ifcModel, bimBotContext.getContextId());
 		
 		GuidDataSet dataset = new GuidDataSet(store);
 		

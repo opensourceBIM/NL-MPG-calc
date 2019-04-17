@@ -22,7 +22,7 @@ public class IfcObjectCollectionToBcfService extends IfcObjectCollectionBaseServ
 
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
-		MpgObjectStore store = matParser.collectIfcModelObjects(ifcModel);
+		MpgObjectStore store = matParser.collectIfcModelObjects(ifcModel, bimBotContext.getContextId());
 		ObjectStoreToBcfConverter converter = new ObjectStoreToBcfConverter(store, input);
 		
 		BimBotsOutput output = null;

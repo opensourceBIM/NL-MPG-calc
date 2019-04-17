@@ -64,8 +64,8 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	}
 
 	@Override
-	public ResponseWrapper<MappingSet> getMappingSetByProjectIdAndRevisionId(Long pid, Long rid) {
-		String path = "/api/mappingset/" + rid + "/" + pid + "/mappingsetmap";
+	public ResponseWrapper<MappingSet> getMappingSetByProjectId(String pid) {
+		String path = "/api/mappingset/" + pid + "/mappingsetmap";
 		HttpResponse resp = this.performGetRequestWithParams(path, null);
 		return this.handleHttpResponse(resp, MappingSet.class);
 	}
