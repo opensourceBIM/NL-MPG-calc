@@ -68,8 +68,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>1.11</source>
+					<target>1.11</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -91,7 +91,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>pluginbase</artifactId>
-			<version>1.5.132</version>
+			<version>1.5.161</version>
 		</dependency>
 		<dependency>
 			<scope>test</scope>
@@ -102,7 +102,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimserverclientlib</artifactId>
-			<version>1.5.132</version>
+			<version>1.5.161</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
