@@ -41,6 +41,14 @@
 		<testSourceDirectory>test</testSourceDirectory>
 		<plugins>
 			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<generateBackupPoms>false</generateBackupPoms>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>2.4</version>
@@ -68,8 +76,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
-					<source>1.11</source>
-					<target>1.11</target>
+					<release>11</release>
 				</configuration>
 			</plugin>
 			<plugin>
