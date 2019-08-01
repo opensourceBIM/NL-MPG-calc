@@ -11,6 +11,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.bimserver.emf.IfcModelInterface;
+import org.bimserver.emf.ModelMetaData;
+import org.bimserver.emf.PackageMetaData;
+import org.bimserver.emf.Schema;
 import org.bimserver.models.geometry.Bounds;
 import org.bimserver.models.geometry.GeometryInfo;
 import org.bimserver.models.geometry.Vector3f;
@@ -37,6 +40,9 @@ import org.bimserver.models.ifc2x3tc1.IfcUnitAssignment;
 import org.bimserver.models.ifc2x3tc1.IfcUnitEnum;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.ecore.EClassifier;
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.impl.EPackageImpl;
 
 /**
  * Factory class to create IfcModel objects to test various methods
@@ -63,6 +69,13 @@ public class IfcMockFactory {
 		when(proj.getPid()).thenReturn(0);
 		when(proj.getRid()).thenReturn(0);
 		when(model.getAllWithSubTypes(IfcProject.class)).thenReturn(Arrays.asList(proj));
+		
+		EPackage pack = mock(EPackageImpl.class);
+		when(pack.getName()).thenReturn("");
+		when(pack.getEClassifiers()).thenReturn(new BasicEList<EClassifier>());
+		PackageMetaData metaData = new PackageMetaData(pack, Schema.IFC2X3TC1, null);
+		
+		when(model.getPackageMetaData()).thenReturn(metaData);
 		
 		return model;
 	}

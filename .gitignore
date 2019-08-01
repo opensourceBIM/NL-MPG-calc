@@ -12,3 +12,4 @@
 src/org/opensourcebim/resources/local/nmdConfig.xml
 nmdConfig.xml
 config.xml
+.classpath
