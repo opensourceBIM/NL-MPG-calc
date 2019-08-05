@@ -1,5 +1,9 @@
 package org.opensourcebim.services;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.bimserver.bimbots.BimBotContext;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsInput;
@@ -13,6 +17,7 @@ import org.opensourcebim.mapping.NmdDataResolver;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
 
 import nl.tno.bim.nmd.config.NmdConfigImpl;
+import nl.tno.bim.nmd.services.Nmd2DataService;
 import nl.tno.bim.nmd.services.Nmd3DataService;
 
 public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
@@ -30,8 +35,9 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 		MpgObjectStore ifcResults = matParser.collectIfcModelObjects(ifcModel, bimBotContext.getContextId());
 		
 		// resolve any ifc to nmd coupling
+		Path pPath = Paths.get(getPluginContext().getRootPath().toString());
 		NmdDataResolver resolver = new NmdDataResolverImpl();
-		resolver.setNmdService(new Nmd3DataService(new NmdConfigImpl()));
+		resolver.setNmdService(new Nmd2DataService(new NmdConfigImpl(pPath)));
 		resolver.setMappingService(new MappingDataServiceRestImpl());
 		resolver.setStore(ifcResults);
 		resolver.nmdToMpg();
