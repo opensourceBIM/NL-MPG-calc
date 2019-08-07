@@ -1,6 +1,5 @@
 package org.opensourcebim.ifccollection;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,8 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.bimserver.emf.IfcModelInterface;
-import org.bimserver.models.geometry.Bounds;
-import org.bimserver.models.geometry.GeometryInfo;
 import org.bimserver.models.ifc2x3tc1.IfcAnnotation;
 import org.bimserver.models.ifc2x3tc1.IfcBoolean;
 import org.bimserver.models.ifc2x3tc1.IfcBuilding;
@@ -36,7 +33,6 @@ import org.bimserver.models.ifc2x3tc1.IfcOpeningElement;
 import org.bimserver.models.ifc2x3tc1.IfcPhysicalQuantity;
 import org.bimserver.models.ifc2x3tc1.IfcPhysicalSimpleQuantity;
 import org.bimserver.models.ifc2x3tc1.IfcProduct;
-import org.bimserver.models.ifc2x3tc1.IfcProject;
 import org.bimserver.models.ifc2x3tc1.IfcProperty;
 import org.bimserver.models.ifc2x3tc1.IfcPropertySet;
 import org.bimserver.models.ifc2x3tc1.IfcPropertySetDefinition;
@@ -47,7 +43,6 @@ import org.bimserver.models.ifc2x3tc1.IfcQuantityVolume;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociates;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesClassification;
 import org.bimserver.models.ifc2x3tc1.IfcRelAssociatesMaterial;
-import org.bimserver.models.ifc2x3tc1.IfcRelDecomposes;
 import org.bimserver.models.ifc2x3tc1.IfcRelDefines;
 import org.bimserver.models.ifc2x3tc1.IfcRelDefinesByProperties;
 import org.bimserver.models.ifc2x3tc1.IfcRelDefinesByType;
@@ -66,14 +61,8 @@ import org.bimserver.models.ifc2x3tc1.impl.IfcOpeningElementImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcSiteImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcSpaceImpl;
 import org.bimserver.models.ifc2x3tc1.impl.IfcVirtualElementImpl;
-import org.bimserver.utils.AreaUnit;
-import org.bimserver.utils.IfcUtils;
-import org.bimserver.utils.LengthUnit;
-import org.bimserver.utils.VolumeUnit;
-import org.eclipse.emf.common.util.EList;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.emf.common.util.EList;
 
 /**
  * Class to retrieve the material properties from the IfcModel
@@ -83,23 +72,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class MpgIfcObjectCollector {
 
 	private MpgObjectStoreImpl objectStore;
-
+	private MpgGeometryParser geometryParser;
 	// products that should not be included in the material calculations.
 	private List<Class<? extends IfcProduct>> ignoredProducts;
 
-	// reporting units and imported units to help convert measurements
-	private AreaUnit areaUnit = AreaUnit.SQUARED_METER;
-	private VolumeUnit volumeUnit = VolumeUnit.CUBIC_METER;
-	private LengthUnit lengthUnit = LengthUnit.METER;
-	private AreaUnit modelAreaUnit;
-	private VolumeUnit modelVolumeUnit;
-	private LengthUnit modelLengthUnit;
-	private ObjectMapper mapper = new ObjectMapper();
-
 	public MpgIfcObjectCollector() {
 		objectStore = new MpgObjectStoreImpl();
-		objectStore.setUnits(volumeUnit, areaUnit, lengthUnit);	
-		
+		objectStore.setUnits(MpgGeometryParser.getVolumeUnit(),
+				MpgGeometryParser.getAreaUnit(),
+				MpgGeometryParser.GetLengthUnit());	
+				
+		// List products that are not going to be analyzed for material mappings
 		ignoredProducts = Arrays.asList(IfcSite.class, IfcSiteImpl.class, IfcBuilding.class, IfcBuildingImpl.class,
 				IfcBuildingStorey.class, IfcBuildingStoreyImpl.class, IfcFurnishingElement.class,
 				IfcFurnishingElementImpl.class, IfcOpeningElement.class, IfcOpeningElementImpl.class,
@@ -113,46 +96,16 @@ public class MpgIfcObjectCollector {
 
 	/**
 	 * method to read in a IfcModel and retrieve material properties for MPG
-	 * calculations
+	 * calculations using different types of data retrieval availabel for the IFC standard
 	 * 
 	 * @param ifcModel for now only a ifc2x3tc1 IfcModel object
 	 */
 	public MpgObjectStore collectIfcModelObjects(IfcModelInterface ifcModel, String pId) {
 		objectStore.reset();
-		
+		geometryParser = new MpgGeometryParser(ifcModel);
 		objectStore.setProjectId(pId);
 
-		// get project wide parameters
-		modelVolumeUnit = IfcUtils.getVolumeUnit(ifcModel);
-		modelAreaUnit = IfcUtils.getAreaUnit(ifcModel);
-		modelLengthUnit = IfcUtils.getLengthUnit(ifcModel);
-
-		// loop through IfcSpaces
-		for (IfcSpace space : ifcModel.getAllWithSubTypes(IfcSpace.class)) {
-
-			// omit any external spaces.
-			if (space.getBoundedBy().size() == 0) {
-				continue;
-			}
-
-			EList<IfcRelDecomposes> parentDecomposedProduct = space.getIsDecomposedBy();
-
-			// if there is any space that decomposes in this space we can omit the addition
-			// of the volume
-			boolean isIncludedSemantically = false;
-			if (parentDecomposedProduct != null) {
-				isIncludedSemantically = parentDecomposedProduct.stream()
-						.filter(relation -> relation.getRelatingObject() instanceof IfcSpace).count() > 0;
-			}
-
-			MpgGeometry geom = getGeometryFromProduct(space);
-
-			// ToDo: also include geometric check?
-			if (!isIncludedSemantically) {
-				objectStore.getSpaces()
-						.add(new MpgSpaceImpl(space.getGlobalId(), geom.getVolume(), geom.getFloorArea()));
-			}
-		}
+		this.geometryParser.tryParseFloorArea(ifcModel, this.objectStore);
 
 		Map<String, String> childToParentMap = new HashMap<String, String>();
 
@@ -181,17 +134,17 @@ public class MpgIfcObjectCollector {
 							}
 						}
 					});
-
+				
 				MpgObjectImpl mpgObject = new MpgObjectImpl(product.getOid(), 
 						product.getGlobalId(), 
 						product.getName(),
 						product.getClass().getSimpleName(), "");
 
 				this.getPropertySetsFromIfcProduct(product, mpgObject);
-				MpgGeometry geom = getGeometryFromProduct(product);
+				MpgGeometry geom = geometryParser.getGeometryFromProduct(product);
 				if (geom.getVolume().isNaN()) {
 					// if the geomServer does not return a volume we have to try it through properties.
-					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "Geometry from properties");
+					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "Geometry from property set");
 					mpgObject.setGeometry(this.getGeometryFromPropertySet(product, mpgObject));
 				} else {
 					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "Geometry from ifcopenShell");
@@ -209,10 +162,9 @@ public class MpgIfcObjectCollector {
 				this.getProductClassications(product, mpgObject);
 				
 				// all properties are set. add it to the store.
-				// create the mpg element
+				// create the mpg element and link it to the object
 				String newMpgElementId = product.getName() + "-" + product.getGlobalId();
 				MpgElement newMpgElement = this.objectStore.addElement(newMpgElementId);
-
 				objectStore.getObjects().add(mpgObject);
 				newMpgElement.setMpgObject(mpgObject);
 			}
@@ -261,55 +213,6 @@ public class MpgIfcObjectCollector {
 		}
 		geom.setIsComplete(false);
 		return geom;
-	}
-
-	/**
-	 * retrieve the geometric properties of an ifcProduct
-	 * 
-	 * @param prod the product to evaluate
-	 * @return a MpgGeometry object with relevant data stored
-	 */
-	private MpgGeometry getGeometryFromProduct(IfcProduct prod) {
-		GeometryInfo geometry = prod.getGeometry();
-
-		MpgGeometry geom = new MpgGeometry();
-
-		if (geometry != null) {
-
-			geom.setVolume(this.convertVolume(geometry.getVolume()));
-
-			try {
-				JsonNode geomData = mapper.readTree(geometry.getAdditionalData());
-				if (geomData != null && geomData.size() > 0) {
-					geom.setIsComplete(true);
-					Bounds bounds = geometry.getBoundsUntransformed();
-					double x_dir = this.convertLength(bounds.getMax().getX() - bounds.getMin().getX());
-					double y_dir = this.convertLength(bounds.getMax().getY() - bounds.getMin().getY());
-					double z_dir = this.convertLength(bounds.getMax().getZ() - bounds.getMin().getZ());
-					
-					//double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
-										
-					geom.setFloorArea(this.convertArea(geomData.get("SURFACE_AREA_ALONG_Z").asDouble()));
-					geom.setDimensions(x_dir, y_dir, z_dir);
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		return geom;
-	}
-
-	private Double convertVolume(Double value) {
-		return this.getVolumeUnit().convert(value, modelVolumeUnit);
-	}
-
-	private Double convertArea(Double value) {
-		return this.getAreaUnit().convert(value, modelAreaUnit);
-	}
-
-	private Double convertLength(Double value) {
-		return this.lengthUnit.convert(value, modelLengthUnit);
 	}
 
 	/**
@@ -555,18 +458,4 @@ public class MpgIfcObjectCollector {
 	private List<Triple<String, String, Double>> getMaterialLayerList(IfcMaterialLayerSetUsage layerSetUsage) {
 		return getMaterialLayerList(layerSetUsage.getForLayerSet());
 	}
-
-	// ---------- Standard getters and setters -------------
-	public AreaUnit getAreaUnit() {
-		return areaUnit;
-	}
-
-	public VolumeUnit getVolumeUnit() {
-		return volumeUnit;
-	}
-
-	public LengthUnit GetLengthUnit() {
-		return lengthUnit;
-	}
-
 }
