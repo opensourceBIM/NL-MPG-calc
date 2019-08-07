@@ -146,7 +146,7 @@ public class MpgGeometryParser {
 			}
 		} else {
 			// on absence of spaces use the voxel bot
-			res = 1.0
+			double res = 1.0;
 			objectStore.getSpaces()
 			.add(new MpgSpaceImpl("no ifcSpace objects found", 0.0, res));
 		}
