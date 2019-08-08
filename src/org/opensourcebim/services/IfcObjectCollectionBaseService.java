@@ -19,6 +19,11 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 		return true;
 	}
 	
+	@Override
+    public boolean needsRawInput() {
+        return true;
+    }
+	
 	protected BimBotsOutput toBimBotsJsonOutput(Object results, String outputDescription) throws BimBotsException {
 		// convert output with Jackon
 		byte[] ifcJsonResults;
