@@ -14,7 +14,9 @@ import org.opensourcebim.mapping.NmdDataResolverImpl;
 import org.opensourcebim.mpgcalculation.MpgCalculationResults;
 import org.opensourcebim.mpgcalculation.MpgCalculator;
 
+import nl.tno.bim.nmd.config.NmdConfigImpl;
 import nl.tno.bim.nmd.services.Nmd2DataService;
+import nl.tno.bim.nmd.services.Nmd3DataService;
 
 public class MpgCalculationResultsService extends IfcObjectCollectionBaseService {
 
@@ -23,7 +25,7 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 			throws BimBotsException {
 
 		IfcModelInterface ifcModel = input.getIfcModel();
-
+		
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
 		MpgObjectStore ifcResults = matParser.collectIfcModelObjects(ifcModel, bimBotContext.getContextId());
@@ -31,7 +33,7 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 		// resolve any ifc to nmd coupling
 		NmdDataResolver resolver = new NmdDataResolverImpl();
 		
-		resolver.setNmdService(new Nmd2DataService(getPluginContext().getRootPath()));
+		resolver.setNmdService(new Nmd3DataService(new NmdConfigImpl(getPluginContext().getRootPath())));
 		resolver.setMappingService(new MappingDataServiceRestImpl());
 		resolver.setStore(ifcResults);
 		resolver.nmdToMpg();
