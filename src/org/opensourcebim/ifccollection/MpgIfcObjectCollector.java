@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
+import org.bimserver.bimbots.BimBotsInput;
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.ifc2x3tc1.IfcAnnotation;
 import org.bimserver.models.ifc2x3tc1.IfcBoolean;
@@ -94,18 +95,26 @@ public class MpgIfcObjectCollector {
 		return this.objectStore;
 	}
 
+	public MpgObjectStore collectIfcModelObjects(IfcModelInterface model, String pId) {
+		return collectIfcModelObjects(model, pId, null);
+	}
+
+	public MpgObjectStore collectIfcModelObjects(BimBotsInput input, String pId) {
+		return collectIfcModelObjects(input.getIfcModel(), pId, input.getData());
+	}
+	
 	/**
 	 * method to read in a IfcModel and retrieve material properties for MPG
 	 * calculations using different types of data retrieval availabel for the IFC standard
 	 * 
 	 * @param ifcModel for now only a ifc2x3tc1 IfcModel object
 	 */
-	public MpgObjectStore collectIfcModelObjects(IfcModelInterface ifcModel, String pId) {
+	public MpgObjectStore collectIfcModelObjects(IfcModelInterface ifcModel, String pId, byte[] data) {		
 		objectStore.reset();
 		geometryParser = new MpgGeometryParser(ifcModel);
 		objectStore.setProjectId(pId);
 
-		this.geometryParser.tryParseFloorArea(ifcModel, this.objectStore);
+		this.geometryParser.tryParseFloorArea(ifcModel, this.objectStore, data);
 
 		Map<String, String> childToParentMap = new HashMap<String, String>();
 

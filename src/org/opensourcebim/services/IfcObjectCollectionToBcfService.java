@@ -18,11 +18,9 @@ public class IfcObjectCollectionToBcfService extends IfcObjectCollectionBaseServ
 	public BimBotsOutput runBimBot(BimBotsInput input, BimBotContext bimBotContext, PluginConfiguration pluginConfiguration)
 			throws BimBotsException {
 
-		IfcModelInterface ifcModel = input.getIfcModel();
-
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
-		MpgObjectStore store = matParser.collectIfcModelObjects(ifcModel, bimBotContext.getContextId());
+		MpgObjectStore store = matParser.collectIfcModelObjects(input, bimBotContext.getContextId());
 		ObjectStoreToBcfConverter converter = new ObjectStoreToBcfConverter(store, input);
 		
 		BimBotsOutput output = null;

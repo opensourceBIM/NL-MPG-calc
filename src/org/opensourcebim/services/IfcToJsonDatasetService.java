@@ -16,11 +16,9 @@ public class IfcToJsonDatasetService extends IfcObjectCollectionBaseService {
 	public BimBotsOutput runBimBot(BimBotsInput input, BimBotContext bimBotContext, PluginConfiguration pluginConfiguration)
 			throws BimBotsException {
 
-		IfcModelInterface ifcModel = input.getIfcModel();
-
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
-		MpgObjectStore store = matParser.collectIfcModelObjects(ifcModel, bimBotContext.getContextId());
+		MpgObjectStore store = matParser.collectIfcModelObjects(input, bimBotContext.getContextId());
 		
 		GuidDataSet dataset = new GuidDataSet(store);
 		

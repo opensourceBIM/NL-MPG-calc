@@ -14,6 +14,7 @@ import org.bimserver.utils.IfcUtils;
 import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.EList;
+import org.opensourcebim.services.FloorAreaService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -114,7 +115,7 @@ public class MpgGeometryParser {
 	 * @param ifcModel the ifc data to parse
 	 * @param objectStore container to store the floor area data.
 	 */
-	public void tryParseFloorArea(IfcModelInterface ifcModel, MpgObjectStoreImpl objectStore) {
+	public void tryParseFloorArea(IfcModelInterface ifcModel, MpgObjectStoreImpl objectStore, byte[] data) {
 
 		// first loop through IfcSpaces
 		List<IfcSpace> allSpaces = ifcModel.getAllWithSubTypes(IfcSpace.class);
@@ -144,11 +145,19 @@ public class MpgGeometryParser {
 							.add(new MpgSpaceImpl(space.getGlobalId(), geom.getVolume(), geom.getFloorArea()));
 				}
 			}
+		} else if (data != null){
+			JsonNode res;
+			try {
+				res = FloorAreaService.getJsonFromBinaryData(data);
+				objectStore.getSpaces()
+				.add(new MpgSpaceImpl("area from floor area voxel service", 0.0, res.get("floor_area").asDouble()));
+		
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		} else {
-			// on absence of spaces use the voxel bot
-			double res = 1.0;
 			objectStore.getSpaces()
-			.add(new MpgSpaceImpl("no ifcSpace objects found", 0.0, res));
+			.add(new MpgSpaceImpl("no floor area found", 0.0, -1));
 		}
 		
 		// if nothing else helped do something else
