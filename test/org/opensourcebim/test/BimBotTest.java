@@ -1,6 +1,7 @@
 package org.opensourcebim.test;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.bimserver.bimbots.BimBotDummyContext;
@@ -29,6 +30,8 @@ public class BimBotTest implements Runnable {
 	private Path path;
 	private BimBotsServiceInterface bimBot;
 	private UsernamePasswordAuthenticationInfo credentials;
+	
+	private JsonNode res;
 
 	public BimBotTest(Path path, BimServerClientFactory bimServerClientFactory,
 			UsernamePasswordAuthenticationInfo credentials, BimBotsServiceInterface bimBot) {
@@ -36,6 +39,11 @@ public class BimBotTest implements Runnable {
 		this.bimServerClientFactory = bimServerClientFactory;
 		this.credentials = credentials;
 		this.bimBot = bimBot;
+		this.res = null;
+	}
+	
+	public JsonNode getResultsAsJson() {
+		return this.res;
 	}
 
 	@Override
@@ -63,7 +71,7 @@ public class BimBotTest implements Runnable {
 			}
 
 			try (IfcModelInterface model = client.getModel(project, project.getLastRevisionId(), true, false, true)) {
-				BimBotsInput input = new BimBotsInput("", null);
+				BimBotsInput input = new BimBotsInput("", Files.readAllBytes(path));
 				input.setIfcModel(model);
 				BimBotsOutput bimBotsOutput = bimBot.runBimBot(input, new BimBotDummyContext(), null);
 
@@ -71,8 +79,8 @@ public class BimBotTest implements Runnable {
 				mapper.enable(SerializationFeature.INDENT_OUTPUT);
 				DefaultPrettyPrinter printer = new DefaultPrettyPrinter();
 				ObjectWriter writer = mapper.writer(printer);
-				JsonNode jsonTree = mapper.readTree(bimBotsOutput.getData());
-				writer.writeValue(new File(path.toString().replace(".ifc", ".json")), jsonTree);
+				this.res = mapper.readTree(bimBotsOutput.getData());
+				writer.writeValue(new File(path.toString().replace(".ifc", ".json")), this.res);
 
 				LOGGER.info(bimBotsOutput.getTitle() + " " + bimBotsOutput.getData().length + "bytes");
 				LOGGER.info("");
