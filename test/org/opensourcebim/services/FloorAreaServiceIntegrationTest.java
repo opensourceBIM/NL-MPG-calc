@@ -36,8 +36,10 @@ public class FloorAreaServiceIntegrationTest {
 	@Parameterized.Parameters(name = "{0}/{1}")
 	public static Iterable<Object[]> data() {
 	    return Arrays.asList(new Object[][] {
-	        {"Project C (BasisILS)", "model voorbeeld BasisILS.ifc"},
 	        {"project a", "3d bwk_K01K05_04-12-2017.ifc"},
+	        {"Project B", "063_AP_DSB_BIM_CONSTR.ifc"},
+	        {"Project C (BasisILS)", "model voorbeeld BasisILS.ifc"},
+	        {"Project D", "18014_BWK_totaal.ifc"},
 	    });
 	}
 	
