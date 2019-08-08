@@ -91,7 +91,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>pluginbase</artifactId>
-			<version>1.5.164-SNAPSHOT</version>
+			<version>1.5.163</version>
 		</dependency>
 		<dependency>
 			<scope>test</scope>
@@ -102,7 +102,7 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimserverclientlib</artifactId>
-			<version>1.5.161</version>
+			<version>1.5.163</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
