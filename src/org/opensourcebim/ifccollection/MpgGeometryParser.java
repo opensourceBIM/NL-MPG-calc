@@ -94,15 +94,15 @@ public class MpgGeometryParser {
 	}
 
 	private Double convertVolume(Double value) {
-		return this.getVolumeUnit().convert(value, modelVolumeUnit);
+		return MpgGeometryParser.getVolumeUnit().convert(value, modelVolumeUnit);
 	}
 
 	private Double convertArea(Double value) {
-		return this.getAreaUnit().convert(value, modelAreaUnit);
+		return MpgGeometryParser.getAreaUnit().convert(value, modelAreaUnit);
 	}
 
 	private Double convertLength(Double value) {
-		return this.lengthUnit.convert(value, modelLengthUnit);
+		return MpgGeometryParser.lengthUnit.convert(value, modelLengthUnit);
 	}
 	
 	
@@ -110,7 +110,7 @@ public class MpgGeometryParser {
 	 * Try parse the floor area by different means:
 	 *  - When there are IfcSpaces defined apply this method
 	 *  - try get it through the voxel bot
-	 *  - try get it through slab area
+	 *  - try get it through other means
 	 * @param ifcModel the ifc data to parse
 	 * @param objectStore container to store the floor area data.
 	 */
