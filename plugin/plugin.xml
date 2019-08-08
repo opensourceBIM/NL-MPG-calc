@@ -4,24 +4,34 @@
 		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
 		<implementationClass>org.opensourcebim.services.IfcToMpgCollectionService</implementationClass>
 		<name>Ifc Object Collection for MPG Calculation</name>
-		<description>Collects all IFC objects that are required for MPG calculations</description>
+		<description>Collects all IFC objects that are required for MPG
+			calculations</description>
 	</JavaPlugin>
 	<JavaPlugin>
 		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
 		<implementationClass>org.opensourcebim.services.IfcToJsonDatasetService</implementationClass>
-		<name>Ifc Object collection with selection of properties per guid</name>
-		<description>Returns a Json dataset that can easily be represented in COTS analysis tools</description>
+		<name>Ifc Object collection for analysis</name>
+		<description>Returns a Json dataset that can easily be represented in
+			COTS analysis tools</description>
 	</JavaPlugin>
 	<JavaPlugin>
 		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
 		<implementationClass>org.opensourcebim.services.MpgCalculationResultsService</implementationClass>
-		<name>Mpg Results calculation for Revision</name>
-		<description>Returns a MpgCalculationResults object for input IfcModel.</description>
+		<name>Mpg calculation Results</name>
+		<description>Returns a MpgCalculationResults object for input
+			IfcModel.</description>
 	</JavaPlugin>
 	<JavaPlugin>
 		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
 		<implementationClass>org.opensourcebim.services.IfcObjectCollectionToBcfService</implementationClass>
-		<name>bcf export for mpg object store issues</name>
-		<description>Returns a BCF file listing the various issues identified during ifc object collection and NMD mapping.</description>
+		<name>bcf export for MpgObjectStore issues</name>
+		<description>Returns a BCF file listing the various issues identified
+			during ifc object collection and NMD mapping.</description>
+	</JavaPlugin>
+	<JavaPlugin>
+		<interfaceClass>org.bimserver.plugins.services.ServicePlugin</interfaceClass>
+		<implementationClass>org.opensourcebim.services.FloorAreaService</implementationClass>
+		<name>floor area voxel bot</name>
+		<description>Calls voxel service to determine floor area of ifc construction. takes into account multiple floors</description>
 	</JavaPlugin>
 </PluginDescriptor>
