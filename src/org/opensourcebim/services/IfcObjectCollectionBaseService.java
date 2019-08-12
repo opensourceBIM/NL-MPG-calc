@@ -3,11 +3,14 @@ package org.opensourcebim.services;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsOutput;
 import org.bimserver.plugins.services.BimBotAbstractService;
+import org.opensourcebim.ifccollection.MpgObjectStore;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class IfcObjectCollectionBaseService extends BimBotAbstractService {
+	
+	private MpgObjectStore store = null;
 	
 	@Override
 	public boolean preloadCompleteModel() {
@@ -24,6 +27,8 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
         return true;
     }
 	
+	
+	
 	protected BimBotsOutput toBimBotsJsonOutput(Object results, String outputDescription) throws BimBotsException {
 		// convert output with Jackon
 		byte[] ifcJsonResults;
@@ -39,5 +44,13 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 		} catch (JsonProcessingException e) {
 			throw new BimBotsException("Unable to convert retrieved objects to Json", 500);
 		}
+	}
+
+	public MpgObjectStore getStore() {
+		return store;
+	}
+
+	public void setStore(MpgObjectStore store) {
+		this.store = store;
 	}
 }
