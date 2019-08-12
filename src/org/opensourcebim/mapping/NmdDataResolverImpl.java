@@ -102,7 +102,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// pre process: try to fill in missing Nlsfb codes based on hierarchy in the
 		// model
-		this.resolveNlsfbCodes();
+		this.resolveAlternativeNlsfbCodes();
 
 		// pre process: try fill in dimensions by producttype relations for products
 		// without parsed geometry
@@ -626,7 +626,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * looking at decomposing elements and/or a list of alternative IfcProduct to
 	 * NLsfb mappings.
 	 */
-	public void resolveNlsfbCodes() {
+	public void resolveAlternativeNlsfbCodes() {
 
 		Map<String, List<String>> map = getMappingService().getNlsfbMappings();
 
@@ -635,30 +635,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			// find NLsfb codes for child objects that have no code themselves.
 			MpgObject o = el.getMpgObject();
 			List<String> foundMap = map.getOrDefault(o.getObjectType(), null);
-
-			boolean hasParent = (o.getParentId() != null) && !o.getParentId().isEmpty();
-			MpgObject p = new MpgObjectImpl();
-			if (hasParent) {
-				try {
-					p = this.getStore().getObjectByGuid(o.getParentId()).get();
-				} catch (Exception e) {
-					System.out.println("encountered GUID that should have a parent, but is not mapped correctly : "
-							+ o.getParentId());
-				}
-				if (!o.hasNlsfbCode()) {
-
-					if (p.hasNlsfbCode()) {
-						o.setNLsfbCode(p.getNLsfbCode().print());
-						o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "Resolved from: " + p.getGlobalId());
-					}
-				}
-
-				// Now add all aternatives to fall back on should the first mapping give no
-				// results
-				if (foundMap == null) {
-					foundMap = map.getOrDefault(p.getObjectType(), null);
-				}
-			}
 
 			if (foundMap != null && foundMap.size() > 0) {
 				o.addNlsfbAlternatives(new HashSet<String>(foundMap));

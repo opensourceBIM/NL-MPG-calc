@@ -525,5 +525,31 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		boolean childCheck = includeChildren
 				&& getChildren(obj.getGlobalId()).anyMatch(o -> hasUndefinedLayers(o, includeChildren));
 		return ownCheck || childCheck;
-	}	
+	}
+
+	public void resolveParentNLsfbCodes() {
+		this.getElements().forEach(el -> {
+
+			// find NLsfb codes for child objects that have no code themselves.
+			MpgObject o = el.getMpgObject();
+
+			boolean hasParent = (o.getParentId() != null) && !o.getParentId().isEmpty();
+			MpgObject p = new MpgObjectImpl();
+			if (hasParent) {
+				try {
+					p = this.getObjectByGuid(o.getParentId()).get();
+				} catch (Exception e) {
+					System.out.println("encountered GUID that should have a parent, but is not mapped correctly : "
+							+ o.getParentId());
+				}
+				if (!o.hasNlsfbCode()) {
+
+					if (p.hasNlsfbCode()) {
+						o.setNLsfbCode(p.getNLsfbCode().print());
+						o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "Resolved from: " + p.getGlobalId());
+					}
+				}
+			}
+		});
+	}
 }
