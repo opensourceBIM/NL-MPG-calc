@@ -60,7 +60,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 		setObjects(new BasicEList<MpgObject>());
 		setSpaces(new BasicEList<MpgSpace>());
 		setUnits(VolumeUnit.CUBIC_METER, AreaUnit.SQUARED_METER, LengthUnit.METER);
-		decomposedRelations = new ArrayList<ImmutablePair<String,MpgObject>>();
+		decomposedRelations = new ArrayList<ImmutablePair<String, MpgObject>>();
 	}
 
 	public void reset() {
@@ -178,9 +178,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	
 	@Override
 	public List<NmdProductCard> getProductCards(Collection<Integer> ids) {
-		return this.productCards.entrySet().stream()
-				.filter(es -> ids.contains(es.getKey()))
-				.map(es -> es.getValue())
+		return this.productCards.entrySet().stream().filter(es -> ids.contains(es.getKey())).map(es -> es.getValue())
 				.collect(Collectors.toList());
 	}
 
@@ -237,6 +235,14 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	public Map<String, List<MpgElement>> getElementGroups() {
 		return this.mpgElements.stream().collect(Collectors.groupingBy(el -> {
+			return el.getValueHash();
+		}));
+	}
+	
+	@JsonIgnore
+	@Override
+	public Map<String, List<MpgElement>> getCleanedElementGroups() {
+		return this.mpgElements.stream().filter(el -> !el.getMpgObject().getObjectName().isEmpty()).collect(Collectors.groupingBy(el -> {
 			return el.getValueHash();
 		}));
 	}
@@ -322,14 +328,14 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 				el.setMappingMethod(NmdMappingType.IndirectThroughParent);
 				el.removeProductCards();
 			});
-			
+
 			parents.forEach(el -> {
 				if (el.getMappingMethod() == NmdMappingType.None && allChildrenAreMapped(el)) {
 					el.setMappingMethod(NmdMappingType.IndirectThroughChildren);
 				}
 			});
 		} else {
-			// revert all hierarchical child mappings 
+			// revert all hierarchical child mappings
 			// (as there can only be a single parent with a direct mapping)
 			children.forEach(el -> {
 				if (el.getMappingMethod() == NmdMappingType.IndirectThroughParent) {
@@ -348,15 +354,16 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 
 	/**
 	 * Recursively check whether all children are mapped.
+	 * 
 	 * @param el MpgElement to check hierarchy of
 	 * @return a flag to indicate that all chidren have a mapping
 	 */
 	private boolean allChildrenAreMapped(MpgElement el) {
 		List<MpgElement> childrenOfElement = decomposedRelations.stream()
 				.filter(kvp -> kvp.getKey().equals(el.getMpgObject().getGlobalId()))
-				.map(v -> v.getValue().getGlobalId())
-				.map(guid -> this.getElementByObjectGuid(guid)).collect(Collectors.toList());
-		
+				.map(v -> v.getValue().getGlobalId()).map(guid -> this.getElementByObjectGuid(guid))
+				.collect(Collectors.toList());
+
 		if (childrenOfElement.size() > 0) {
 			return childrenOfElement.stream().allMatch(ce -> ce.hasMapping() || allChildrenAreMapped(ce));
 		} else {
@@ -385,7 +392,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 
 	/**
-	 * Get a collection of elements that are down in the hierarchy than the input guid
+	 * Get a collection of elements that are down in the hierarchy than the input
+	 * guid
 	 * 
 	 * @param globalId guid to start from
 	 * @return a list of elements that are a (recursive) child of the input guid
@@ -471,8 +479,8 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@JsonIgnore
 	public GuidCollection getGuidsWithoutMappings() {
 		GuidCollection coll = new GuidCollection(this, "Object GUIDs for objects with incomplete NMD mapping");
-		coll.setCollection(this.getElements().stream().filter(el -> !el.getIsFullyCovered()).map(el -> el.getMpgObject().getGlobalId())
-				.collect(Collectors.toList()));
+		coll.setCollection(this.getElements().stream().filter(el -> !el.getIsFullyCovered())
+				.map(el -> el.getMpgObject().getGlobalId()).collect(Collectors.toList()));
 		return coll;
 	}
 	
