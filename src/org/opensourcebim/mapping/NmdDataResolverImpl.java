@@ -23,7 +23,6 @@ import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;

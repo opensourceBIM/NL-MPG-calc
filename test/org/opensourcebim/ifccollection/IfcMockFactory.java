@@ -11,7 +11,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.bimserver.emf.IfcModelInterface;
-import org.bimserver.emf.ModelMetaData;
 import org.bimserver.emf.PackageMetaData;
 import org.bimserver.emf.Schema;
 import org.bimserver.models.geometry.Bounds;

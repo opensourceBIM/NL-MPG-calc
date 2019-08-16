@@ -4,11 +4,9 @@ import org.bimserver.bimbots.BimBotContext;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsInput;
 import org.bimserver.bimbots.BimBotsOutput;
-import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.plugins.PluginConfiguration;
 import org.opensourcebim.ifcanalysis.GuidDataSet;
 import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
-import org.opensourcebim.ifccollection.MpgObjectStore;
 
 public class IfcToJsonDatasetService extends IfcObjectCollectionBaseService {
 

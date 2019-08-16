@@ -4,10 +4,8 @@ import org.bimserver.bimbots.BimBotContext;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsInput;
 import org.bimserver.bimbots.BimBotsOutput;
-import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.plugins.PluginConfiguration;
 import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
-import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.mapping.MappingDataServiceRestImpl;
 import org.opensourcebim.mapping.NmdDataResolver;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
@@ -16,7 +14,6 @@ import org.opensourcebim.mpgcalculation.MpgCalculator;
 
 import nl.tno.bim.nmd.config.NmdConfigImpl;
 import nl.tno.bim.nmd.services.Nmd2DataService;
-import nl.tno.bim.nmd.services.Nmd3DataService;
 
 public class MpgCalculationResultsService extends IfcObjectCollectionBaseService {
 

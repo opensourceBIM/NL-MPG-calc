@@ -6,12 +6,10 @@ import org.bimserver.bimbots.BimBotContext;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsInput;
 import org.bimserver.bimbots.BimBotsOutput;
-import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.plugins.PluginConfiguration;
 import org.opensourcebim.bcf.BcfException;
 import org.opensourcebim.bcfexport.ObjectStoreToBcfConverter;
 import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
-import org.opensourcebim.ifccollection.MpgObjectStore;
 
 public class IfcObjectCollectionToBcfService extends IfcObjectCollectionBaseService {
 	@Override
