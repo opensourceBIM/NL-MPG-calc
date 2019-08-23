@@ -1,5 +1,9 @@
 package org.opensourcebim.services;
 
+import java.io.FileNotFoundException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.bimserver.bimbots.BimBotContext;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsInput;
@@ -23,13 +27,15 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
+		NmdDataResolver resolver;
+		try {
+			resolver = getNmdResolver();
+		} catch (FileNotFoundException e) {
+			return this.toBimBotsJsonOutput(e, "bot failed. Config not found");
+		}
+
 		this.setStore(matParser.collectIfcModelObjects(input, bimBotContext.getContextId()));
 		
-		// resolve any ifc to nmd coupling
-		NmdDataResolver resolver = new NmdDataResolverImpl();
-		
-		resolver.setNmdService(new Nmd3DataService(new NmdConfigImpl(getPluginContext().getRootPath())));
-		resolver.setMappingService(new MappingDataServiceRestImpl());
 		resolver.setStore(this.getStore());
 		resolver.nmdToMpg();
 		

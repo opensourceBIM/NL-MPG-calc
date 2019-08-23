@@ -20,7 +20,6 @@ public class IfcObjectCollectionToBcfService extends IfcObjectCollectionBaseServ
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
 		this.setStore(matParser.collectIfcModelObjects(input, bimBotContext.getContextId()));
 		
-		
 		ObjectStoreToBcfConverter converter = new ObjectStoreToBcfConverter(this.getStore(), input);
 		
 		BimBotsOutput output = null;

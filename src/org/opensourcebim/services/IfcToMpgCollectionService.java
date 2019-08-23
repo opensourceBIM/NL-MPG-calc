@@ -1,5 +1,6 @@
 package org.opensourcebim.services;
 
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -15,6 +16,8 @@ import org.opensourcebim.mapping.NmdDataResolverImpl;
 
 import nl.tno.bim.nmd.config.NmdConfigImpl;
 import nl.tno.bim.nmd.services.Nmd2DataService;
+import nl.tno.bim.nmd.services.Nmd3DataService;
+import nl.tno.bim.nmd.services.NmdDataService;
 
 public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 
@@ -24,13 +27,14 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
-		this.setStore(matParser.collectIfcModelObjects(input, bimBotContext.getContextId()));
+		NmdDataResolver resolver;
+		try {
+			resolver = getNmdResolver();
+		} catch (FileNotFoundException e) {
+			return this.toBimBotsJsonOutput(e, "bot failed. Config not found");
+		}
 		
-		// resolve any ifc to nmd coupling
-		Path pPath = Paths.get(getPluginContext().getRootPath().toString());
-		NmdDataResolver resolver = new NmdDataResolverImpl();
-		resolver.setNmdService(new Nmd2DataService(new NmdConfigImpl(pPath)));
-		resolver.setMappingService(new MappingDataServiceRestImpl());
+		this.setStore(matParser.collectIfcModelObjects(input, bimBotContext.getContextId()));
 		resolver.setStore(this.getStore());
 		resolver.nmdToMpg();
 				
