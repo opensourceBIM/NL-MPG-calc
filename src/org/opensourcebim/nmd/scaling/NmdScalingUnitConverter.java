@@ -4,7 +4,7 @@ import org.bimserver.utils.LengthUnit;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 
 /**
- * Static functions to support dimension chekcs and unit conversion
+ * Static functions to support dimension checks and unit conversion
  * 
  * @author vijj
  *
@@ -15,6 +15,8 @@ public final class NmdScalingUnitConverter {
 	}
 
 	public static int getUnitDimension(String unit) {
+		if (unit == null) return -1;
+		
 		switch (unit.toLowerCase()) {
 		case "mm":
 		case "cm":
