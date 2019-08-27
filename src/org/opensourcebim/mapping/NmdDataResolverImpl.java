@@ -372,6 +372,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param codeSet
 	 */
 	private void FindProductsForNlsfbCodes(MpgElement mpgElement, Set<NlsfbCode> codeSet) {
+		// clear earlier warnings
+		mpgElement.getMpgObject().clearTagsOfType(MpgInfoTagType.nmdProductCardWarning);
+
 		// STEP 1: check if there are relevant nlsfbcodes present in the input set
 		if (codeSet.size() == 0 || codeSet.stream().allMatch(c -> c == null)) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
