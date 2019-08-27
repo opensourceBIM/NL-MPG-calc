@@ -423,9 +423,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 */
 	private List<NmdElement> selectCandidateElements(MpgElement mpgElement, List<NmdElement> candidates) {
 
-		List<NmdElement> filteredCandidates = candidates.stream()
-				.filter(ce -> (ce.getIsMandatory() && ce.getProducts().size() > 0)
-						|| ce.getProducts().stream().anyMatch(pc -> pc.getIsTotaalProduct()))
+		List<NmdElement> filteredCandidates = candidates.stream().filter(ce -> (ce.getProducts().size() > 0))
 				.collect(Collectors.toList());
 
 		return filteredCandidates;
