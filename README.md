@@ -61,7 +61,7 @@ In the BimServer documentation it states how to set up the eclipse client with t
 ## The NMD Service
 If you are to run the NMD service locally please clone [this repository](https://github.com/TNOBIM/NMD/) and follow the readme to run it. As this is a private repository you will either need to require access rights , or use an externally hosted NMD service.
 
-In order to connect to a locally hosted NMD service you are required to add a config.xml file (for NMD3.0 tokens and NMD2.2 db location) in the root directory of the NL-MPG-calc repository (= the current repository). An example file with the structure of the xml has been provided in the examples folder of this repository.
+In order to connect to a locally hosted NMD service you are required to add a config.xml file (for NMD3.0 tokens and NMD2.2 db location) in the root directory of the NL-MPG-CALC *and* the root directory of the NMD Service  repositories. An example file with the structure of the xml has been provided in the examples folder of this repository.
 
 Currently we make use of the NMD2.2 connection as the 3.0 version is not ready for full load testing yet. However, the problem with the 2.2 version is that the user needs its own sqlite *.db file hosted locally in the config data folder. However, the disadvantage of the NMD2.2 version is that the interface is only partially implemented and therefore does not return representative values for product cards. This has been intentionally left as 'to do' as we are currently not planning for the 2.2 version to be used in production stages.
 

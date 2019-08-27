@@ -2,7 +2,6 @@ package org.opensourcebim.services;
 
 import java.io.FileNotFoundException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -17,9 +16,6 @@ import org.opensourcebim.mapping.NmdDataResolverImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nl.tno.bim.nmd.config.NmdConfig;
-import nl.tno.bim.nmd.config.NmdConfigImpl;
-import nl.tno.bim.nmd.services.Nmd2DataService;
 import nl.tno.bim.nmd.services.Nmd3DataService;
 
 public abstract class IfcObjectCollectionBaseService extends BimBotAbstractService {
@@ -73,26 +69,21 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 	 * @return a preconfigured NMDDataResolver
 	 * @throws FileNotFoundException
 	 */
-	protected NmdDataResolver getNmdResolver() throws FileNotFoundException {
-		NmdConfig config;
-		if (getPluginContext() == null) {
-			config = new NmdConfigImpl();
-		} else {
-			
-			Path pPath = Paths.get(getPluginContext().getRootPath().getParent().toString());
-			if (Files.notExists(pPath.resolve("config.xml"))) {
-				config = new NmdConfigImpl(Paths.get(getPluginContext().getRootPath().toString()));
-			} else {
-				config = new NmdConfigImpl(pPath);
-			}
-			if (Files.notExists(pPath.resolve("config.xml"))) {
-				throw new FileNotFoundException("Could not find config file");
-			}
-		}
-
+	protected NmdDataResolver getNmdResolver() {
+		Path pPath;
+        if (getPluginContext() == null) {
+        	pPath = Paths.get(System.getProperty("user.dir"));
+        } else {
+            pPath = getPluginContext().getRootPath().getParent();
+            if (Files.notExists(pPath.resolve("config.xml"))) {
+                pPath = getPluginContext().getRootPath();
+            }
+        }
+		
 		NmdDataResolver resolver = new NmdDataResolverImpl();
-		resolver.setNmdService(new Nmd3DataService(config));
+		resolver.setNmdService(Nmd3DataService.getInstance(pPath));
 		resolver.setMappingService(new MappingDataServiceRestImpl());
 		return resolver;
 	}
+
 }
