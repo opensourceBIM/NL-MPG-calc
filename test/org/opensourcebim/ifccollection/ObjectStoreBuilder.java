@@ -162,7 +162,6 @@ public class ObjectStoreBuilder {
 		card.setProductId(getNewUniqueId());
 		card.setCategory(category);
 		card.setDescription(description);
-		card.setIsScalable(true);
 		card.setIsTotaalProduct(false);
 		card.setLifetime(lifetime);
 		if (el != null) {
