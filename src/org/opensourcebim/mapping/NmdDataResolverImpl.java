@@ -52,7 +52,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private MpgObjectStore store;
 	private Set<String> keyWords;
 
-	public NmdDataResolverImpl() {	}
+	public NmdDataResolverImpl() {
+	}
 
 	public MpgObjectStore getStore() {
 		return store;
@@ -127,7 +128,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				// element could already have a mapping through a decomposes relation
 				// in that case skip to the next one.
 				if (!element.hasMapping()) {
-					
+
 					resolveNmdMappingForElement(element);
 					// avoid adding elements that could not be found a nmd productcard for.
 					if (element.hasMapping()) {
@@ -282,19 +283,17 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			}
 		}
 
-		for (MpgElement el : store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty())
-				.collect(Collectors.toList())) {
-
+		store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty()).forEach(el ->
+		{
 			Set<String> foundMaterials = this.tryGetKeyMaterials(el.getMpgObject().getObjectName());
 
 			// add the found materials as aa single material item only if there are no
 			// materials already defined.
 			if (!foundMaterials.isEmpty() && el.getMpgObject().getListedMaterials().isEmpty()) {
-
 				el.getMpgObject().addMaterialSource(
 						new MaterialSource("-1", String.join(" ", foundMaterials), "from description"));
 			}
-		}
+		});
 	}
 
 	/**
