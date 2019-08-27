@@ -639,6 +639,15 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 			if (foundMap != null && foundMap.size() > 0) {
 				o.addNlsfbAlternatives(new HashSet<String>(foundMap));
+			} else {
+				// get type of possible parent and get nlsfb alternatives from there
+				Optional<MpgObject> parentObj = this.getStore().getObjectByGuid(o.getParentId());
+				if (parentObj.isPresent()) {
+					foundMap = map.getOrDefault(parentObj.get().getObjectType(), null);
+					if (foundMap != null && foundMap.size() > 0) {
+						o.addNlsfbAlternatives(new HashSet<String>(foundMap));
+					}
+				}
 			}
 		});
 	}
