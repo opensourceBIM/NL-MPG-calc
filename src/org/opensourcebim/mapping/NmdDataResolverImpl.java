@@ -464,6 +464,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 						"large uncertainty for mapping material: " + mat.getName());
 			}
 
+			List<NmdProductCard> removeCards = new ArrayList<>();
 			for (NmdProductCard card : productOptions) {
 				// per found element we should try to select a fitting productCard
 				int dims = NmdScalingUnitConverter.getUnitDimension(card.getUnit());
@@ -475,10 +476,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					// check if the productcard does not constrain the element in its physical
 					// dimensions.
 					if (!canProductBeUsedForElement(card, orientation)) {
-						productOptions.remove(card);
+						removeCards.add(card);
 					}
 				}
 			}
+			productOptions.removeAll(removeCards);
 
 			// determine which product card should be returned based on an input filter
 			// function and add this one to the results list
