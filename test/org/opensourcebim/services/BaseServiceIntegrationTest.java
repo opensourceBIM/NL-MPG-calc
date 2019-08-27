@@ -15,8 +15,12 @@ import org.bimserver.shared.UsernamePasswordAuthenticationInfo;
 import org.bimserver.shared.exceptions.BimServerClientException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+import org.opensourcebim.ifccollection.MaterialSource;
+import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.ObjectStoreBuilder;
+import org.opensourcebim.nmd.NmdProductCardReference;
 
 @RunWith(Parameterized.class)
 public class BaseServiceIntegrationTest<T extends BimBotsServiceInterface> {
@@ -65,11 +69,14 @@ public class BaseServiceIntegrationTest<T extends BimBotsServiceInterface> {
 	@SuppressWarnings("serial")
 	private static MpgObjectStoreImpl getProjectCReferenceStore() {
 		ObjectStoreBuilder factory = new ObjectStoreBuilder();
-		factory.AddUnmappedMpgElement("16_Fundering_funderingsbalk", false,
+		MpgElement el;
+		MaterialSource refSource = new MaterialSource(UUID.randomUUID().toString(), "dummy name", "reference source");
+		el = factory.AddUnmappedMpgElement("16_Fundering_funderingsbalk", false,
 				new HashMap<String, Double>() { {put("Beton gewapend C", 1.0);} },
 				new Double[] {5.0, 0.4, 0.5}, "16.12", "IfcFooting", null);
+		el.mapProductCard(refSource, new NmdProductCardReference(1000D));
 		
-		String doorUUID = UUID.randomUUID().toString();
+		//String doorUUID = UUID.randomUUID().toString();
 		factory.AddUnmappedMpgElement("32_Deur_S-01", false, 
 				new HashMap<String, Double>(), // { {put("32_Loofhout", 1.0);} }
 				new Double[] {0.986, 0.114, 2.1}, "32.31", "IfcDoor", null);
