@@ -37,8 +37,7 @@ public class WorksheetReaderTest {
 	private Integer expectedCols;
 	private String description;
 
-	String rootDir = Paths.get(System.getProperty("user.dir")).getParent() + File.separator + "ReferenceExcelFiles"
-			+ File.separator;
+	Path rootDir = Paths.get(System.getProperty("user.dir")).resolve("test").resolve("ReferenceExcelFiles");
 	
 	public WorksheetReaderTest(String relPath, Boolean fileExists, Integer sheetNum, Integer headerRow,
 			Integer startCol, Integer skipRows, Integer expectedColumns, Integer expectedRows, String testDescription) {
@@ -62,7 +61,7 @@ public class WorksheetReaderTest {
 		return Arrays.asList(new Object[][] {
 			{ "fileDoesNotExist.xlsx", false, 0, 0, 0, 0, 10, 41, "file is not a valid filename"},
 			{ "testReference1.xlsx", true, 0, 0, 0, 0, 10, 41, "blue sky test with default settings" },
-			{ "testReference1.xlsx", true, 1, 0, 0, 0, 0, 0, "reading wrong sheet" },
+			{ "testReference1.xlsx", true, 1, 0, 0, 0, 1, 4, "reading wrong sheet" },
 			{ "testReference1.xlsx", true, 0, 2, 0, 0, 10, 39, "set header row to 3rd line"},
 			{ "testReference1.xlsx", true, 0, 0, 3, 0, 7, 41, "skip the first 3 columns" },
 			{ "testReference1.xlsx", true, 0, 0, 0, 11, 10, 30, "skip the first 11 rows" },
@@ -71,7 +70,7 @@ public class WorksheetReaderTest {
 	}
 
 	protected Path getFullIfcModelPath() {
-		return Paths.get(rootDir + this.relPath);
+		return rootDir.resolve(this.relPath);
 	}
 
 	@Test
