@@ -70,6 +70,8 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 	 * @throws FileNotFoundException
 	 */
 	protected NmdDataResolver getNmdResolver() {
+		// the path is relative to the project it is called from. therefore 
+		// some existence checks need to be done to make sure we can find a config file.
 		Path pPath;
         if (getPluginContext() == null) {
         	pPath = Paths.get(System.getProperty("user.dir"));
