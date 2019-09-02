@@ -353,8 +353,15 @@ public class MpgIfcObjectCollectorTest {
 		factory.addGenericIfcProductToModel(ifcModel, IfcFurnishingElement.class, null);
 		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		
-		assertEquals(0, collector.results().getSpaces().size());
 		assertEquals(0, collector.results().getObjects().size());
+	}
+	
+	@Test
+	public void testCollectorCreatesDummySpaceWhenNoSpaceIsFound() {
+		factory.addGenericIfcProductToModel(ifcModel, IfcFurnishingElement.class, null);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
+		
+		assertEquals(-1d, collector.results().getSpaces().get(0).getArea(), 1e-8);
 	}
 	
 	@Test
