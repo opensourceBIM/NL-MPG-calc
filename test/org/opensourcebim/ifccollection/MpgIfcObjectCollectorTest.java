@@ -46,7 +46,7 @@ public class MpgIfcObjectCollectorTest {
 	
 	@Test
 	public void testParseModelWithoutProducts() {
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
 		
@@ -54,7 +54,7 @@ public class MpgIfcObjectCollectorTest {
 	public void testParseModelWithoutMaterialAssociatesWillNotThrowError() {		
 		factory.setAssociations(null);
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
 	
@@ -62,7 +62,7 @@ public class MpgIfcObjectCollectorTest {
 	public void testParseModelWithoutGeometryWillNotThrowError() {
 		factory.setGeometry(null);
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		
 		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
@@ -71,7 +71,7 @@ public class MpgIfcObjectCollectorTest {
 	public void testCollectObjectsWillGatherObjectNamesofProduct() {
 		String name = "a structural beam";
 		factory.addProductToModel(ifcModel, name, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		
 		assertEquals(name, collector.results().getObjects().get(0).getObjectName());
 	}
@@ -83,7 +83,7 @@ public class MpgIfcObjectCollectorTest {
 		IfcProduct parent = ifcModel.getAllWithSubTypes(IfcProduct.class).get(0);
 		factory.addProductToModel(ifcModel, "b", parent.getGlobalId());
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(parent.getGlobalId(), collector.results().getObjects().get(1).getParentId());
 	}
 		
@@ -92,7 +92,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterial("aluminium");
 		factory.addProductToModel(ifcModel, null, null);
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(1, collector.results().getAllMaterialNames().count());
 	}
 	
@@ -102,7 +102,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterial("aluminium");
 		factory.addProductToModel(ifcModel, null, null);
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		// if the materials are the same we should only store it once.
 		assertEquals(1, collector.results().getAllMaterialNames().count());
 	}
@@ -118,7 +118,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterial("steel");
 		factory.addProductToModel(ifcModel, null, null);
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		// if the materials are the same we should only store it once.
 		assertEquals(2, collector.results().getAllMaterialNames().count());
 	}
@@ -129,7 +129,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterial("steel");
 		factory.setGeometry(null);
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 
 		assertEquals(2, collector.results().getAllMaterialNames().count());
 	}
@@ -138,7 +138,7 @@ public class MpgIfcObjectCollectorTest {
 	public void testCanParseModelWithMaterialList() {
 		factory.addMaterialList(Arrays.asList("Steel", "Aluminium", "Aluminium"));
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(2, collector.results().getAllMaterialNames().count());
 	}
 	
@@ -146,7 +146,7 @@ public class MpgIfcObjectCollectorTest {
 	public void testCanParseModelWithEmptyMaterialList() {
 		factory.addMaterialList(new ArrayList<String>());
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(0, collector.results().getAllMaterialNames().count());
 	}
 	
@@ -154,7 +154,7 @@ public class MpgIfcObjectCollectorTest {
 	public void testCanParseModelWithMaterialLayer() {
 		factory.addMaterialLayer("brick", 0.15);
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(1, collector.results().getAllMaterialNames().count());
 	}
 	
@@ -169,7 +169,7 @@ public class MpgIfcObjectCollectorTest {
 		
 		factory.addMaterialLayerSet(layers);
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(3, collector.results().getAllMaterialNames().count() );
 	}
 	
@@ -184,7 +184,7 @@ public class MpgIfcObjectCollectorTest {
 		
 		factory.addMaterialLayerSetUsage(layers);
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(3, collector.results().getAllMaterialNames().count());
 	}
 	
@@ -201,7 +201,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterialLayer("styrofoam", .3);
 		
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(4, collector.results().getAllMaterialNames().count());
 	}
 	
@@ -213,7 +213,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterial("aluminium");
 		
 		factory.addProductToModel(ifcModel, null, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(1.0e-9, collector.results().getObjects().get(0).getGeometry().getVolume(), 1e-8);
 	}
 	
@@ -224,7 +224,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterial("brick");
 		factory.addProductToModel(ifcModel, null, null);
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(3, collector.results().getObjects().get(0).getGeometry().getVolume(), 1e-8);
 	}
 	
@@ -239,7 +239,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.setGeometry(factory.getGeometryInfoMock(1, 2));
 		factory.addProductToModel(ifcModel, null, null);
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(3, collector.results().getObjects().get(0).getGeometry().getVolume(), 1e-8);
 	}
 	
@@ -251,7 +251,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterialLayer("rockwool", 3.0);
 		factory.addProductToModel(ifcModel, null, null);
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(.25, collector.results().getObjects().get(0).getLayers().get(0).getVolume(), 1e-8);
 		assertEquals(.75, collector.results().getObjects().get(0).getLayers().get(1).getVolume(), 1e-8);
 	}
@@ -273,7 +273,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterialLayerSet(layers);
 		factory.addProductToModel(ifcModel, null, null);
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(.25, collector.results().getObjects().get(0).getLayers().get(0).getVolume(), 1e-8);
 		assertEquals(.75, collector.results().getObjects().get(0).getLayers().get(1).getVolume(), 1e-8);
 
@@ -296,7 +296,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.setGeometry(factory.getGeometryInfoMock(1, 10));
 		factory.setAssociations(new BasicEList<IfcRelAssociates>());
 				
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		
 		// material names of layers are null
 		assertEquals(0, collector.results().getAllMaterialNames().count());
@@ -311,7 +311,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.addMaterial("steel");
 		factory.addProductToModel(ifcModel, null, null);
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(.25,collector.results().getObjects().get(0).getLayers().get(0).getVolume(), 1e-8);
 		assertEquals(.75,collector.results().getObjects().get(0).getLayers().get(1).getVolume(), 1e-8);
 		
@@ -327,7 +327,7 @@ public class MpgIfcObjectCollectorTest {
 		factory.setGeometry(factory.getGeometryInfoMock(1, 4.0));
 		factory.addSpaceToModel(ifcModel, null);
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(4.0, collector.results().getSpaces().get(0).getVolume(), 1e-8);
 		assertEquals(Math.pow(4.0, (2.0/3.0)), collector.results().getSpaces().get(0).getArea(), 1e-8);
 	}
@@ -343,7 +343,7 @@ public class MpgIfcObjectCollectorTest {
 		// add another space that is a child of the first one.
 		factory.addSpaceToModel(ifcModel, ifcModel.getAllWithSubTypes(IfcSpace.class).get(0));
 		
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		assertEquals(4.0, collector.results().getSpaces().get(0).getVolume(), 1e-8);
 		assertEquals(1, collector.results().getSpaces().size());
 	}
@@ -351,10 +351,17 @@ public class MpgIfcObjectCollectorTest {
 	@Test
 	public void testCollectorOmitsFurnishingElements() {
 		factory.addGenericIfcProductToModel(ifcModel, IfcFurnishingElement.class, null);
-		collector.collectIfcModelObjects(ifcModel);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
 		
-		assertEquals(0, collector.results().getSpaces().size());
 		assertEquals(0, collector.results().getObjects().size());
+	}
+	
+	@Test
+	public void testCollectorCreatesDummySpaceWhenNoSpaceIsFound() {
+		factory.addGenericIfcProductToModel(ifcModel, IfcFurnishingElement.class, null);
+		collector.collectIfcModelObjects(ifcModel, "SomeProjectUUID");
+		
+		assertEquals(-1d, collector.results().getSpaces().get(0).getArea(), 1e-8);
 	}
 	
 	@Test

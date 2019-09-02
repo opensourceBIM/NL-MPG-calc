@@ -23,7 +23,6 @@ import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
 import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
-import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
@@ -53,7 +52,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private MpgObjectStore store;
 	private Set<String> keyWords;
 
-	public NmdDataResolverImpl() {	}
+	public NmdDataResolverImpl() {
+	}
 
 	public MpgObjectStore getStore() {
 		return store;
@@ -102,13 +102,13 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// pre process: try to fill in missing Nlsfb codes based on hierarchy in the
 		// model
-		this.resolveNlsfbCodes();
+		this.resolveAlternativeNlsfbCodes();
 
 		// pre process: try fill in dimensions by producttype relations for products
 		// without parsed geometry
 		this.resolveUnknownGeometries();
 
-		// start nmd service and
+		// start nmd service
 		try {
 			getService().login();
 			getService().preLoadData();
@@ -119,7 +119,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				set = new MappingSet();
 			}
 			set.setProjectId(store.getProjectId());
-			set.setRevisionId(store.getRevisionId());
 			set.setDate(new Date());
 
 			Map<String, List<MpgElement>> elGroups = store.getElementGroups();
@@ -129,7 +128,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				// element could already have a mapping through a decomposes relation
 				// in that case skip to the next one.
 				if (!element.hasMapping()) {
-					
+
 					resolveNmdMappingForElement(element);
 					// avoid adding elements that could not be found a nmd productcard for.
 					if (element.hasMapping()) {
@@ -168,8 +167,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private MappingSet tryApplyEarlierMappings() {
 		ResponseWrapper<MappingSet> respSet = null;
 		try {
-			respSet = getMappingService().getMappingSetByProjectIdAndRevisionId(store.getProjectId(),
-					store.getRevisionId());
+			respSet = getMappingService().getMappingSetByProjectId(store.getProjectId());
 			if (respSet.succes()) {
 				for (MappingSetMap map : respSet.getObject().getMappingSetMaps()) {
 					Mapping nmdMap = map.getMapping();
@@ -285,19 +283,17 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			}
 		}
 
-		for (MpgElement el : store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty())
-				.collect(Collectors.toList())) {
-
+		store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty()).forEach(el ->
+		{
 			Set<String> foundMaterials = this.tryGetKeyMaterials(el.getMpgObject().getObjectName());
 
 			// add the found materials as aa single material item only if there are no
 			// materials already defined.
 			if (!foundMaterials.isEmpty() && el.getMpgObject().getListedMaterials().isEmpty()) {
-
 				el.getMpgObject().addMaterialSource(
 						new MaterialSource("-1", String.join(" ", foundMaterials), "from description"));
 			}
-		}
+		});
 	}
 
 	/**
@@ -376,7 +372,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param codeSet
 	 */
 	private void FindProductsForNlsfbCodes(MpgElement mpgElement, Set<NlsfbCode> codeSet) {
-		// STEP 1: check if there are relevant nlsfbcodes present in the inp[ut set
+		// clear earlier warnings
+		mpgElement.getMpgObject().clearTagsOfType(MpgInfoTagType.nmdProductCardWarning);
+
+		// STEP 1: check if there are relevant nlsfbcodes present in the input set
 		if (codeSet.size() == 0 || codeSet.stream().allMatch(c -> c == null)) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"No NLsfbcodes linked to the product");
@@ -424,9 +423,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 */
 	private List<NmdElement> selectCandidateElements(MpgElement mpgElement, List<NmdElement> candidates) {
 
-		List<NmdElement> filteredCandidates = candidates.stream()
-				.filter(ce -> (ce.getIsMandatory() && ce.getProducts().size() > 0)
-						|| ce.getProducts().stream().anyMatch(pc -> pc.getIsTotaalProduct()))
+		List<NmdElement> filteredCandidates = candidates.stream().filter(ce -> (ce.getProducts().size() > 0))
 				.collect(Collectors.toList());
 
 		return filteredCandidates;
@@ -467,6 +464,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 						"large uncertainty for mapping material: " + mat.getName());
 			}
 
+			List<NmdProductCard> removeCards = new ArrayList<>();
 			for (NmdProductCard card : productOptions) {
 				// per found element we should try to select a fitting productCard
 				int dims = NmdScalingUnitConverter.getUnitDimension(card.getUnit());
@@ -478,10 +476,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					// check if the productcard does not constrain the element in its physical
 					// dimensions.
 					if (!canProductBeUsedForElement(card, orientation)) {
-						productOptions.remove(card);
+						removeCards.add(card);
 					}
 				}
 			}
+			productOptions.removeAll(removeCards);
 
 			// determine which product card should be returned based on an input filter
 			// function and add this one to the results list
@@ -628,7 +627,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * looking at decomposing elements and/or a list of alternative IfcProduct to
 	 * NLsfb mappings.
 	 */
-	public void resolveNlsfbCodes() {
+	public void resolveAlternativeNlsfbCodes() {
 
 		Map<String, List<String>> map = getMappingService().getNlsfbMappings();
 
@@ -638,32 +637,17 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			MpgObject o = el.getMpgObject();
 			List<String> foundMap = map.getOrDefault(o.getObjectType(), null);
 
-			boolean hasParent = (o.getParentId() != null) && !o.getParentId().isEmpty();
-			MpgObject p = new MpgObjectImpl();
-			if (hasParent) {
-				try {
-					p = this.getStore().getObjectByGuid(o.getParentId()).get();
-				} catch (Exception e) {
-					System.out.println("encountered GUID that should have a parent, but is not mapped correctly : "
-							+ o.getParentId());
-				}
-				if (!o.hasNlsfbCode()) {
-
-					if (p.hasNlsfbCode()) {
-						o.setNLsfbCode(p.getNLsfbCode().print());
-						o.addTag(MpgInfoTagType.nlsfbCodeFromResolvedType, "Resolved from: " + p.getGlobalId());
-					}
-				}
-
-				// Now add all aternatives to fall back on should the first mapping give no
-				// results
-				if (foundMap == null) {
-					foundMap = map.getOrDefault(p.getObjectType(), null);
-				}
-			}
-
 			if (foundMap != null && foundMap.size() > 0) {
 				o.addNlsfbAlternatives(new HashSet<String>(foundMap));
+			} else {
+				// get type of possible parent and get nlsfb alternatives from there
+				Optional<MpgObject> parentObj = this.getStore().getObjectByGuid(o.getParentId());
+				if (parentObj.isPresent()) {
+					foundMap = map.getOrDefault(parentObj.get().getObjectType(), null);
+					if (foundMap != null && foundMap.size() > 0) {
+						o.addNlsfbAlternatives(new HashSet<String>(foundMap));
+					}
+				}
 			}
 		});
 	}

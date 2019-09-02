@@ -32,8 +32,7 @@ public class ObjectStoreBuilder {
 
 	public ObjectStoreBuilder() {
 		this.setStore(new MpgObjectStoreImpl());
-		this.getStore().setProjectId(1L);
-		this.getStore().setRevisionId(1L);
+		this.getStore().setProjectId("SomeProjectUUID");
 		lastIdCreated = 0;
 	}
 
@@ -163,7 +162,6 @@ public class ObjectStoreBuilder {
 		card.setProductId(getNewUniqueId());
 		card.setCategory(category);
 		card.setDescription(description);
-		card.setIsScalable(true);
 		card.setIsTotaalProduct(false);
 		card.setLifetime(lifetime);
 		if (el != null) {

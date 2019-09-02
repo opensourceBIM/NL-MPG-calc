@@ -91,8 +91,7 @@ public class MappingDataServiceIntegrationTest {
 	@Test
 	public void testMapServiceCanAddMappingSet() {
 		MappingSet set = new MappingSet();
-		set.setProjectId((long)1);
-		set.setRevisionId((long)1);
+		set.setProjectId("SomeProjectUUID");
 		
 		set.addMappingToMappingSet(createDummyMap(), "some guid");
 
@@ -104,8 +103,7 @@ public class MappingDataServiceIntegrationTest {
 	@Test
 	public void testMapServiceCannotAddMappingSetWithSameProjectAndRevisionId() {
 		MappingSet set = new MappingSet();
-		set.setProjectId((long)1);
-		set.setRevisionId((long)1);
+		set.setProjectId("SomeProjectUUID");
 		
 		set.addMappingToMappingSet(createDummyMap(), "some guid");
 
@@ -116,18 +114,16 @@ public class MappingDataServiceIntegrationTest {
 	}
 	
 	@Test
-	public void testMapServiceWillAddNewMappingSetOnNewRevision() {
+	public void testMapServiceWillAddNewMappingSetWhenMappingSetIdIsNotPresent() {
 		Mapping map = createDummyMap();
 		
 		MappingSet set1 = new MappingSet();
-		set1.setProjectId((long)1);
-		set1.setRevisionId((long)1);
+		set1.setProjectId("SomeProjectUUID");
 		set1.addMappingToMappingSet(map, "some guid");
 		ResponseWrapper<MappingSet> respSet1 = mapService.postMappingSet(set1);
 		
 		MappingSet set2 = new MappingSet();
-		set2.setProjectId((long)1);
-		set2.setRevisionId((long)2);
+		set1.setProjectId("SomeProjectUUID");
 		set2.addMappingToMappingSet(map, "some other guid");
 		ResponseWrapper<MappingSet> respSet2 = mapService.postMappingSet(set2);
 		
@@ -139,8 +135,7 @@ public class MappingDataServiceIntegrationTest {
 	@Test
 	public void testTwoMappingSetMapsWithSameMappingGetSameMappingRefence() {
 		MappingSet set = new MappingSet();
-		set.setProjectId((long)1);
-		set.setRevisionId((long)1);
+		set.setProjectId("someProjectUUID");
 		
 		// have to post the map first to get an id (otherwise two different records will be created)
 		Mapping map = createDummyMap();
@@ -158,15 +153,14 @@ public class MappingDataServiceIntegrationTest {
 	@Test
 	public void testGetMappingSetByProjectIdAndRevisionId() {
 		MappingSet set = new MappingSet();
-		set.setProjectId((long)1);
-		set.setRevisionId((long)1);
+		set.setProjectId("SomeProjectUUID");
 		set.setDate(new Date());
 
 		Mapping map = createDummyMap();
 		set.addMappingToMappingSet(map, UUID.randomUUID().toString());
 		set = mapService.postMappingSet(set).getObject();
 		
-		MappingSet sameSet = mapService.getMappingSetByProjectIdAndRevisionId((long)1, (long)1).getObject();
+		MappingSet sameSet = mapService.getMappingSetByProjectId("SomeProjectUUId").getObject();
 		
 		assertEquals(set.getId(), sameSet.getId());
 		assertEquals(set.getMappingSetMaps().get(0).getMapping().getId(), sameSet.getMappingSetMaps().get(0).getMapping().getId());
@@ -175,8 +169,7 @@ public class MappingDataServiceIntegrationTest {
 	@Test
 	public void testSetNewMappingSetMapUpdatesMappingRevisionId() {
 		MappingSet set = new MappingSet();
-		set.setProjectId((long)1);
-		set.setRevisionId((long)1);
+		set.setProjectId("SomeProjectUUID");
 		set.setDate(new Date());
 
 		String guid = UUID.randomUUID().toString();

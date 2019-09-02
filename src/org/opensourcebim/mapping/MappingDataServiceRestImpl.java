@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
+import org.apache.http.StatusLine;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.message.BasicStatusLine;
 import org.opensourcebim.ifccollection.MpgObject;
@@ -63,8 +64,8 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	}
 
 	@Override
-	public ResponseWrapper<MappingSet> getMappingSetByProjectIdAndRevisionId(Long pid, Long rid) {
-		String path = "/api/mappingset/" + rid + "/" + pid + "/mappingsetmap";
+	public ResponseWrapper<MappingSet> getMappingSetByProjectId(String pid) {
+		String path = "/api/mappingset/" + pid + "/mappingsetmap";
 		HttpResponse resp = this.performGetRequestWithParams(path, null);
 		return this.handleHttpResponse(resp, MappingSet.class);
 	}
@@ -81,10 +82,8 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 		ResponseWrapper<List<IfcToNlsfb>> maps = this.handleHttpResponse(resp, IfcToNlsfb.class,
 				mapper.getTypeFactory().constructCollectionType(List.class, IfcToNlsfb.class));
 
-		Map<String, List<String>> res = null;
+		Map<String, List<String>> res = new HashMap<>();
 		if (maps.succes()) {
-			res = new HashMap<>();
-
 			for (IfcToNlsfb dbMap : maps.getObject()) {
 
 				String nlsfbCode = dbMap.getNlsfbCode();
@@ -109,9 +108,8 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 		ResponseWrapper<List<IfcMaterialKeyword>> maps = this.handleHttpResponse(resp, IfcMaterialKeyword.class,
 				mapper.getTypeFactory().constructCollectionType(List.class, IfcMaterialKeyword.class));
 
-		Map<String, Long> res = null;
+		Map<String, Long> res = new HashMap<>();
 		if (maps.succes()) {
-			res = new HashMap<>();
 			for (IfcMaterialKeyword dbMap : maps.getObject()) {
 				if (dbMap.getCount() >= minOccurence) {
 					res.putIfAbsent(dbMap.getKeyword(), dbMap.getCount());
@@ -125,7 +123,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	public List<String> getCommonWords() {
 		String path = "/api/commonword";
 		HttpResponse resp = this.performGetRequestWithParams(path, null);
-		List<String> res = null;
+		List<String> res = new ArrayList<>();
 
 		ResponseWrapper<List<CommonWord>> maps = this.handleHttpResponse(resp, CommonWord.class,
 				mapper.getTypeFactory().constructCollectionType(List.class, CommonWord.class));
@@ -242,7 +240,8 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	private <T> ResponseWrapper<List<T>> handleHttpResponse(HttpResponse resp, Class<T> classType,
 			CollectionType collType) {
 		List<T> obj = null;
-		if (resp.getStatusLine().getStatusCode() == 200) {
+		
+		if (resp != null && resp.getStatusLine().getStatusCode() == 200) {
 			try {
 				String body = respHandler.handleResponse(resp);
 				obj = mapper.readValue(body, collType);
@@ -250,7 +249,14 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 				System.out.println("Error encountered retrieving response " + e.getMessage());
 			}
 		}
-		return new ResponseWrapper<List<T>>(obj, resp.getStatusLine());
+		StatusLine line;
+		if (resp != null) {
+			line = resp.getStatusLine();
+		} else {
+			line = new BasicStatusLine(new ProtocolVersion(this.getScheme(), 1, 1), 500, "no response received");
+		}
+		
+		return new ResponseWrapper<List<T>>(obj, line);
 	}
 
 }

@@ -44,6 +44,7 @@ public interface MpgObjectStore {
 	List<MpgElement> getElementsByProductType(String productType);
 	MpgElement getElementByObjectGuid(String guid);
 	Map<String, List<MpgElement>> getElementGroups();
+	Map<String, List<MpgElement>> getCleanedElementGroups();
 	
 	void addProductCard(NmdProductCard card);
 	NmdProductCard getProductCard(Integer id);
@@ -81,7 +82,5 @@ public interface MpgObjectStore {
 
 	boolean hasUndefinedMaterials(MpgObject obj, boolean includeChildren);
 
-	Long getProjectId();
-
-	Long getRevisionId();
+	String getProjectId();
 }

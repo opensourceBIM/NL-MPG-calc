@@ -43,9 +43,11 @@ public interface MpgObject {
 	boolean hasDuplicateMaterialNames();
 	
 	void addTag(MpgInfoTagType tagType, String message);
+	void clearTagsOfType(MpgInfoTagType nmdproductcardwarning);
 	
 	String getValueHash();
 	boolean copyMappingFromObject(MpgObject mpgObject);
+
 
 
 }

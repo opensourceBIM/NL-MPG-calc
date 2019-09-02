@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.emf.common.util.BasicEList;
 
@@ -171,6 +172,14 @@ public class MpgObjectImpl implements MpgObject {
 		return this.tags;
 	}
 
+	@Override
+	public void clearTagsOfType(MpgInfoTagType type) {
+		List<MpgInfoTag> typeTags = this.tags.parallelStream()
+				.filter(t -> t.getType() == type)
+				.collect(Collectors.toList());
+		this.tags.removeAll(typeTags);
+	}
+	
 	@Override
 	public List<MpgInfoTag> getTagsByType(MpgInfoTagType type) {
 		return tags.stream().filter(t -> t.getType().equals(type)).collect(Collectors.toList());

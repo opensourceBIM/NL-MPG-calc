@@ -181,7 +181,7 @@ public class NmdDataResolverTest {
 		ResponseWrapper<Mapping> emptyMap = new ResponseWrapper<>(null, new BasicStatusLine(new ProtocolVersion("http", 1, 1), 404, ""));
 		ResponseWrapper<MappingSet> emptyMapSet = new ResponseWrapper<>(null, new BasicStatusLine(new ProtocolVersion("http", 1, 1), 404, ""));
 		when(mapService.getMappingById(any(Long.class))).thenReturn(emptyMap);
-		when(mapService.getMappingSetByProjectIdAndRevisionId(any(Long.class), any(Long.class))).thenReturn(emptyMapSet);
+		when(mapService.getMappingSetByProjectId(any(String.class))).thenReturn(emptyMapSet);
 		when(mapService.postMapping(any(Mapping.class))).thenReturn(emptyMap);
 		when(mapService.postMappingSet(any(MappingSet.class))).thenReturn(emptyMapSet);
 		when(mapService.getApproximateMapForObject(any(MpgObject.class))).thenReturn(emptyMap);
