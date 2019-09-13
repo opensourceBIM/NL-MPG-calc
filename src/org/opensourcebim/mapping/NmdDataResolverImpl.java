@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
@@ -557,11 +558,10 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return a score to indicate word similarity. lwoer scores indicate a larger
 	 *         similarity
 	 */
-	@SuppressWarnings("deprecation")
 	private Double calculateSimilarityScore(Set<String> materialDescriptors, List<String> productCardKeyWords) {
-
+		LevenshteinDistance dist = new LevenshteinDistance();
 		BiFunction<String, String, Double> score = (ref, check) -> {
-			return (double) StringUtils.getLevenshteinDistance((CharSequence) ref, check);
+			return (double) dist.apply((CharSequence) ref, check);
 		};
 
 		Double sum = 0.0;

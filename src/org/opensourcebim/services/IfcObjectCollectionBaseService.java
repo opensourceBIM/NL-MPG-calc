@@ -1,10 +1,8 @@
 package org.opensourcebim.services;
 
 import java.io.FileNotFoundException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
+import org.apache.log4j.Logger;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsOutput;
 import org.bimserver.plugins.services.BimBotAbstractService;
@@ -70,21 +68,16 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 	 * @throws FileNotFoundException
 	 */
 	protected NmdDataResolver getNmdResolver() {
-		// the path is relative to the project it is called from. therefore 
+		// the path is relative to the project it is called from. therefore
 		// some existence checks need to be done to make sure we can find a config file.
-		Path pPath;
-        if (getPluginContext() == null) {
-        	pPath = Paths.get(System.getProperty("user.dir"));
-        } else {
-            pPath = getPluginContext().getRootPath().getParent();
-            if (Files.notExists(pPath.resolve("config.xml"))) {
-                pPath = getPluginContext().getRootPath();
-            }
-        }
-		
 		NmdDataResolver resolver = new NmdDataResolverImpl();
-		resolver.setNmdService(Nmd3DataService.getInstance(pPath));
-		resolver.setMappingService(new MappingDataServiceRestImpl());
+		try {
+			resolver.setNmdService(Nmd3DataService.getInstance());
+			resolver.setMappingService(new MappingDataServiceRestImpl());
+		} catch (Exception e){
+			Logger.getLogger(IfcObjectCollectionBaseService.class).error("Could not initialize services for BimBots Service");
+		}
+		
 		return resolver;
 	}
 

@@ -70,6 +70,7 @@ public class MpgGeometry {
 	}
 	
 	public MpgScalingOrientation getScalerOrientation(int numProductDimenions) {
+		if (sortedDims == null) return null;
 		MpgScalingOrientation scaler = new MpgScalingOrientation();
 		if (numProductDimenions == 1) {
 			scaler.setUnitDims(new Double[] {sortedDims[0]});
