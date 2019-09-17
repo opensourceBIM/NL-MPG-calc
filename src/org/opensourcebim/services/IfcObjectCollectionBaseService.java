@@ -19,7 +19,7 @@ import nl.tno.bim.nmd.services.Nmd3DataService;
 public abstract class IfcObjectCollectionBaseService extends BimBotAbstractService {
 
 	private MpgObjectStore store = null;
-
+	protected static Logger LOGGER = Logger.getLogger(IfcObjectCollectionBaseService.class);
 	@Override
 	public boolean preloadCompleteModel() {
 		return true;
@@ -39,6 +39,7 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 		// convert output with Jackon
 		byte[] ifcJsonResults;
 		try {
+			LOGGER.info("writing output to Json");
 			ObjectMapper mapper = new ObjectMapper();
 			ifcJsonResults = mapper.writeValueAsBytes(results);
 
@@ -48,6 +49,7 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 			return output;
 
 		} catch (JsonProcessingException e) {
+			LOGGER.warn("failed to write output to json.");
 			throw new BimBotsException("Unable to convert retrieved objects to Json", 500);
 		}
 	}

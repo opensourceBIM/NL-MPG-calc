@@ -18,16 +18,21 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 			throws BimBotsException {
 
 		// Get properties from ifcModel
+		
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
 		NmdDataResolver resolver = getNmdResolver();
 		this.setStore(matParser.collectIfcModelObjects(input, bimBotContext.getContextId()));
 		
+		LOGGER.warn("start resolving product cards");
 		resolver.setStore(this.getStore());
 		resolver.nmdToMpg();
 		
 		// calculate the mpg scores
+		LOGGER.warn("start collection of ifc objects for mpg calculation");
 		MpgCalculator calculator = new MpgCalculator();
 		calculator.setObjectStore(resolver.getStore());
+		
+		LOGGER.warn("start mpg calculation");
 		MpgCalculationResults calcResults = calculator.calculate(75.0);
 		
 		return this.toBimBotsJsonOutput(calcResults, "mpg calculation results");
