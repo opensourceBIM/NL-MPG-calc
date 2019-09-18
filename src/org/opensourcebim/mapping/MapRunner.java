@@ -29,10 +29,12 @@ import com.opencsv.CSVReader;
 
 public class MapRunner {
 
-	/**
-	 * @param args: not required. PREREQUISITE: make sure a mappingservice is
-	 *        runnning as otherwise you will get no response errors
-	 */
+    /**
+     * @param args: see options section in code for possible arguments
+     * 
+     * @prerequisite: make sure a mappingservice is
+     *        runnning as otherwise you will get no response errors
+     */
 	public static void main(String[] args) {
 
 		Options options = new Options();
@@ -125,7 +127,7 @@ public class MapRunner {
 			Files.walk(Paths.get(pathToFolder)).filter(p -> p.getFileName().toString().toLowerCase().endsWith(".ifc"))
 					.filter(p -> {
 						// filter on max file size. example: 50 MB limit on 5e7
-						return (new File(p.toAbsolutePath().toString())).length() < 1e8;
+						return (new File(p.toAbsolutePath().toString())).length() < 6e7;
 					}).forEach(p -> {
 						foundFiles.add(p);
 					});
