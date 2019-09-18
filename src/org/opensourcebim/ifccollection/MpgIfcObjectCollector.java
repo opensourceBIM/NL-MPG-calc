@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.log4j.Logger;
 import org.bimserver.bimbots.BimBotsInput;
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.ifc2x3tc1.IfcAnnotation;
@@ -73,7 +72,6 @@ import org.eclipse.emf.common.util.EList;
  */
 public class MpgIfcObjectCollector {
 
-	private static Logger LOGGER = Logger.getLogger(MpgIfcObjectCollector.class);
 	private MpgObjectStoreImpl objectStore;
 	private MpgGeometryParser geometryParser;
 	// products that should not be included in the material calculations.
@@ -116,12 +114,10 @@ public class MpgIfcObjectCollector {
 		geometryParser = new MpgGeometryParser(ifcModel);
 		objectStore.setProjectId(pId);
 
-		LOGGER.info("retrieve floor area");
 		this.geometryParser.tryParseFloorArea(ifcModel, this.objectStore, data);
 
 		Map<String, String> childToParentMap = new HashMap<String, String>();
 
-		LOGGER.info("start ifc product data retrieval");
 		// loop through IfcProducts that constitute the physical building.
 		for (IfcProduct product : ifcModel.getAllWithSubTypes(IfcProduct.class)) {
 
@@ -184,8 +180,8 @@ public class MpgIfcObjectCollector {
 		}
 
 		// set all parent child relations for elements
-		LOGGER.info("resolve hierarchy for ifc products and NLsfb codes");
 		objectStore.reloadParentChildRelationShips(childToParentMap);
+
 		objectStore.resolveParentNLsfbCodes();
 		
 		return objectStore;

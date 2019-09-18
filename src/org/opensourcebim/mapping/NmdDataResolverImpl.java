@@ -19,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDistance;
-import org.apache.log4j.Logger;
 import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgGeometry;
@@ -28,7 +27,6 @@ import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
-import org.opensourcebim.services.IfcObjectCollectionBaseService;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
@@ -55,8 +53,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private MpgObjectStore store;
 	private Set<String> keyWords;
 
-	protected static Logger LOGGER = Logger.getLogger(NmdDataResolver.class);
-	
 	public NmdDataResolverImpl() {
 	}
 
@@ -101,29 +97,31 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return;
 		}
 
-		LOGGER.info("retrieve additional material data and nlsfb codes");
+		// pre process: identify material keywords and/or nlsfb codes from material
+		// and name descriptions.
 		this.tryFindAdditionalInfo();
+
+		// pre process: try to fill in missing Nlsfb codes based on hierarchy in the
+		// model
 		this.resolveAlternativeNlsfbCodes();
 
-		LOGGER.info("try resolve unknown geometries based on hierarchy");
+		// pre process: try fill in dimensions by producttype relations for products
+		// without parsed geometry
 		this.resolveUnknownGeometries();
 
 		// start nmd service
 		try {
-			LOGGER.info("Find pre-existing mappings");
+			getService().login();
+			getService().preLoadData();
+
+			// first check if there are already mappings available for this dataset
 			MappingSet set = this.tryApplyEarlierMappings();
 			if (set == null) {
-				LOGGER.info("No mappingset found. Create a new one.");
 				set = new MappingSet();
 			}
 			set.setProjectId(store.getProjectId());
 			set.setDate(new Date());
 
-			LOGGER.info("Connect to NMD service");
-			getService().login();
-			getService().preLoadData();
-			
-			LOGGER.info("Start NMD product card selection process");
 			Map<String, List<MpgElement>> elGroups = store.getElementGroups();
 			boolean addedNewMapping = false;
 			for (List<MpgElement> elGroup : elGroups.values()) {
@@ -134,7 +132,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 					resolveNmdMappingForElement(element);
 					// avoid adding elements that could not be found a nmd productcard for.
-					if (element.hasMapping()) { 
+					if (element.hasMapping()) {
 						addedNewMapping = true;
 						Mapping map = createMappingFromMappedElement(element);
 						map = mappingService.postMapping(map).getObject();
@@ -151,13 +149,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				}
 			}
 
+			// tried to map a new item on every unmapped nmd element. now push it to the db
 			if (addedNewMapping) {
-				LOGGER.info("Save new Mappings to Mapping service");
 				getMappingService().postMappingSet(set);
 			}
-			LOGGER.info("Successfully finished NMD product card selection process");
 		} catch (Exception e) {
-			LOGGER.warn("Error occured in retrieving material data");
+			System.out.println("Error occured in retrieving material data");
 		} finally {
 			getService().logout();
 		}
