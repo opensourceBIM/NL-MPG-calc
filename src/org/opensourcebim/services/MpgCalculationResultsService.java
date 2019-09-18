@@ -19,10 +19,13 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
-		NmdDataResolver resolver = getNmdResolver();
+		
+		LOGGER.info("collect objects, materials and other properties");
 		this.setStore(matParser.collectIfcModelObjects(input, bimBotContext.getContextId()));
 		
+		NmdDataResolver resolver = getNmdResolver();
 		resolver.setStore(this.getStore());
+		LOGGER.info("Start NMD resolving process");
 		resolver.nmdToMpg();
 		
 		// calculate the mpg scores

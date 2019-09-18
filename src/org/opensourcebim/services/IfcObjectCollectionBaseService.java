@@ -19,6 +19,7 @@ import nl.tno.bim.nmd.services.Nmd3DataService;
 public abstract class IfcObjectCollectionBaseService extends BimBotAbstractService {
 
 	private MpgObjectStore store = null;
+    protected static Logger LOGGER = Logger.getLogger(IfcObjectCollectionBaseService.class);
 
 	@Override
 	public boolean preloadCompleteModel() {
@@ -39,6 +40,7 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 		// convert output with Jackon
 		byte[] ifcJsonResults;
 		try {
+			LOGGER.info("write output to json");
 			ObjectMapper mapper = new ObjectMapper();
 			ifcJsonResults = mapper.writeValueAsBytes(results);
 
@@ -48,6 +50,7 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 			return output;
 
 		} catch (JsonProcessingException e) {
+			LOGGER.warn("failed to convert object to Json");
 			throw new BimBotsException("Unable to convert retrieved objects to Json", 500);
 		}
 	}
@@ -68,14 +71,13 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 	 * @throws FileNotFoundException
 	 */
 	protected NmdDataResolver getNmdResolver() {
-		// the path is relative to the project it is called from. therefore
-		// some existence checks need to be done to make sure we can find a config file.
+		LOGGER.info("Initializing services");
 		NmdDataResolver resolver = new NmdDataResolverImpl();
 		try {
 			resolver.setNmdService(Nmd3DataService.getInstance());
 			resolver.setMappingService(new MappingDataServiceRestImpl());
 		} catch (Exception e){
-			Logger.getLogger(IfcObjectCollectionBaseService.class).error("Could not initialize services for BimBots Service");
+			LOGGER.warn("Could not initialize services for BimBots Service");
 		}
 		
 		return resolver;

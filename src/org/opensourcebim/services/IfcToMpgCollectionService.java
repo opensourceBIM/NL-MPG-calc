@@ -18,8 +18,10 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
 		NmdDataResolver resolver = getNmdResolver();
 		
+		LOGGER.info("collect objects, materials and other properties");
 		this.setStore(matParser.collectIfcModelObjects(input, bimBotContext.getContextId()));
 		resolver.setStore(this.getStore());
+		LOGGER.info("Start NMD resolving process");
 		resolver.nmdToMpg();
 				
 		return this.toBimBotsJsonOutput(resolver.getStore(), "results object collection");
