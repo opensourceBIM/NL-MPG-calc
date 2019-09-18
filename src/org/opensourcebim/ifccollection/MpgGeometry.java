@@ -7,9 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class MpgGeometry {
 	private double volume;
 	private double floorArea;
-
 	private Boolean isComplete;
-	
 	private Double[] principalDimensions;
 	private Double[] sortedDims;
 
