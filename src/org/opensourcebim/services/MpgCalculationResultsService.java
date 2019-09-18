@@ -4,6 +4,7 @@ import org.bimserver.bimbots.BimBotContext;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsInput;
 import org.bimserver.bimbots.BimBotsOutput;
+import org.bimserver.models.ifc2x3tc1.IfcProject;
 import org.bimserver.plugins.PluginConfiguration;
 import org.opensourcebim.ifccollection.MpgIfcObjectCollector;
 import org.opensourcebim.mapping.NmdDataResolver;
@@ -20,7 +21,17 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
 		NmdDataResolver resolver = getNmdResolver();
-		this.setStore(matParser.collectIfcModelObjects(input, bimBotContext.getContextId()));
+        
+		IfcProject proj = input.getIfcModel().getAllWithSubTypes(IfcProject.class).get(0);
+        String pid = "";
+        if (proj != null) {
+        	pid = Long.toString(proj.getOid());
+        }
+        else {
+        	pid = bimBotContext.getContextId();
+        }
+		
+		this.setStore(matParser.collectIfcModelObjects(input, pid));
 		
 		resolver.setStore(this.getStore());
 		resolver.nmdToMpg();

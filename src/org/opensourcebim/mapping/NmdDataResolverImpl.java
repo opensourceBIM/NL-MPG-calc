@@ -184,6 +184,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			}
 		} catch (Exception e) {
 			System.err.println("Map service error: " + e.getMessage());
+			return null;
 		}
 		return respSet.getObject();
 	}
