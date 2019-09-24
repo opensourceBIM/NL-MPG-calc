@@ -74,7 +74,9 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 		log.info("set up services for productcard resolving");
 		NmdDataResolver resolver = new NmdDataResolverImpl();
 		try {
+			log.info("initializing nmd service");
 			resolver.setNmdService(Nmd3DataService.getInstance());
+			log.info("initializing map service");
 			resolver.setMappingService(new MappingDataServiceRestImpl());
 		} catch (Exception e){
 			log.warn("Could not initialize services for BimBots Service");
