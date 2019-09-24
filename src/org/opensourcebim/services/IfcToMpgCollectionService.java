@@ -27,7 +27,7 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
         else {
         	pid = bimBotContext.getContextId();
         }
-		log.info("collecting objects for porject with id: " + pid);
+		log.info("collecting objects for project with id: " + pid);
 		
 		this.setStore(matParser.collectIfcModelObjects(input, pid));
 		resolver.setStore(this.getStore());
