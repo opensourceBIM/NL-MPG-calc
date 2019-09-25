@@ -59,7 +59,7 @@ public class NMDSelectionValidationTest {
 				String ifcName = this.getStringValueFromColumn("Toelichting", data, rowIdx);
 				Map<String, Double> matSpecs = this.getMaterialSpecs(data, rowIdx);
 				Double[] dims = this.getDimensions(data, rowIdx);
-				String nlsfb = this.getStringValueFromColumn("key SfB element", data, rowIdx);
+				String nlsfb = "";
 				String type = this.getIfcType(data, rowIdx);
 				String parentUUID = "";
 
