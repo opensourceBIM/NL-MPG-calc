@@ -2,9 +2,9 @@ package org.opensourcebim.services;
 
 import java.io.FileNotFoundException;
 
-import org.apache.log4j.Logger;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsOutput;
+import org.bimserver.models.log.LogFactory;
 import org.bimserver.plugins.services.BimBotAbstractService;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.mapping.MappingDataServiceRestImpl;
@@ -19,7 +19,6 @@ import nl.tno.bim.nmd.services.Nmd3DataService;
 public abstract class IfcObjectCollectionBaseService extends BimBotAbstractService {
 
 	private MpgObjectStore store = null;
-	protected static Logger log = Logger.getLogger(IfcObjectCollectionBaseService.class);
 	
 	@Override
 	public boolean preloadCompleteModel() {
@@ -71,15 +70,11 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 	protected NmdDataResolver getNmdResolver() {
 		// the path is relative to the project it is called from. therefore
 		// some existence checks need to be done to make sure we can find a config file.
-		log.info("set up services for productcard resolving");
 		NmdDataResolver resolver = new NmdDataResolverImpl();
 		try {
-			log.info("initializing nmd service");
 			resolver.setNmdService(Nmd3DataService.getInstance());
-			log.info("initializing map service");
 			resolver.setMappingService(new MappingDataServiceRestImpl());
 		} catch (Exception e){
-			log.warn("Could not initialize services for BimBots Service");
 		}
 		
 		return resolver;

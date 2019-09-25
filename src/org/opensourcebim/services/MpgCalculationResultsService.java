@@ -30,11 +30,9 @@ public class MpgCalculationResultsService extends IfcObjectCollectionBaseService
         else {
         	pid = bimBotContext.getContextId();
         }
-		log.info("collecting objects for project with id: " + pid);
 		
 		this.setStore(matParser.collectIfcModelObjects(input, pid));
 		resolver.setStore(this.getStore());
-		log.info("start resolve productcards");
 		resolver.nmdToMpg();
 		
 		// calculate the mpg scores

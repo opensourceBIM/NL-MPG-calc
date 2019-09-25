@@ -79,6 +79,7 @@
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimserverclientlib</artifactId>
 			<version>1.5.170</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
@@ -110,12 +111,12 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimmappingservice</artifactId>
-			<version>1.15</version>
+			<version>1.17</version>
 		</dependency>
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimnmdservice</artifactId>
-			<version>0.12</version>
+			<version>0.16</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
