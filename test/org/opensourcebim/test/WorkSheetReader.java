@@ -67,14 +67,18 @@ public class WorkSheetReader {
 				if (cell == null) {
 					continue;
 				}
-				String header = this.readCell(cell).toString();
 				
-				List<Object> columnData = readColumn(sheet, c, startRow, rows);
-
-				if (!data.containsKey(header)) {
-					data.put(header, columnData);
-				} else {
-					throw new KeyException("duplicate column found");
+				Object val = this.readCell(cell);
+				if (val != null) {
+					String header = this.readCell(cell).toString();
+					
+					List<Object> columnData = readColumn(sheet, c, startRow, rows);
+	
+					if (!data.containsKey(header)) {
+						data.put(header, columnData);
+					} else {
+						throw new KeyException("duplicate column found");
+					}
 				}
 			}
 		} catch (Exception ioe) {
@@ -121,9 +125,12 @@ public class WorkSheetReader {
 			return cell.getStringCellValue();
 		} else if (cell.getCellType() == XSSFCell.CELL_TYPE_BOOLEAN) {
 			return cell.getBooleanCellValue();
+		} else if (cell.getCellType() == XSSFCell.CELL_TYPE_BLANK) {
+			return null;
+		} else if (cell.getCellType() == XSSFCell.CELL_TYPE_FORMULA) {
+			return cell.getRawValue();
 		} else {
 			return null;
 		}
 	}
-
 }
