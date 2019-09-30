@@ -2,7 +2,6 @@ package org.opensourcebim.services;
 
 import java.io.FileNotFoundException;
 
-import org.apache.log4j.Logger;
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsOutput;
 import org.bimserver.plugins.services.BimBotAbstractService;
@@ -10,6 +9,8 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.mapping.MappingDataServiceRestImpl;
 import org.opensourcebim.mapping.NmdDataResolver;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,7 +20,7 @@ import nl.tno.bim.nmd.services.Nmd3DataService;
 public abstract class IfcObjectCollectionBaseService extends BimBotAbstractService {
 
 	private MpgObjectStore store = null;
-    protected static Logger LOGGER = Logger.getLogger(IfcObjectCollectionBaseService.class);
+    protected static Logger LOGGER = LoggerFactory.getLogger(IfcObjectCollectionBaseService.class);
 
 	@Override
 	public boolean preloadCompleteModel() {
@@ -77,7 +78,8 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 			resolver.setNmdService(Nmd3DataService.getInstance());
 			resolver.setMappingService(new MappingDataServiceRestImpl());
 		} catch (Exception e){
-			LOGGER.warn("Could not initialize services for BimBots Service");
+			LOGGER.warn("Could not initialize services for BimBots Service. Error encountered" );
+			LOGGER.warn(e.getMessage());
 		}
 		
 		return resolver;

@@ -15,7 +15,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDistance;
@@ -27,6 +26,8 @@ import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import nl.tno.bim.mapping.domain.Mapping;
 import nl.tno.bim.mapping.domain.MappingSet;
@@ -52,7 +53,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private MappingDataService mappingService;
 	private MpgObjectStore store;
 	private Set<String> keyWords;
-
+	
+	protected static Logger log = LoggerFactory.getLogger(NmdDataResolverImpl.class);
+	
 	public NmdDataResolverImpl() {
 	}
 
@@ -72,14 +75,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	public void setMappingService(MappingDataService mappingService) {
 		this.mappingService = mappingService;
 		if (mappingService != null) {
-			keyWords = mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet();
+			log.info("Mappingservice set. Loading keyword mappings");
+			keyWords = this.mappingService.getKeyWordMappings(ResolverSettings.keyWordOccurenceMininum).keySet();
+			if (keyWords !=null) { log.info("keywords loaded.");}
 		}
 	}
 
 	@Override
 	public void setNmdService(NmdDataService nmdDataService) {
-		// check if same service is not already present?
 		this.service = nmdDataService;
+		log.info("NMD service set");
 	}
 
 	public NmdDataService getService() {
@@ -326,7 +331,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		if (!objectDescription.isEmpty()) {
 			for (String word : objectDescription) {
 				for (String key : keyWords) {
-					if (word.contains(key)) {
+					if (key != null && word != null && word.contains(key)) {
 						res.add(word);
 					}
 				}

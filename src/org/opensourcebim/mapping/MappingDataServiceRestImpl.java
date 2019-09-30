@@ -14,6 +14,8 @@ import org.apache.http.StatusLine;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.message.BasicStatusLine;
 import org.opensourcebim.ifccollection.MpgObject;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.type.CollectionType;
 
@@ -36,6 +38,8 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 
 	private BasicResponseHandler respHandler = new BasicResponseHandler();
 
+	protected static Logger log = LoggerFactory.getLogger(MappingDataServiceRestImpl.class);
+	
 	public MappingDataServiceRestImpl() {
 		setScheme("http");
 		setHost("localhost");

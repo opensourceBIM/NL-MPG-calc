@@ -2,6 +2,7 @@ package org.opensourcebim.validationtest;
 
 import static org.junit.Assert.fail;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -151,7 +152,12 @@ public class NMDSelectionValidationTest {
 	public void CanCreateObjectStoreFromReferenceFile() {
 		MpgObjectStore store = this.createBillOfMaterialsFromReferenceFile();
 		NmdDataResolver resolver = new NmdDataResolverImpl();
-		resolver.setNmdService(Nmd3DataService.getInstance());
+		try {
+			resolver.setNmdService(Nmd3DataService.getInstance());
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		resolver.setMappingService(new MappingDataServiceRestImpl());
 		resolver.setStore(store);
 		resolver.nmdToMpg();
