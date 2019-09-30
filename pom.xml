@@ -135,12 +135,12 @@
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimmappingservice</artifactId>
-			<version>1.15</version>
+			<version>1.17</version>
 		</dependency>
 		<dependency>
 			<groupId>org.opensourcebim</groupId>
 			<artifactId>bimnmdservice</artifactId>
-			<version>0.11</version>
+			<version>0.16</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
