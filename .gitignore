@@ -11,3 +11,4 @@
 /target/
 config.xml
 .classpath
+application.properties
