@@ -174,7 +174,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		ResponseWrapper<MappingSet> respSet = null;
 		try {
 			respSet = getMappingService().getMappingSetByProjectId(store.getProjectId());
-			if (respSet.succes()) {
+			if (respSet.succes() && respSet.getObject().getMappingSetMaps() != null) {
 				for (MappingSetMap map : respSet.getObject().getMappingSetMaps()) {
 					Mapping nmdMap = map.getMapping();
 					if (nmdMap != null) {
