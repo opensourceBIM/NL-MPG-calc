@@ -1,6 +1,13 @@
 package org.opensourcebim.services;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
 
 import org.bimserver.bimbots.BimBotsException;
 import org.bimserver.bimbots.BimBotsOutput;
@@ -21,7 +28,8 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 
 	private MpgObjectStore store = null;
     protected static Logger LOGGER = LoggerFactory.getLogger(IfcObjectCollectionBaseService.class);
-
+    protected Properties pluginProperties = IfcObjectCollectionBaseService.loadProperties();
+    
 	@Override
 	public boolean preloadCompleteModel() {
 		return true;
@@ -72,17 +80,42 @@ public abstract class IfcObjectCollectionBaseService extends BimBotAbstractServi
 	 * @throws FileNotFoundException
 	 */
 	protected NmdDataResolver getNmdResolver() {
+		
+		loadProperties();
 		LOGGER.info("Initializing services");
 		NmdDataResolver resolver = new NmdDataResolverImpl();
 		try {
 			resolver.setNmdService(Nmd3DataService.getInstance());
-			resolver.setMappingService(new MappingDataServiceRestImpl());
+			MappingDataServiceRestImpl mapService = new MappingDataServiceRestImpl();
+			mapService.setHost(this.pluginProperties.get("bimmapservice.host").toString());
+			resolver.setMappingService(mapService);
 		} catch (Exception e){
 			LOGGER.warn("Could not initialize services for BimBots Service. Error encountered" );
 			LOGGER.warn(e.getMessage());
 		}
 		
 		return resolver;
+	}
+	
+	private static Properties loadProperties() {
+		Properties props = new Properties();
+		try {
+			Path propertyPath = getPropertyRootPath("mpg").resolve("application.properties");
+			props.load(new FileInputStream(propertyPath.toAbsolutePath().toString()));
+		} catch (IOException e) {
+		  LOGGER.warn("Could not find properties file.");
+		}
+		return props;
+	}
+	
+	protected static Path getPropertyRootPath(String service) {
+		Path rootPath = null;
+		if (System.getProperty("os.name").contains("Windows")) {
+			rootPath = Paths.get("C:\\tmp\\" + service + "\\");
+		} else {
+			rootPath = Paths.get("/etc/" + service + "/");
+		}
+		return rootPath;
 	}
 
 }

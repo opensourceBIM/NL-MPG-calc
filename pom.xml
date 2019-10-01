@@ -20,18 +20,18 @@
 
 	<profiles>
 		<profile>
-			<id>local_dev</id>
+			<id>dev</id>
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<nmdConfigLocation>${basedir}/src//org//opensourcebim//resources//local</nmdConfigLocation>
+				<appPropertiesLocation>${basedir}/src//resources//dev</appPropertiesLocation>
 			</properties>
 		</profile>
 		<profile>
-			<id>ci_dev</id>
+			<id>deploy</id>
 			<properties>
-				<nmdConfigLocation>${basedir}/src//org//opensourcebim//resources//ci</nmdConfigLocation>
+				<appPropertiesLocation>${basedir}/src//resources//deploy</appPropertiesLocation>
 			</properties>
 		</profile>
 	</profiles>
@@ -56,7 +56,7 @@
 							<outputDirectory>${basedir}</outputDirectory>
 							<resources>
 								<resource>
-									<directory>${nmdConfigLocation}</directory>
+									<directory>${appPropertiesLocation}</directory>
 									<filtering>true</filtering>
 								</resource>
 							</resources>
