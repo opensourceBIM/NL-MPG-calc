@@ -84,6 +84,9 @@ public class MpgGeometryParser {
 					//double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
 										
 					geom.setFloorArea(this.convertArea(geomData.get("SURFACE_AREA_ALONG_Z").asDouble()));
+					x_dir = Double.isInfinite(x_dir) || Double.isNaN(x_dir) ? 0.0 : x_dir;
+					y_dir = Double.isInfinite(y_dir) || Double.isNaN(y_dir) ? 0.0 : y_dir;
+					z_dir = Double.isInfinite(z_dir) || Double.isNaN(z_dir) ? 0.0 : z_dir;
 					geom.setDimensions(x_dir, y_dir, z_dir);
 				}
 			} catch (IOException e) {
