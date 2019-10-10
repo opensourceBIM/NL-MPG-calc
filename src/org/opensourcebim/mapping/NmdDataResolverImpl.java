@@ -462,17 +462,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// specifications
 		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
 
+		//ToDo: also give an option for total product options by appending mat names and matching these on the products
+		
+		
 		for (MaterialSource mat : mats) {
 			List<NmdProductCard> productOptions = selectProductsBasedOnStringSimilarity(mat.getName(), allProducts);
-
-			// check if a decent enough filter has been made. if not tag that there are too
-			// many options.
-			// ToDo: make warning settings variable
-			if (allProducts.size() * ResolverSettings.tooManyOptionsRatio <= productOptions.size()
-					|| productOptions.size() > ResolverSettings.tooManyOptionsAbsNum) {
-				mpgElement.getMpgObject().addTag(MpgInfoTagType.mappingWarning,
-						"large uncertainty for mapping material: " + mat.getName());
-			}
 
 			List<NmdProductCard> removeCards = new ArrayList<>();
 			for (NmdProductCard card : productOptions) {
@@ -492,6 +486,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			}
 			productOptions.removeAll(removeCards);
 
+			// check if a decent enough filter has been made. if not tag that there are too
+			// many options.
+			// ToDo: make warning settings variable
+			if (allProducts.size() * ResolverSettings.tooManyOptionsRatio <= productOptions.size()
+					|| productOptions.size() > ResolverSettings.tooManyOptionsAbsNum) {
+				mpgElement.getMpgObject().addTag(MpgInfoTagType.mappingWarning,
+						"large uncertainty for mapping material: " + mat.getName());
+			}
+			
+			
 			// determine which product card should be returned based on an input filter
 			// function and add this one to the results list
 			// ToDo: currently this is a set Function, but this can be replaced with any
