@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDistance;
@@ -126,11 +127,13 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			}
 			set.setProjectId(store.getProjectId());
 			set.setDate(new Date());
-
+			
 			Map<String, List<MpgElement>> elGroups = store.getElementGroups();
 			boolean addedNewMapping = false;
 			for (List<MpgElement> elGroup : elGroups.values()) {
 				MpgElement element = elGroup.get(0);
+				// ToDo: what if one element in the group has a mapping and the others do not?
+				// OR what if multiple elements have different mappings?
 				// element could already have a mapping through a decomposes relation
 				// in that case skip to the next one.
 				if (!element.hasMapping()) {
@@ -201,8 +204,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param nmdMap Mapping object that contains NMDproductcard ids (totaal and/or
 	 *               per material) and a guid reference to the input element
 	 * @param el     MpgElement that does not yet have a product card
+	 * @return a flag to indicate whether setting the mapping was succesful
 	 */
-	private void setNmdProductCardForElement(Mapping nmdMap, MpgElement el) {
+	private boolean setNmdProductCardForElement(Mapping nmdMap, MpgElement el) {
 		List<Long> ids = nmdMap.getAllNmdProductIds();
 		if (ids.size() > 0) {
 			List<NmdProductCard> cards = this.getService().getProductCardsByIds(ids);
@@ -213,12 +217,20 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					Optional<NmdProductCard> totCard = cards.parallelStream()
 							.filter(c -> (long) c.getProductId() == totId).findFirst();
 					if (totCard.isPresent()) {
-						el.mapProductCard(new MaterialSource("-1", "totaal map", "mapService"), totCard.get());
+						el.mapProductCard(
+								new MaterialSource(
+										String.valueOf(el.getMpgObject().getObjectId()),
+										"totaal map",
+										"mapService"),
+								totCard.get());
+						el.setMappingMethod(NmdMappingType.UserMapping);
 					}
 				}
+				
 				// next check for the material mappings and apply these
 				nmdMap.getMaterialMappings().forEach(mMap -> {
 					el.getMpgObject().getListedMaterials().forEach(mat -> {
+						
 						if (mat.getName().toLowerCase().trim().equals(mMap.getMaterialName().toLowerCase().trim())) {
 							Optional<NmdProductCard> matCard = cards.parallelStream()
 									.filter(c -> (long) c.getProductId() == mMap.getNmdProductId()).findFirst();
@@ -231,6 +243,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				});
 			}
 		}
+		return el.getProductIds().size() > 0;
 	}
 
 	/**
@@ -290,13 +303,14 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			}
 		}
 
+		// try get material keywords from the object description
 		store.getElements().stream().filter(el -> el.getMpgObject().getListedMaterials().isEmpty()).forEach(el ->
 		{
 			Set<String> foundMaterials = this.tryGetKeyMaterials(el.getMpgObject().getObjectName());
 
 			// add the found materials as aa single material item only if there are no
 			// materials already defined.
-			if (!foundMaterials.isEmpty() && el.getMpgObject().getListedMaterials().isEmpty()) {
+			if (!foundMaterials.isEmpty()) {
 				el.getMpgObject().addMaterialSource(
 						new MaterialSource("-1", String.join(" ", foundMaterials), "from description"));
 			}
@@ -684,7 +698,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			return e.getObjectType();
 		};
 
-		// TODO: make this more abstract to run on generic property
 		this.getStore().getObjects().stream().filter(o -> !o.getGeometry().getIsComplete()).forEach(o -> {
 			MpgGeometry geom = null;
 			String NLsfbKey = o.getNLsfbCode() != null ? o.getNLsfbCode().print() : "";
@@ -695,6 +708,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				geom = findGeometryForMpgObjectProperty(getNLsfbProp, NLsfbKey);
 				foundGeometries.put(NLsfbKey, geom);
 			}
+			
 			if (geom != null) {
 				o.getGeometry().setDimensionsByVolumeRatio(geom);
 				o.getGeometry().setIsComplete(true);
