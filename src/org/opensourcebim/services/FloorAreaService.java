@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Properties;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -55,8 +56,10 @@ public class FloorAreaService extends IfcObjectCollectionBaseService {
         os.close(); 
         
         CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost uploadFile = new HttpPost("http://tnovoxelserver.aecgeeks.com/gross_floor_area");
-
+		Properties pluginProperties = IfcObjectCollectionBaseService.loadProperties();
+		String host_name = pluginProperties.get("voxelservice.host").toString();
+		HttpPost uploadFile = new HttpPost("http://" + host_name + ":5000/gross_floor_area");
+        
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
         builder.addBinaryBody("ifc", f,
                 ContentType.MULTIPART_FORM_DATA, f.getAbsolutePath());
