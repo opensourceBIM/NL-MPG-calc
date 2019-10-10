@@ -86,11 +86,6 @@ public class MpgElement {
 		return this.getStore().getProductCards(this.getProductIds());
 	}
 
-	private void addProductCard(NmdProductCard productCard) {
-		this.getProductIds().add(productCard.getProductId());
-		this.getStore().addProductCard(productCard);
-	}
-
 	public void removeProductCards() {
 		this.getMpgObject().getListedMaterials().forEach(mat -> mat.clearMap());
 	}
@@ -103,7 +98,7 @@ public class MpgElement {
 		}
 
 		mat.setMapping(card);
-		this.addProductCard(card);
+		this.getStore().addProductCard(card);
 	}
 
 	/**
@@ -136,7 +131,6 @@ public class MpgElement {
 	 * @return
 	 */
 	public String getValueHash() {
-		// TODO Auto-generated method stub
 		return this.getMpgObject().getValueHash();
 	}
 
