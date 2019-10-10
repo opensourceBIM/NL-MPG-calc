@@ -89,9 +89,14 @@ public class MpgGeometry {
 			this.setDimensions(Double.NaN, Double.NaN, Double.NaN);
 			return;
 		}
-		Double lengthRatio = Math.pow(this.getVolume() / geom.getVolume(), 1.0/3.0);
+		Double geom_vol = geom.getVolume() != 0 ?
+			geom.getVolume() :
+			geom.getDimensions()[0] * geom.getDimensions()[1] * geom.getDimensions()[2];
+
+		Double lengthRatio = Math.pow(this.getVolume() / geom_vol, 1.0/3.0);
 		this.setDimensions(geom.getDimensions()[0] * lengthRatio,
 				geom.getDimensions()[1] * lengthRatio,
 				geom.getDimensions()[2] * lengthRatio);
+
 	}
 }
