@@ -25,8 +25,9 @@ import org.opensourcebim.nmd.NmdProductCardReference;
 @RunWith(Parameterized.class)
 public class BaseServiceIntegrationTest<T extends BimBotsServiceInterface> {
 
-	String rootDir = Paths.get(System.getProperty("user.dir")).getParent() + File.separator
-			+ "2018 BouwBesluit test files" + File.separator;
+	String rootDir = Paths.get(System.getProperty("user.dir")).getParent() 
+			+ File.separator + "data"
+			+ File.separator + "2018 BouwBesluit test files" + File.separator;
 	JsonBimServerClientFactory factory = null;
 	UsernamePasswordAuthenticationInfo authInfo = null;
 	protected String fileName;
