@@ -181,9 +181,6 @@ public class MpgIfcObjectCollector {
 
 		// set all parent child relations for elements
 		objectStore.reloadParentChildRelationShips(childToParentMap);
-
-		objectStore.resolveParentNLsfbCodes();
-		
 		return objectStore;
 	}
 
