@@ -81,13 +81,20 @@ public class MpgGeometryParser {
 					double y_dir = this.convertLength(bounds.getMax().getY() - bounds.getMin().getY());
 					double z_dir = this.convertLength(bounds.getMax().getZ() - bounds.getMin().getZ());
 					
+					geom.setFloorArea(this.convertArea(geomData.get("SURFACE_AREA_ALONG_Z").asDouble()));				
 					//double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
 										
-					geom.setFloorArea(this.convertArea(geomData.get("SURFACE_AREA_ALONG_Z").asDouble()));
+
 					x_dir = Double.isInfinite(x_dir) || Double.isNaN(x_dir) ? 0.0 : x_dir;
 					y_dir = Double.isInfinite(y_dir) || Double.isNaN(y_dir) ? 0.0 : y_dir;
 					z_dir = Double.isInfinite(z_dir) || Double.isNaN(z_dir) ? 0.0 : z_dir;
 					geom.setDimensions(x_dir, y_dir, z_dir);
+					
+					if (x_dir * y_dir * z_dir <= geom.getVolume() / 1e6) {
+						geom.setVolume(x_dir * y_dir * z_dir);
+						geom.setFloorArea(x_dir * y_dir);
+					}
+					
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -148,7 +155,9 @@ public class MpgGeometryParser {
 							.add(new MpgSpaceImpl(space.getGlobalId(), geom.getVolume(), geom.getFloorArea()));
 				}
 			}
-		} else if (data != null){
+		}
+		
+		if (data != null && objectStore.getSpaces().size() == 0){
 			JsonNode res;
 			try {
 				res = FloorAreaService.getJsonFromBinaryData(data);
@@ -162,10 +171,6 @@ public class MpgGeometryParser {
 			objectStore.getSpaces()
 			.add(new MpgSpaceImpl("no floor area found", 0.0, -1));
 		}
-		
-		// if nothing else helped do something else
-		
-
 	}
 
 }
