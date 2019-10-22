@@ -230,13 +230,10 @@ public class MpgObjectImpl implements MpgObject {
 
 	@Override
 	public boolean copyMappingFromObject(MpgObject mpgObject) {
-		if (this.getValueHash().equals(mpgObject.getValueHash())) {
-			// the value hash should already confirm that the two lists are equals so no need to do another check
-			for (int i = 0; i < this.getListedMaterials().size(); i++) {
-				this.getListedMaterials().set(i, mpgObject.getListedMaterials().get(i).copy());
-			}	
-			return true;
-		}
-		return false;	
+		// the earlier applied value hash should already confirm that the two lists are equals so no need to do another check
+		for (int i = 0; i < this.getListedMaterials().size(); i++) {
+			this.getListedMaterials().set(i, mpgObject.getListedMaterials().get(i).copy());
+		}	
+		return true;
 	}
 }

@@ -135,12 +135,8 @@ public class MpgElement {
 	}
 
 	public boolean copyMappingFromElement(MpgElement element) {
-		if (this.getValueHash().equals(element.getValueHash())) {
 			this.setMappingMethod(element.getMappingMethod());
-
 			return this.getMpgObject().copyMappingFromObject(element.getMpgObject());
-		}
-		return false;
 	}
 
 	public double getRequiredNumberOfUnits(NmdProductCard card) {
