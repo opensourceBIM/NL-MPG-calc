@@ -270,7 +270,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	 * map
 	 * 
 	 * @param isDecomposedByrelationMap hashMap containing the guids of decomposed
-	 *                                  and decomposing objects.
+	 *                                  and decomposing objects. (key = child, value = parent)
 	 */
 	public void reloadParentChildRelationShips(Map<String, String> isDecomposedByrelationMap) {
 
@@ -288,7 +288,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	@Override
 	public Stream<MpgObject> getChildren(String parentGuid) {
 		if (this.decomposedRelations != null) {
-			return this.decomposedRelations.parallelStream().filter(p -> p.getLeft() == parentGuid)
+			return this.decomposedRelations.stream().filter(p -> p.getLeft().equals(parentGuid))
 					.map(p -> p.getRight());
 		} else {
 			return (new ArrayList<MpgObject>()).stream();
