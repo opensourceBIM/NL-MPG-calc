@@ -17,10 +17,8 @@ public class IfcToMpgCollectionService extends IfcObjectCollectionBaseService {
 
 		// Get properties from ifcModel
 		MpgIfcObjectCollector matParser = new MpgIfcObjectCollector();
-	    IfcProject proj = input.getIfcModel().getAllWithSubTypes(IfcProject.class).get(0);
-        String pid = proj != null ? Long.toString(proj.getOid()) : bimBotContext.getContextId();
 	
-		this.setStore(matParser.collectIfcModelObjects(input, pid));
+		this.setStore(matParser.collectIfcModelObjects(input, bimBotContext.getContextId()));		
 		NmdDataResolver resolver = getNmdResolver();
 		resolver.setStore(this.getStore());
 		LOGGER.info("Start NMD resolving process");
