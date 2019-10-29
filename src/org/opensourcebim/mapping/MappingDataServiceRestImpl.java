@@ -56,7 +56,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	@Override
 	public ResponseWrapper<Mapping> getMappingById(Long id) {
 		String path = "/api/mapping/" + id;
-		HttpResponse resp = this.performGetRequestWithParams(path, null);
+		HttpResponse resp = this.performGetRequestWithParams(path, null, false);
 		return this.handleHttpResponse(resp, Mapping.class);
 	}
 
@@ -70,7 +70,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	@Override
 	public ResponseWrapper<MappingSet> getMappingSetByProjectId(String pid) {
 		String path = "/api/mappingset/" + pid + "/mappingsetmap";
-		HttpResponse resp = this.performGetRequestWithParams(path, null);
+		HttpResponse resp = this.performGetRequestWithParams(path, null, false);
 		return this.handleHttpResponse(resp, MappingSet.class);
 	}
 
@@ -82,7 +82,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	@Override
 	public Map<String, List<String>> getNlsfbMappings() {
 		String path = "/api/ifctonlsfb";
-		HttpResponse resp = this.performGetRequestWithParams(path, null);
+		HttpResponse resp = this.performGetRequestWithParams(path, null, false);
 		ResponseWrapper<List<IfcToNlsfb>> maps = this.handleHttpResponse(resp, IfcToNlsfb.class,
 				mapper.getTypeFactory().constructCollectionType(List.class, IfcToNlsfb.class));
 
@@ -108,7 +108,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	@Override
 	public Map<String, Long> getKeyWordMappings(Integer minOccurence) {
 		String path = "/api/ifcmaterialkeyword";
-		HttpResponse resp = this.performGetRequestWithParams(path, null);
+		HttpResponse resp = this.performGetRequestWithParams(path, null, false);
 		ResponseWrapper<List<IfcMaterialKeyword>> maps = this.handleHttpResponse(resp, IfcMaterialKeyword.class,
 				mapper.getTypeFactory().constructCollectionType(List.class, IfcMaterialKeyword.class));
 
@@ -126,7 +126,7 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	@Override
 	public List<String> getCommonWords() {
 		String path = "/api/commonword";
-		HttpResponse resp = this.performGetRequestWithParams(path, null);
+		HttpResponse resp = this.performGetRequestWithParams(path, null, false);
 		List<String> res = new ArrayList<>();
 
 		ResponseWrapper<List<CommonWord>> maps = this.handleHttpResponse(resp, CommonWord.class,
@@ -160,13 +160,13 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 
 			String path = "/api/ifctonlsfb";
 			HttpResponse resp = this.performPostRequestWithParams(path, null, null, nlsfbMaps);
-			if (resp.getStatusLine().getStatusCode() == 200) {
+			if (resp != null && ResponseWrapper.succes(resp.getStatusLine().getStatusCode())) {
 				return true;
 			}
-			System.out.println("error encountered posting nlsfb alternative map");
+			log.error("error encountered posting nlsfb alternative map");
 		} else {
 			// our import file does not seem to be in the assumed structure.
-			System.out.println("incorrect input data encountered.");
+			log.error("incorrect input data encountered.");
 		}
 		return false;
 	}
@@ -181,11 +181,11 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 			}
 			String apiPath = "/api/ifcmaterialkeyword";
 			HttpResponse resp = this.performPostRequestWithParams(apiPath, null, null, kWords);
-			if (resp.getStatusLine().getStatusCode() == 200) {
+			if (resp != null && ResponseWrapper.succes(resp.getStatusLine().getStatusCode())) {
 				return true;
 			}
 		} catch (Exception e) {
-			System.out.println("error occured posting keywords to database: " + e.getMessage());
+			log.error("error occured posting keywords to database: " + e.getMessage());
 		}
 		return false;
 	}
@@ -203,14 +203,14 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 				}
 				String apiPath = "/api/commonword";
 				HttpResponse resp = this.performPostRequestWithParams(apiPath, null, null, cWords);
-				if (resp.getStatusLine().getStatusCode() == 200) {
+				if (resp != null && ResponseWrapper.succes(resp.getStatusLine().getStatusCode())) {
 					return true;
 				}
 			} else {
-				System.out.println("incorrect input data encountered.");
+				log.error("incorrect input data encountered.");
 			}
 		} catch (Exception e) {
-			System.out.println("error encountered posting common words: " + e.getMessage());
+			log.error("error encountered posting common words: " + e.getMessage());
 		}
 		return false;
 	}
@@ -223,12 +223,12 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 	 */
 	private <T> ResponseWrapper<T> handleHttpResponse(HttpResponse resp, Class<T> classType) {
 		T obj = null;
-		if (resp.getStatusLine().getStatusCode() == 200) {
+		if (resp != null && ResponseWrapper.succes(resp.getStatusLine().getStatusCode())) {
 			try {
 				String body = respHandler.handleResponse(resp);
 				obj = mapper.readValue(body, classType);
 			} catch (IOException e) {
-				System.out.println("Error encountered retrieving response " + e.getMessage());
+				log.error("Error encountered retrieving response " + e.getMessage());
 			}
 		}
 		return new ResponseWrapper<T>(obj, resp.getStatusLine());
@@ -245,12 +245,12 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 			CollectionType collType) {
 		List<T> obj = null;
 		
-		if (resp != null && resp.getStatusLine().getStatusCode() == 200) {
+		if (resp != null && ResponseWrapper.succes(resp.getStatusLine().getStatusCode())) {
 			try {
 				String body = respHandler.handleResponse(resp);
 				obj = mapper.readValue(body, collType);
 			} catch (IOException e) {
-				System.out.println("Error encountered retrieving response " + e.getMessage());
+				log.error("Error encountered retrieving response " + e.getMessage());
 			}
 		}
 		StatusLine line;
