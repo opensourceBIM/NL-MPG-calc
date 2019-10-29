@@ -15,7 +15,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDistance;
@@ -162,7 +161,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				getMappingService().postMappingSet(set);
 			}
 		} catch (Exception e) {
-			System.out.println("Error occured in retrieving material data");
+			log.error("Error occured in retrieving material data");
 		} finally {
 			getService().logout();
 		}
@@ -191,7 +190,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				}
 			}
 		} catch (Exception e) {
-			System.err.println("Map service error: " + e.getMessage());
+			log.error("Map service error: " + e.getMessage());
 			return null;
 		}
 		return respSet.getObject();

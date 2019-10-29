@@ -136,11 +136,6 @@ public class MpgIfcObjectCollector {
 								&& o.getGlobalId() != product.getGlobalId()) {
 
 							childToParentMap.put(product.getGlobalId(), o.getGlobalId());
-
-						} else {
-							if (o.getGlobalId() != product.getGlobalId()) {
-								System.out.println(">> " + product.getGlobalId() + ", " + o.getGlobalId());
-							}
 						}
 					});
 				

@@ -152,7 +152,7 @@ public class MpgGeometryParser {
 				// ToDo: also include geometric check?
 				if (!isIncludedSemantically) {
 					objectStore.getSpaces()
-							.add(new MpgSpaceImpl(space.getGlobalId(), geom.getVolume(), geom.getFloorArea()));
+						.add(new MpgSpaceImpl(space.getGlobalId(), geom.getVolume(), geom.getFloorArea()));
 				}
 			}
 		}
@@ -162,7 +162,7 @@ public class MpgGeometryParser {
 			try {
 				res = FloorAreaService.getJsonFromBinaryData(data);
 				objectStore.getSpaces()
-				.add(new MpgSpaceImpl("area from floor area voxel service", 0.0, res.get("floor_area").asDouble()));
+					.add(new MpgSpaceImpl("area from floor area voxel service", 0.0, res.get("floor_area").asDouble()));
 		
 			} catch (IOException e) {
 				e.printStackTrace();
