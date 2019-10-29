@@ -32,6 +32,10 @@ public class ResponseWrapper<T> {
 	}
 	
 	public boolean succes() {
-		return this.status.getStatusCode() == 200;
+		return this.status.getStatusCode() >= 200 && this.status.getStatusCode() < 300;
+	}
+	
+	public static boolean succes(int code) {
+		return code >= 200 && code < 300;
 	}
 }
