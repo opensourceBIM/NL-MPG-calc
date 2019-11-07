@@ -92,7 +92,8 @@ public class MpgElement {
 
 	public void mapProductCard(MaterialSource mat, NmdProductCard card) {
 		// add the material to the mpgObject if it has not been added yet.
-		if (this.getMpgObject().getListedMaterials().isEmpty() || this.getMpgObject().getListedMaterials().stream()
+		if (this.getMpgObject().getListedMaterials().isEmpty() || 
+			this.getMpgObject().getListedMaterials().stream()
 				.filter(m -> m.getOid().equals(mat.getOid())).count() == 0) {
 			this.getMpgObject().addMaterialSource(mat);
 		}

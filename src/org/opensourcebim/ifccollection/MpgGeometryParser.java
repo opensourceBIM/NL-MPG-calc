@@ -159,7 +159,7 @@ public class MpgGeometryParser {
 			}
 		}
 		
-		if (data != null && objectStore.getSpaces().size() == 0){
+		if (data != null && objectStore.getTotalFloorArea() == 0.0){
 			JsonNode res;
 			try {
 				res = FloorAreaService.getJsonFromBinaryData(data);
