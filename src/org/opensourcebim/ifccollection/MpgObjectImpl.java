@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -239,5 +240,15 @@ public class MpgObjectImpl implements MpgObject {
 			this.getListedMaterials().set(i, mpgObject.getListedMaterials().get(i).copy());
 		}	
 		return true;
+	}
+
+	@Override
+	public MpgLayer getLayerByProductId(Integer productId) {
+		Optional<MaterialSource> matSource = this.getListedMaterials().stream().filter(mat -> mat.getMapId() == productId).findFirst();
+		if(matSource.isPresent()) {
+			Optional<MpgLayer> layer = this.getLayers().stream().filter(l -> l.getMaterialName().equals(matSource.get().getName())).findFirst();
+			return layer.isPresent() ? layer.get() : null;
+		}
+		return null;
 	}
 }

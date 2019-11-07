@@ -58,4 +58,5 @@ public interface MpgObject {
 	String getUnMappedGroupHash();
 	
 	boolean copyMappingFromObject(MpgObject mpgObject);
+	MpgLayer getLayerByProductId(Integer productId);
 }
