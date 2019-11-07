@@ -139,6 +139,19 @@ public class MpgElement {
 			return this.getMpgObject().copyMappingFromObject(element.getMpgObject());
 	}
 
+	/**
+	 * Returns the amount of product card needed based on the geometry of the object and
+	 * the unti fo the product card.
+	 * 
+	 * @example: A door of 2 x 0.9 x 0.1 meters can be (theoretically) mapped on any product card
+	 * When it is mapped on a card with a m^2 unit it will return 1.8 (2 8 0.9). If it is mapped on a  
+	 * product card with unit m it will return 2 units and for a card with unit m^3 it will return 0.18 units.
+	 * 
+	 * When the product is stated per piece (p) it will always return 1, but be sure to check reference dimensions!
+	 * 
+	 * @param card The product card mapped on a mgp element
+	 * @return The number of units required to for the product card to cover the mpg object.
+	 */
 	public double getRequiredNumberOfUnits(NmdProductCard card) {
 
 		if (this.getMpgObject() == null || card.getProfileSets().size() == 0) {
@@ -154,6 +167,12 @@ public class MpgElement {
 			return geom.getFaceArea();
 		}
 		if (productUnit.equals("m3")) {
+			// In case the card has a volume unit and the object has layers we need to get the ratio
+			if(this.mpgObject.getLayers().size() > 0) {
+				MpgLayer layer = this.getMpgObject().getLayerByProductId(card.getProductId());
+				return (layer == null ? 0.0 : layer.getVolume()) * geom.getVolume();
+			}
+			
 			return geom.getVolume();
 		}
 		if (productUnit.equals("p")) {
