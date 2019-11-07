@@ -15,6 +15,8 @@ import org.bimserver.utils.LengthUnit;
 import org.bimserver.utils.VolumeUnit;
 import org.eclipse.emf.common.util.EList;
 import org.opensourcebim.services.FloorAreaService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +36,7 @@ public class MpgGeometryParser {
 	private VolumeUnit modelVolumeUnit;
 	private LengthUnit modelLengthUnit;
 
+	protected static Logger LOGGER = LoggerFactory.getLogger(MpgGeometryParser.class);
 	private ObjectMapper mapper = new ObjectMapper();
 	
 	public MpgGeometryParser(IfcModelInterface ifcModel) {
@@ -97,8 +100,7 @@ public class MpgGeometryParser {
 					
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LOGGER.error("Error encountered whiel retrieving geometry from product: " + e.getMessage());
 			}
 		}
 		return geom;
@@ -165,11 +167,12 @@ public class MpgGeometryParser {
 					.add(new MpgSpaceImpl("area from floor area voxel service", 0.0, res.get("floor_area").asDouble()));
 		
 			} catch (IOException e) {
-				e.printStackTrace();
+				LOGGER.error(e.getMessage());
 			}
 		} else {
 			objectStore.getSpaces()
 			.add(new MpgSpaceImpl("no floor area found", 0.0, -1));
+			LOGGER.warn("failed to find a floor area");
 		}
 	}
 
