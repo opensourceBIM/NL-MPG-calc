@@ -229,24 +229,16 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 	}
 	
 	/**
-	 * Group the elements in a model by equal valueHash. 
+	 * Group the elements in batches that would get the same nmd element mapping. 
 	 * This allows to do the mapping per group rather than per element
 	 * and is especially efficient on models with many similar items
 	 */
 	@JsonIgnore
 	@Override
 	public Map<String, List<MpgElement>> getElementGroups() {
-		return this.mpgElements.stream().collect(Collectors.groupingBy(el -> {
-			return el.getValueHash();
-		}));
-	}
-	
-	@JsonIgnore
-	@Override
-	public Map<String, List<MpgElement>> getCleanedElementGroups() {
-		return this.mpgElements.stream().filter(el -> !el.getMpgObject().getObjectName().isEmpty()).collect(Collectors.groupingBy(el -> {
-			return el.getValueHash();
-		}));
+		return this.mpgElements.stream()
+				.filter(el -> !el.getMpgObject().getObjectName().isEmpty())
+				.collect(Collectors.groupingBy(MpgElement::getUnMappedGroupHash));
 	}
 
 	@Override

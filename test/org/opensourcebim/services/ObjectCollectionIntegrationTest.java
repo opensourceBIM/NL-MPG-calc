@@ -45,7 +45,7 @@ public class ObjectCollectionIntegrationTest extends BaseServiceIntegrationTest<
 		test.run();
 		MpgObjectStore results = this.getService().getStore();
 
-		Map<String, List<MpgElement>> resultGroups = results.getCleanedElementGroups();
+		Map<String, List<MpgElement>> resultGroups = results.getElementGroups();
 		Map<String, List<MpgElement>> referenceGroups = this.referencemodel.getElementGroups();
 
 		// copy the keys to separate sets

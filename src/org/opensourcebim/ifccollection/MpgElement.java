@@ -127,12 +127,24 @@ public class MpgElement {
 
 	/**
 	 * determines whether an element is equal in values to another element for the
-	 * sake of mapping grouping This will therefore not include an equality
+	 * sake of mapping grouping This will therefore not include an equality of selected NMD cards etc.
 	 * 
 	 * @return
 	 */
-	public String getValueHash() {
-		return this.getMpgObject().getValueHash();
+	@JsonIgnore
+	public String getUnMappedGroupHash() {
+		return this.getMpgObject().getUnMappedGroupHash();
+	}
+	
+	/**
+	 * determines whether an element is equal in values to another element for the
+	 * sake of mapping grouping This will therefore not include an equality of selected NMD cards etc.
+	 * 
+	 * @return
+	 */
+	@JsonIgnore
+	public String getMappedGroupHash() {
+		return this.getMpgObject().getMappedGroupHash();
 	}
 
 	public boolean copyMappingFromElement(MpgElement element) {

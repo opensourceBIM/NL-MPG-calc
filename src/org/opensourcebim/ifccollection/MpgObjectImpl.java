@@ -219,12 +219,17 @@ public class MpgObjectImpl implements MpgObject {
 	}
 
 	@Override
-	public String getValueHash() {
+	public String getMappedGroupHash() {
 		String nlsfbToText = this.nlsfb == null ? "" : this.getNLsfbCode().print();
 		
-		return this.getObjectName() + this.getObjectType()
+		return this.getUnMappedGroupHash()
 		+ String.join("-", this.getMaterialNamesBySource(null))
 		+ nlsfbToText;
+	}
+	
+	@Override
+	public String getUnMappedGroupHash() {
+		return this.getObjectName() + this.getObjectType();
 	}
 
 	@Override
