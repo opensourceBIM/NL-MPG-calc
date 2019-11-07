@@ -1,9 +1,16 @@
 package org.opensourcebim.mpgcalculation;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
+import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
@@ -69,12 +76,10 @@ public class MpgCalculator {
 							// determine scale factor based on scaler. if no scaler is present the
 							// unitsRequired is sufficient (and no scaling is applied)
 							if (element.requiresScaling() && profielSet.getIsScalable()) {
-
 								if (profielSet.getScaler() != null) {
 									NmdScaler scaler = profielSet.getScaler();
 									int numDims = NmdScalingUnitConverter.getUnitDimension(product.getUnit());
 									if (numDims < 3) {
-
 										MpgScalingOrientation or = element.getMpgObject().getGeometry()
 												.getScalerOrientation(numDims);
 										Double[] dims = or.getScaleDims();
@@ -101,6 +106,9 @@ public class MpgCalculator {
 					}
 				}
 			}
+
+			this.generateBillOfMaterials();
+			
 			if (results.getStatus() != ResultStatus.IncompleteData) {
 				results.SetResultsStatus(ResultStatus.Success);
 			}
@@ -141,5 +149,73 @@ public class MpgCalculator {
 
 	public void setResults(MpgCalculationResults results) {
 		this.results = results;
+	}
+	
+	/**
+	 * 
+	 * @param store
+	 * @return void, but edits the results object to contain a BoM object
+	 */
+	public void generateBillOfMaterials() {
+		BillOfMaterials bom = new BillOfMaterials();
+		if (this.objectStore != null && this.objectStore.getProductCards().size() > 0) {
+			Collection<List<MpgElement>> elementGroups = this.objectStore.getElementGroups().values();
+			HashMap<Long, Double> mkiContributions = this.results.getCostPerObjectId();
+			
+			for (List<MpgElement> elements : elementGroups) {
+				// get the total score contributed by these elements
+				Map<String, Object> bomEntry = new HashMap<String, Object>();
+				List<NmdProductCard> cards = elements.stream()
+						.flatMap(el -> el.getNmdProductCards().stream())
+						.distinct().collect(Collectors.toList());
+				
+				String unit = "";
+				String cardDescription = "";
+				Integer nmdId = null;
+				if (cards.size() >= 1) {
+					if (cards.size() > 1) {
+						bom.addAnnotation(String.format(
+								"found more than one product card for element group %s",
+								elements.get(0).getUnMappedGroupHash()));
+					}
+					unit = cards.get(0).getUnit();
+					cardDescription = String.join("|", cards.stream().map(c -> c.getDescription()).collect(Collectors.toList()));
+					nmdId = cards.get(0).getProductId();
+				} else {
+					bom.addAnnotation(String.format(
+							"found no product card for element group %s",
+							elements.get(0).getUnMappedGroupHash()));
+				} 
+				
+				Double totalVolume = elements.stream()
+						.mapToDouble(el -> el.getMpgObject().getGeometry().getVolume())
+						.filter(vol -> Double.isFinite(vol)).sum();
+				Double totalArea = elements.stream()
+						.mapToDouble(el -> el.getMpgObject().getGeometry().getFaceArea())
+						.filter(vol -> Double.isFinite(vol)).sum();
+				
+				List<Long> ids = elements.stream().map(el -> el.getMpgObject().getObjectId()).collect(Collectors.toList());
+				
+				Double mkiContribution = ids.stream()
+				        .filter(mkiContributions::containsKey)
+				        .collect(Collectors.toMap(Function.identity(), mkiContributions::get))
+				        .values().stream().mapToDouble(d -> d).sum();
+					
+				// report the total score together with metadata such as total volume
+				// num elements, material description etc.
+				bomEntry.put("nmd card", cardDescription);
+				bomEntry.put("nmd id", nmdId);
+				bomEntry.put("mapping type", elements.get(0).getMappingMethod());
+				bomEntry.put("Ifc type", elements.get(0).getMpgObject().getObjectType());
+				bomEntry.put("Ifc object name", elements.get(0).getMpgObject().getObjectName());
+				bomEntry.put("number of elements", elements.size());
+				bomEntry.put("unit", unit);
+				bomEntry.put("volume", totalVolume);
+				bomEntry.put("area", totalArea);
+				bomEntry.put("mki contribution", mkiContribution);
+				bom.addEntry(bomEntry);
+			}
+		}
+		this.results.setBillOfMaterials(bom);
 	}
 }

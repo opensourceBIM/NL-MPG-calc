@@ -24,6 +24,7 @@ public class MpgCalculationResults {
 	private Set<NmdCostFactor> costFactors;
 	private double totalFloorArea;
 	private double totalLifeTime;
+	private BillOfMaterials billOfMaterials;
 
 	public MpgCalculationResults() {
 		status = ResultStatus.NotRun;
@@ -150,5 +151,13 @@ public class MpgCalculationResults {
 		for (NmdCostFactor costFactor : factors) {
 			this.addCostFactor(costFactor, product, specName, objectId);
 		}
+	}
+
+	public void setBillOfMaterials(BillOfMaterials bom) {
+		this.billOfMaterials = bom;
+	}
+
+	public BillOfMaterials getBillOfMaterials() {
+		return billOfMaterials;
 	}
 }
