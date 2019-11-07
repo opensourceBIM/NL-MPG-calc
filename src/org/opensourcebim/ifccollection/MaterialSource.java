@@ -38,7 +38,7 @@ public class MaterialSource {
 	}
 	
 	/**
-	 * 
+	 * Determines how the mapping was found (direct, user mapping etc.)
 	 */
 	public String getSource() {
 		return source;

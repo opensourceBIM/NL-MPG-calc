@@ -157,6 +157,7 @@ public class MpgElement {
 		if (this.getMpgObject() == null || card.getProfileSets().size() == 0) {
 			return Double.NaN;
 		}
+		
 		MpgGeometry geom = this.getMpgObject().getGeometry();
 
 		String productUnit = card.getUnit().toLowerCase();

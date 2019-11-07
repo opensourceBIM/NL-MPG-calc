@@ -141,7 +141,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				Mapping map = null;
 				if (mappedElements.size() == 0) {
 					// found no preexisting mappings. find one and apply on the rest.
-
 					element = elGroup.get(0);
 					resolveNmdMappingForElement(element);
 					// avoid adding elements that could not be found a nmd productcard for.
