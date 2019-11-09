@@ -1,5 +1,7 @@
 package org.opensourcebim.validationtest;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.FileNotFoundException;
@@ -16,7 +18,6 @@ import java.util.Map;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.junit.Test;
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.ObjectStoreBuilder;
 import org.opensourcebim.mapping.MappingDataServiceRestImpl;
 import org.opensourcebim.mapping.NmdDataResolver;
@@ -160,7 +161,11 @@ public class NMDSelectionValidationTest {
 		}
 		resolver.setMappingService(new MappingDataServiceRestImpl());
 		resolver.setStore(store);
+		// this will edit the store object with results of NMD product card selection
 		resolver.nmdToMpg();
+		
+		assertEquals(40, store.getElements().size());
+		assertTrue(store.getProductCards().size() > 0);
 	}
 
 }
