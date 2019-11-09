@@ -151,17 +151,21 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 						// add the newly created mapping to the mappingset
 						set.addMappingToMappingSet(map, element.getMpgObject().getGlobalId());
-
+						String guid =  element.getMpgObject().getGlobalId();
 						// apply this for any other elements in the mapping group
 						for (MpgElement el : elGroup.subList(1, elGroup.size())) {
-							el.copyMappingFromElement(element);
 							set.addMappingToMappingSet(map, el.getMpgObject().getGlobalId());
+							MappingSetMap msm = set.getMappingSetMaps().stream()
+									.filter(mapsetmap -> guid.equals(mapsetmap.getElementGuid()))
+									.findFirst().get();
+							setNmdProductCardForElement(msm, el);
 						}
 					}
 				} else {
 					// found a mapping in at least one of the group elements.
 					// Apply on all elements that do not have a mapping
 					element = mappedElements.get(0);
+					String guid =  element.getMpgObject().getGlobalId();
 					map = createMappingFromMappedElement(element);
 					// apply this for any other elements in the mapping group by
 					// creating mappingSetMaps for each of the objects.
@@ -169,8 +173,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 					for (MpgElement el : elGroup) {
 						if (!el.hasMapping()) {
 							addedNewMapping = true;
-							el.copyMappingFromElement(element);
 							set.addMappingToMappingSet(map, el.getMpgObject().getGlobalId());
+							MappingSetMap msm = set.getMappingSetMaps().stream()
+								.filter(mapsetmap -> guid.equals(mapsetmap.getElementGuid()))
+								.findFirst().get();
+							setNmdProductCardForElement(msm, el);
 						}
 					}
 				}
@@ -230,36 +237,42 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		Boolean isOriginalMapping = nmdMap.getMappingRevisionId() == null || nmdMap.getMappingRevisionId() == 0;
 		if (ids.size() > 0) {
 			List<NmdProductCard> cards = this.getService().getProductCardsByIds(ids);
-			if (cards != null) {
-				// first check if a totaal product needs to be mapped
-				Long totId = mapping.getNmdTotaalProductId();
-				if (totId != null && totId > 0) {
-					Optional<NmdProductCard> totCard = cards.parallelStream()
-							.filter(c -> (long) c.getProductId() == totId).findFirst();
-					if (totCard.isPresent()) {
-						el.mapProductCard(new MaterialSource(String.valueOf(el.getMpgObject().getObjectId()),
-								"totaal map", "mapService"), totCard.get());
-						el.setMappingMethod(
-								isOriginalMapping ? NmdMappingType.DirectTotaalProduct : NmdMappingType.UserMapping);
-					}
+			return this.setNmdProductCardForElement(mapping, cards, isOriginalMapping, el);
+		}
+		return false;
+	}
+	
+	private boolean setNmdProductCardForElement(Mapping mapping,
+		List<NmdProductCard> cards, Boolean isOriginalMapping, MpgElement el) {
+		if (cards != null) {
+			// first check if a totaal product needs to be mapped
+			Long totId = mapping.getNmdTotaalProductId();
+			if (totId != null && totId > 0) {
+				Optional<NmdProductCard> totCard = cards.parallelStream()
+						.filter(c -> (long) c.getProductId() == totId).findFirst();
+				if (totCard.isPresent()) {
+					el.mapProductCard(new MaterialSource(String.valueOf(el.getMpgObject().getObjectId()),
+							"totaal map", "mapService"), totCard.get());
+					el.setMappingMethod(
+							isOriginalMapping ? NmdMappingType.DirectTotaalProduct : NmdMappingType.UserMapping);
 				}
-
-				// next check for the material mappings and apply these
-				mapping.getMaterialMappings().forEach(mMap -> {
-					el.getMpgObject().getListedMaterials().forEach(mat -> {
-
-						if (mat.getName().toLowerCase().trim().equals(mMap.getMaterialName().toLowerCase().trim())) {
-							Optional<NmdProductCard> matCard = cards.parallelStream()
-									.filter(c -> (long) c.getProductId() == mMap.getNmdProductId()).findFirst();
-							if (matCard.isPresent()) {
-								el.mapProductCard(mat, matCard.get());
-								el.setMappingMethod(isOriginalMapping ? NmdMappingType.DirectDeelProduct
-										: NmdMappingType.UserMapping);
-							}
-						}
-					});
-				});
 			}
+
+			// next check for the material mappings and apply these
+			mapping.getMaterialMappings().forEach(mMap -> {
+				el.getMpgObject().getListedMaterials().forEach(mat -> {
+
+					if (mat.getName().toLowerCase().trim().equals(mMap.getMaterialName().toLowerCase().trim())) {
+						Optional<NmdProductCard> matCard = cards.parallelStream()
+								.filter(c -> (long) c.getProductId() == mMap.getNmdProductId()).findFirst();
+						if (matCard.isPresent()) {
+							el.mapProductCard(mat, matCard.get());
+							el.setMappingMethod(isOriginalMapping ? NmdMappingType.DirectDeelProduct
+									: NmdMappingType.UserMapping);
+						}
+					}
+				});
+			});
 		}
 		return el.getProductIds().size() > 0;
 	}
