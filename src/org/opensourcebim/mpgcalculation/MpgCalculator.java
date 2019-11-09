@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
-import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 
