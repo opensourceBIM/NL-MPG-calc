@@ -240,6 +240,24 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 				.filter(el -> !el.getMpgObject().getObjectName().isEmpty())
 				.collect(Collectors.groupingBy(MpgElement::getUnMappedGroupHash));
 	}
+	
+	@JsonIgnore
+	@Override
+	public Map<String, List<MpgElement>> getChildElementGroups() {
+		return this.mpgElements.stream()
+				.filter(el -> !el.getMpgObject().getObjectName().isEmpty() &&
+						!el.getMpgObject().getParentId().isBlank())
+				.collect(Collectors.groupingBy(MpgElement::getUnMappedGroupHash));
+	}
+	
+	@JsonIgnore
+	@Override
+	public Map<String, List<MpgElement>> getParentElementGroups() {
+		return this.mpgElements.stream()
+				.filter(el -> !el.getMpgObject().getObjectName().isEmpty() &&
+						el.getMpgObject().getParentId().isBlank())
+				.collect(Collectors.groupingBy(MpgElement::getUnMappedGroupHash));
+	}
 
 	@Override
 	public double getTotalVolumeOfMaterial(String name) {

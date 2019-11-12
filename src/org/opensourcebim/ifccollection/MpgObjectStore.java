@@ -45,6 +45,8 @@ public interface MpgObjectStore {
 	MpgElement getElementByObjectGuid(String guid);
 	
 	Map<String, List<MpgElement>> getElementGroups();
+	Map<String, List<MpgElement>> getChildElementGroups();
+	Map<String, List<MpgElement>> getParentElementGroups();
 	
 	void addProductCard(NmdProductCard card);
 	NmdProductCard getProductCard(Integer id);
