@@ -43,6 +43,7 @@ public interface MpgObjectStore {
 	MpgElement getElementByName(String name);
 	List<MpgElement> getElementsByProductType(String productType);
 	MpgElement getElementByObjectGuid(String guid);
+	
 	Map<String, List<MpgElement>> getElementGroups();
 	
 	void addProductCard(NmdProductCard card);

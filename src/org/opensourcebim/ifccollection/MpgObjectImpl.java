@@ -222,7 +222,6 @@ public class MpgObjectImpl implements MpgObject {
 	@Override
 	public String getMappedGroupHash() {
 		String nlsfbToText = this.nlsfb == null ? "" : this.getNLsfbCode().print();
-		
 		return this.getUnMappedGroupHash()
 		+ String.join("-", this.getMaterialNamesBySource(null))
 		+ nlsfbToText;

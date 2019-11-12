@@ -55,7 +55,7 @@ public class MaterialSource {
 	}
 
 	/**
-	 * descrption of the nmd product card used fir the mapping
+	 * description of the nmd product card used for the mapping
 	 */
 	public String getMapName() {
 		return this.mapName;

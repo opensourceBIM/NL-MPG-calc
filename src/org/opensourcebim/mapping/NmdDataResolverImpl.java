@@ -188,7 +188,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				getMappingService().postMappingSet(set);
 			}
 		} catch (Exception e) {
-			log.error("Error occured in retrieving material data: " + e.getMessage());
+			log.error("Error encountered during mapping process :" + e.getMessage());
 		} finally {
 			getService().logout();
 		}
