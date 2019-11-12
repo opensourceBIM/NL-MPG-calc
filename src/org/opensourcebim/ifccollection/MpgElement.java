@@ -8,6 +8,7 @@ import org.opensourcebim.mapping.NmdMappingType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import nl.tno.bim.mapping.domain.MaterialMapping;
 import nl.tno.bim.nmd.domain.NmdProductCard;
 
 /**
@@ -22,6 +23,7 @@ public class MpgElement {
 	private MpgObject mpgObject;
 	private MpgObjectStore store;
 	private NmdMappingType mappingMethod;
+	private TotalMaterialSource totalMap;
 
 	public MpgElement(String name, MpgObjectStore store) {
 		ifcName = name;
@@ -198,5 +200,13 @@ public class MpgElement {
 		}
 
 		return Double.NaN;
+	}
+
+	public MaterialSource getTotalMap() {
+		return totalMap;
+	}
+
+	public void setTotalMap(TotalMaterialSource totalMap) {
+		this.totalMap = totalMap;
 	}
 }
