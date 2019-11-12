@@ -27,6 +27,7 @@ import org.opensourcebim.ifccollection.MpgInfoTagType;
 import org.opensourcebim.ifccollection.MpgObject;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
+import org.opensourcebim.ifccollection.TotalMaterialSource;
 import org.opensourcebim.nmd.scaling.NmdScalingUnitConverter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -102,27 +103,27 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	@Override
 	public void nmdToMpg() {
 
-		if (this.getStore() == null) {
-			return;
-		}
-
-		// pre process: identify material keywords and/or nlsfb codes from material
-		// and name descriptions.
-		this.tryFindAdditionalInfo();
-
-		// pre process: try to fill in missing Nlsfb codes based on hierarchy in the
-		// model
-		this.resolveAlternativeNlsfbCodes();
-
-		// pre process: try fill in dimensions by producttype relations for products
-		// without parsed geometry
-		this.resolveUnknownGeometries();
-
-		// start nmd service
 		try {
+			if (this.getStore() == null) {
+				return;
+			}
+	
+			// pre process: identify material keywords and/or nlsfb codes from material
+			// and name descriptions.
+			this.tryFindAdditionalInfo();
+	
+			// pre process: try to fill in missing Nlsfb codes based on hierarchy in the
+			// model
+			this.resolveAlternativeNlsfbCodes();
+	
+			// pre process: try fill in dimensions by producttype relations for products
+			// without parsed geometry
+			this.resolveUnknownGeometries();
+	
+			// start nmd service
 			getService().login();
 			getService().preLoadData();
-
+	
 			// first check if there are already mappings available for this dataset
 			MappingSet set = this.tryApplyEarlierMappings();
 			if (set == null) {
@@ -130,60 +131,22 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			}
 			set.setProjectId(store.getProjectId());
 			set.setDate(new Date());
+	
+			Map<String, List<MpgElement>> childGroups = store.getChildElementGroups();
 
-			Map<String, List<MpgElement>> elGroups = store.getElementGroups();
+			// first try to get mappings for the children. (mapping them all covers the parent by default)
 			boolean addedNewMapping = false;
-			for (List<MpgElement> elGroup : elGroups.values()) {
-
-				List<MpgElement> mappedElements = elGroup.stream().filter(el -> el.hasMapping())
-						.collect(Collectors.toList());
-				MpgElement element = null;
-				Mapping map = null;
-				if (mappedElements.size() == 0) {
-					// found no preexisting mappings. find one and apply on the rest.
-					element = elGroup.get(0);
-					resolveNmdMappingForElement(element);
-					// avoid adding elements that could not be found a nmd productcard for.
-					if (element.hasMapping()) {
-						addedNewMapping = true;
-						map = createMappingFromMappedElement(element);
-						map = mappingService.postMapping(map).getObject();
-
-						// add the newly created mapping to the mappingset
-						set.addMappingToMappingSet(map, element.getMpgObject().getGlobalId());
-						String guid =  element.getMpgObject().getGlobalId();
-						// apply this for any other elements in the mapping group
-						for (MpgElement el : elGroup.subList(1, elGroup.size())) {
-							set.addMappingToMappingSet(map, el.getMpgObject().getGlobalId());
-							MappingSetMap msm = set.getMappingSetMaps().stream()
-									.filter(mapsetmap -> guid.equals(mapsetmap.getElementGuid()))
-									.findFirst().get();
-							setNmdProductCardForElement(msm, el);
-						}
-					}
-				} else {
-					// found a mapping in at least one of the group elements.
-					// Apply on all elements that do not have a mapping
-					element = mappedElements.get(0);
-					String guid =  element.getMpgObject().getGlobalId();
-					map = createMappingFromMappedElement(element);
-					// apply this for any other elements in the mapping group by
-					// creating mappingSetMaps for each of the objects.
-					// and copying the map data to the element itself.
-					for (MpgElement el : elGroup) {
-						if (!el.hasMapping()) {
-							addedNewMapping = true;
-							set.addMappingToMappingSet(map, el.getMpgObject().getGlobalId());
-							MappingSetMap msm = set.getMappingSetMaps().stream()
-								.filter(mapsetmap -> guid.equals(mapsetmap.getElementGuid()))
-								.findFirst().get();
-							setNmdProductCardForElement(msm, el);
-						}
-					}
-				}
+			for (List<MpgElement> elGroup : childGroups.values()) {
+				if (this.findMappingForElementGroup(elGroup, set)) 
+					addedNewMapping = true;
 			}
-
-			// tried to map a new item on every unmapped nmd element. now push it to the db
+			
+			Map<String, List<MpgElement>> parentGroups = store.getParentElementGroups();
+			for (List<MpgElement> elGroup : parentGroups.values()) {
+				if (this.findMappingForElementGroup(elGroup, set)) 
+					addedNewMapping = true;
+			}
+	
 			if (addedNewMapping) {
 				getMappingService().postMappingSet(set);
 			}
@@ -192,6 +155,56 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		} finally {
 			getService().logout();
 		}
+	}
+
+	private boolean findMappingForElementGroup(List<MpgElement> elGroup, MappingSet set) {
+		Boolean newMapping = false;
+		List<MpgElement> mappedElements = elGroup.stream().filter(el -> el.hasMapping())
+				.collect(Collectors.toList());
+		MpgElement element = mappedElements.size() == 0 ? elGroup.get(0) : mappedElements.get(0);
+		String guid = element.getMpgObject().getGlobalId();
+		Mapping map = null;
+		List<MpgElement> toBeMappedElements = null;
+		if (mappedElements.size() == 0) {
+			// found no preexisting mappings. find one and apply on the rest.
+			resolveNmdMappingForElement(element);
+			// avoid adding elements that could not be found a nmd productcard for.
+			if (element.hasMapping()) {
+				newMapping = true;
+				map = createMappingFromMappedElement(element);
+				map = mappingService.postMapping(map).getObject();
+				set.addMappingToMappingSet(map, guid);
+				
+				toBeMappedElements = elGroup.subList(1, elGroup.size());
+			}
+		} else if (element.getMappingMethod() != NmdMappingType.IndirectThroughChildren &&
+				element.getMappingMethod() != NmdMappingType.IndirectThroughParent &&
+				set.getMappingSetMaps() != null) {
+			// found a mapping in at least one of the group elements.
+			// Apply on all elements that do not have a mapping
+			Optional<MappingSetMap> elMap = set.getMappingSetMaps().stream()
+					.filter(msm -> guid.equals(msm.getElementGuid()))
+					.findFirst();
+			if (elMap.isPresent()) {
+				map = elMap.get().getMapping();
+				toBeMappedElements = elGroup;
+			} else {
+				log.warn("Could not find mapping that should exist in mappingset for element: " + guid);
+			}
+		}
+		// apply the found or created mapping on similar IfcObjects
+		if (toBeMappedElements != null) {
+			for (MpgElement el : toBeMappedElements) {
+				if (!el.hasMapping()) {
+					newMapping = true;
+					set.addMappingToMappingSet(map, el.getMpgObject().getGlobalId());
+					MappingSetMap msm = set.getMappingSetMaps().stream()
+							.filter(mapsetmap -> guid.equals(mapsetmap.getElementGuid())).findFirst().get();
+					setNmdProductCardForElement(msm, el);
+				}
+			}
+		}
+		return newMapping;
 	}
 
 	/**
@@ -241,18 +254,20 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 		return false;
 	}
-	
-	private boolean setNmdProductCardForElement(Mapping mapping,
-		List<NmdProductCard> cards, Boolean isOriginalMapping, MpgElement el) {
+
+	private boolean setNmdProductCardForElement(Mapping mapping, List<NmdProductCard> cards, Boolean isOriginalMapping,
+			MpgElement el) {
+		
+		Function<Long, Optional<NmdProductCard>> getCard = (id) -> {return cards.parallelStream().filter(c -> (long) c.getProductId() == id)
+				.findFirst();};
+		
 		if (cards != null) {
 			// first check if a totaal product needs to be mapped
 			Long totId = mapping.getNmdTotaalProductId();
 			if (totId != null && totId > 0) {
-				Optional<NmdProductCard> totCard = cards.parallelStream()
-						.filter(c -> (long) c.getProductId() == totId).findFirst();
-				if (totCard.isPresent()) {
-					el.mapProductCard(new MaterialSource(String.valueOf(el.getMpgObject().getObjectId()),
-							"totaal map", "mapService"), totCard.get());
+				Optional<NmdProductCard> foundCard = getCard.apply(totId);
+				if (foundCard.isPresent()) {
+					el.mapProductCard(new TotalMaterialSource("mapService"), foundCard.get());
 					el.setMappingMethod(
 							isOriginalMapping ? NmdMappingType.DirectTotaalProduct : NmdMappingType.UserMapping);
 				}
@@ -263,12 +278,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				el.getMpgObject().getListedMaterials().forEach(mat -> {
 
 					if (mat.getName().toLowerCase().trim().equals(mMap.getMaterialName().toLowerCase().trim())) {
-						Optional<NmdProductCard> matCard = cards.parallelStream()
-								.filter(c -> (long) c.getProductId() == mMap.getNmdProductId()).findFirst();
-						if (matCard.isPresent()) {
-							el.mapProductCard(mat, matCard.get());
-							el.setMappingMethod(isOriginalMapping ? NmdMappingType.DirectDeelProduct
-									: NmdMappingType.UserMapping);
+						Optional<NmdProductCard> foundCard = getCard.apply(mMap.getNmdProductId());
+						if (foundCard.isPresent()) {
+							el.mapProductCard(mat, foundCard.get());
+							el.setMappingMethod(
+									isOriginalMapping ? NmdMappingType.DirectDeelProduct : NmdMappingType.UserMapping);
 						}
 					}
 				});
@@ -295,15 +309,20 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		} else {
 			map.setQueryIfcType(el.getMpgObject().getObjectType());
 		}
-
-		List<MaterialMapping> matMaps = new ArrayList<>();
-		for (MaterialSource mat : el.getMpgObject().getListedMaterials()) {
-			MaterialMapping matMap = new MaterialMapping();
-			matMap.setMaterialName(mat.getName());
-			matMap.setNmdProductId((long) mat.getMapId());
-			matMaps.add(matMap);
+		
+		Long totalId = (long) (el.getTotalMap()!= null ? el.getTotalMap().getMapId() : -1);
+		if (totalId > 0) {
+			map.setNmdTotaalProductId(totalId);
+		} else {
+			List<MaterialMapping> matMaps = new ArrayList<>();
+			for (MaterialSource mat : el.getMpgObject().getListedMaterials()) {
+				MaterialMapping matMap = new MaterialMapping();
+				matMap.setMaterialName(mat.getName());
+				matMap.setNmdProductId((long) mat.getMapId());
+				matMaps.add(matMap);
+			}
+			map.setMaterialMappings(matMaps);
 		}
-		map.setMaterialMappings(matMaps);
 		return map;
 	}
 
@@ -482,7 +501,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// currently: select most favorable card
 		Function<List<NmdProductCard>, NmdProductCard> selectCard = (list) -> {
-			list.sort((pc1, pc2) -> pc1.getProfileSetsCoeficientSum().compareTo(pc2.getProfileSetsCoeficientSum()));
+			list.sort((pc1, pc2) -> pc2.getProfileSetsCoeficientSum().compareTo(pc1.getProfileSetsCoeficientSum()));
 			return list.get(0);
 		};
 
