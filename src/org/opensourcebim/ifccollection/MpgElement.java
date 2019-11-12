@@ -1,6 +1,7 @@
 package org.opensourcebim.ifccollection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -77,10 +78,18 @@ public class MpgElement {
 	}
 
 	public List<Integer> getProductIds() {
-
-		return this.getMpgObject() == null ? new ArrayList<Integer>()
+		List<Integer> defaultList = new ArrayList<>();
+		List<Integer> matIds = this.getMpgObject() == null ? defaultList
 				: this.getMpgObject().getListedMaterials().stream().filter(m -> m.getMapId() > 0).map(m -> m.getMapId())
-						.collect(Collectors.toList());
+				.collect(Collectors.toList());
+		if (!matIds.isEmpty()) {
+			return matIds;
+		} else {
+			if (this.getTotalMap() != null) {
+				return Arrays.asList(this.getTotalMap().getMapId());
+			}
+		}
+		return defaultList;
 	}
 
 	@JsonIgnore
@@ -89,15 +98,34 @@ public class MpgElement {
 	}
 
 	public void removeProductCards() {
+		this.clearListedMaterals();
+		if (this.getTotalMap() != null) this.getTotalMap().clearMap();
+	}
+	
+	private void clearListedMaterals() {
 		this.getMpgObject().getListedMaterials().forEach(mat -> mat.clearMap());
 	}
 
+	public MaterialSource getTotalMap() {
+		return totalMap;
+	}
+
+	public void setTotalMap(TotalMaterialSource totalMap) {
+		this.totalMap = totalMap;
+		this.clearListedMaterals();
+	}
+	
 	public void mapProductCard(MaterialSource mat, NmdProductCard card) {
-		// add the material to the mpgObject if it has not been added yet.
-		if (this.getMpgObject().getListedMaterials().isEmpty() || 
-			this.getMpgObject().getListedMaterials().stream()
-				.filter(m -> m.getOid().equals(mat.getOid())).count() == 0) {
-			this.getMpgObject().addMaterialSource(mat);
+		
+		if (mat instanceof TotalMaterialSource && this.getTotalMap() == null) {
+			this.setTotalMap((TotalMaterialSource) mat);
+		} else {
+			// add the material to the mpgObject if it has not been added yet.
+			if (this.getMpgObject().getListedMaterials().isEmpty() || 
+				this.getMpgObject().getListedMaterials().stream()
+					.filter(m -> m.getOid().equals(mat.getOid())).count() == 0) {
+				this.getMpgObject().addMaterialSource(mat);
+			}
 		}
 
 		mat.setMapping(card);
@@ -121,10 +149,12 @@ public class MpgElement {
 	 * @return flag to indicate all materials are mapped to an nmdProductCard
 	 */
 	public boolean getIsFullyCovered() {
+		Boolean allMaterialsCovered =  this.getMpgObject().getListedMaterials().stream().allMatch(m -> m.getMapId() > 0)
+				&& this.getMpgObject().getListedMaterials().size() > 0;
+		Boolean hasTotalMap = this.getTotalMap() != null && this.getTotalMap().getMapId() > 0;
+		
 		return this.getMpgObject() != null
-				&& ((this.getMpgObject().getListedMaterials().stream().allMatch(m -> m.getMapId() > 0)
-						&& this.getMpgObject().getListedMaterials().size() > 0)
-						|| this.getNmdProductCards().stream().anyMatch(pc -> pc.getIsTotaalProduct()));
+				&& (allMaterialsCovered || hasTotalMap);
 	}
 
 	/**
@@ -200,13 +230,5 @@ public class MpgElement {
 		}
 
 		return Double.NaN;
-	}
-
-	public MaterialSource getTotalMap() {
-		return totalMap;
-	}
-
-	public void setTotalMap(TotalMaterialSource totalMap) {
-		this.totalMap = totalMap;
 	}
 }

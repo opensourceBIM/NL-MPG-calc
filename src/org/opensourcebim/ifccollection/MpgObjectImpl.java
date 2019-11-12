@@ -223,13 +223,15 @@ public class MpgObjectImpl implements MpgObject {
 	public String getMappedGroupHash() {
 		String nlsfbToText = this.nlsfb == null ? "" : this.getNLsfbCode().print();
 		return this.getUnMappedGroupHash()
-		+ String.join("-", this.getMaterialNamesBySource(null))
 		+ nlsfbToText;
 	}
 	
 	@Override
 	public String getUnMappedGroupHash() {
-		return this.getObjectName() + this.getObjectType();
+		String matNames = this.getListedMaterials().stream()
+				.map(MaterialSource::getName)
+				.collect(Collectors.joining( "_" ) );
+		return this.getObjectName() + this.getObjectType() + matNames;
 	}
 
 	@Override
