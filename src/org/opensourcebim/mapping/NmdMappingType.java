@@ -10,5 +10,11 @@ public enum NmdMappingType {
 	IndirectThroughParent,
 	IndirectThroughChildren,
 	Estimated,
-	UserMapping,
+	UserMapping;
+	
+	public Boolean isIndirectMapping() {
+		return this == NmdMappingType.IndirectThroughChildren ||
+				this == NmdMappingType.IndirectThroughParent;
+	}
 }
+
