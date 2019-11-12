@@ -4,12 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.opensourcebim.mapping.NmdMappingType;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import nl.tno.bim.mapping.domain.MaterialMapping;
 import nl.tno.bim.nmd.domain.NmdProductCard;
 
 /**

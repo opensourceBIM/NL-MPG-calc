@@ -177,8 +177,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				
 				toBeMappedElements = elGroup.subList(1, elGroup.size());
 			}
-		} else if (element.getMappingMethod() != NmdMappingType.IndirectThroughChildren &&
-				element.getMappingMethod() != NmdMappingType.IndirectThroughParent &&
+		} else if (!element.getMappingMethod().isIndirectMapping() &&
 				set.getMappingSetMaps() != null) {
 			// found a mapping in at least one of the group elements.
 			// Apply on all elements that do not have a mapping
