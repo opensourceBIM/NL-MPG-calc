@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.opensourcebim.ifccollection.MaterialSource;
 import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectStore;
 import org.opensourcebim.ifccollection.MpgScalingOrientation;
@@ -171,20 +172,26 @@ public class MpgCalculator {
 				String unit = "";
 				String cardDescription = "";
 				Integer nmdId = null;
-				if (cards.size() >= 1) {
-					if (cards.size() > 1) {
+				if (!elements.get(0).getMappingMethod().isIndirectMapping()) {
+					if (cards.size() >= 1) {
+						if (cards.size() > 1) {
+							bom.addAnnotation(String.format(
+									"found more than one product card for element group %s",
+									elements.get(0).getUnMappedGroupHash()));
+						}
+						unit = cards.get(0).getUnit();
+						cardDescription = String.join("|", cards.stream().map(c -> c.getDescription()).collect(Collectors.toList()));
+						nmdId = cards.get(0).getProductId();
+					} else {
 						bom.addAnnotation(String.format(
-								"found more than one product card for element group %s",
+								"found no product card for element group %s",
 								elements.get(0).getUnMappedGroupHash()));
-					}
-					unit = cards.get(0).getUnit();
-					cardDescription = String.join("|", cards.stream().map(c -> c.getDescription()).collect(Collectors.toList()));
-					nmdId = cards.get(0).getProductId();
-				} else {
-					bom.addAnnotation(String.format(
-							"found no product card for element group %s",
-							elements.get(0).getUnMappedGroupHash()));
-				} 
+					} 
+				}
+				
+				String materialNames = elements.get(0).getMpgObject().getListedMaterials().stream()
+						.map(MaterialSource::getName)
+						.collect(Collectors.joining("|"));
 				
 				Double totalVolume = elements.stream()
 						.mapToDouble(el -> el.getMpgObject().getGeometry().getVolume())
@@ -205,8 +212,10 @@ public class MpgCalculator {
 				bomEntry.put("nmd card", cardDescription);
 				bomEntry.put("nmd id", nmdId);
 				bomEntry.put("mapping type", elements.get(0).getMappingMethod());
+				
 				bomEntry.put("Ifc type", elements.get(0).getMpgObject().getObjectType());
 				bomEntry.put("Ifc object name", elements.get(0).getMpgObject().getObjectName());
+				bomEntry.put("IFC materials", materialNames);
 				bomEntry.put("number of elements", elements.size());
 				bomEntry.put("unit", unit);
 				bomEntry.put("volume", totalVolume);
