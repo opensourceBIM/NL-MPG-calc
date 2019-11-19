@@ -218,29 +218,13 @@ public class MpgObjectImpl implements MpgObject {
 			this.listedMaterials.add(source);
 		}
 	}
-
-	@Override
-	public String getMappedGroupHash() {
-		String nlsfbToText = this.nlsfb == null ? "" : this.getNLsfbCode().print();
-		return this.getUnMappedGroupHash()
-		+ nlsfbToText;
-	}
 	
 	@Override
 	public String getUnMappedGroupHash() {
 		String matNames = this.getListedMaterials().stream()
 				.map(MaterialSource::getName)
-				.collect(Collectors.joining( "_" ) );
-		return this.getObjectName() + this.getObjectType() + matNames;
-	}
-
-	@Override
-	public boolean copyMappingFromObject(MpgObject mpgObject) {
-		// the earlier applied value hash should already confirm that the two lists are equals so no need to do another check
-		for (int i = 0; i < this.getListedMaterials().size(); i++) {
-			this.getListedMaterials().set(i, mpgObject.getListedMaterials().get(i).copy());
-		}	
-		return true;
+				.collect(Collectors.joining("_") );
+		return this.getObjectType() + matNames;
 	}
 
 	@Override

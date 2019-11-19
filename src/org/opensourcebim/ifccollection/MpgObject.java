@@ -46,17 +46,9 @@ public interface MpgObject {
 	void clearTagsOfType(MpgInfoTagType nmdproductcardwarning);
 	
 	/**
-	 * Identifier for an MpgObject by which similarity after NMD selection is determined
-	 * @return
-	 */
-	String getMappedGroupHash();
-	
-	/**
 	 * Identifier for an MpgObject by which similarity for NMD grouping is determined.
 	 * @return
 	 */
 	String getUnMappedGroupHash();
-	
-	boolean copyMappingFromObject(MpgObject mpgObject);
 	MpgLayer getLayerByProductId(Integer productId);
 }

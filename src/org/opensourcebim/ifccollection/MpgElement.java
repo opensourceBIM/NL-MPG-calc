@@ -155,30 +155,31 @@ public class MpgElement {
 	/**
 	 * determines whether an element is equal in values to another element for the
 	 * sake of mapping grouping This will therefore not include an equality of selected NMD cards etc.
+	 * but will take into account equality withint the IFC hierarchy structure
 	 * 
 	 * @return
 	 */
 	@JsonIgnore
 	public String getUnMappedGroupHash() {
-		return this.getMpgObject().getUnMappedGroupHash();
+		String childHash = this.getStore().getChildren(this.getMpgObject().getGlobalId())
+				.map(obj -> this.getStore().getElementByObjectGuid(obj.getGlobalId()).getSimpleHash())
+				.collect(Collectors.joining("_"));
+		
+		MpgElement parent =  this.getStore().getElementByObjectGuid(this.getMpgObject().getParentId());
+		String parentHash = parent != null ? parent.getSimpleHash() : "";
+		
+		return this.getMpgObject().getUnMappedGroupHash() + parentHash + childHash;
 	}
 	
 	/**
-	 * determines whether an element is equal in values to another element for the
-	 * sake of mapping grouping This will therefore not include an equality of selected NMD cards etc.
-	 * 
-	 * @return
+	 * Get a hashcode for the object without regard for hierarchy
+	 * @return hashcode of just the object itself.
 	 */
 	@JsonIgnore
-	public String getMappedGroupHash() {
-		return this.getMpgObject().getMappedGroupHash();
+	private String getSimpleHash() {		
+		return this.getMpgObject().getUnMappedGroupHash();
 	}
-
-	public boolean copyMappingFromElement(MpgElement element) {
-			this.setMappingMethod(element.getMappingMethod());
-			return this.getMpgObject().copyMappingFromObject(element.getMpgObject());
-	}
-
+	
 	/**
 	 * Returns the amount of product card needed based on the geometry of the object and
 	 * the unti fo the product card.
