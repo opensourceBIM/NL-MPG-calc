@@ -231,7 +231,11 @@ public class MappingDataServiceRestImpl extends RestDataService implements Mappi
 				log.error("Error encountered retrieving response " + e.getMessage());
 			}
 		}
-		return new ResponseWrapper<T>(obj, resp.getStatusLine());
+		StatusLine status = resp == null ? 
+				new BasicStatusLine(new ProtocolVersion("http",1, 1), 500, "error retrieving object") :
+				resp.getStatusLine();
+		
+		return new ResponseWrapper<T>(obj, status);
 	}
 
 	/**
