@@ -5,7 +5,8 @@ import org.opensourcebim.ifccollection.MpgObjectStore;
 
 /**
  * Static functions to support dimension checks and unit conversion
- * 
+ * ToDo: state each unit in terms of the scalefoactor to the relevant SI unit
+ * and convert back and forth to any unit.
  * @author vijj
  *
  */

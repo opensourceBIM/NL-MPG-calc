@@ -105,19 +105,13 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		try {
 			if (this.getStore() == null) {
+				log.warn("No Object Store set for retrieving NMD data");
 				return;
 			}
 	
-			// pre process: identify material keywords and/or nlsfb codes from material
-			// and name descriptions.
+			// do several pre-processing step imputating properties using the mapping data.
 			this.tryFindAdditionalInfo();
-	
-			// pre process: try to fill in missing Nlsfb codes based on hierarchy in the
-			// model
 			this.resolveAlternativeNlsfbCodes();
-	
-			// pre process: try fill in dimensions by producttype relations for products
-			// without parsed geometry
 			this.resolveUnknownGeometries();
 	
 			// start nmd service
@@ -382,11 +376,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * Check whether a generic string contains a material keyword from the mapping
-	 * db
-	 * 
+	 * Check whether a generic string contains a material keyword from the mapping db
 	 * @param objectName
-	 * @return
+	 * @return a set with any words that are deemed a keyword.
 	 */
 	public Set<String> tryGetKeyMaterials(String objectName) {
 		Set<String> objectDescription = NmdDataResolverImpl.parseStringForWords(objectName);
@@ -403,8 +395,13 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		return res;
 	}
 
-	private static Set<String> parseStringForWords(String objectName) {
-		return Arrays.asList(objectName.split(ResolverSettings.splitChars)).stream()
+	/**
+	 * Clean up a description based on predefined delimiters and clean up strange characters
+	 * @param description
+	 * @return a set of separate unique words.
+	 */
+	private static Set<String> parseStringForWords(String description) {
+		return Arrays.asList(description.split(ResolverSettings.splitChars)).stream()
 				.map(w -> w.replaceAll(ResolverSettings.numericReplacePattern, "").toLowerCase().trim())
 				.filter(w -> w.length() >= ResolverSettings.minWordLengthForSimilarityCheck)
 				.collect(Collectors.toSet());
@@ -557,18 +554,18 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * Detemrine the top list of products based on a string similarity score
+	 * Determine the top list of products based on a string similarity score
 	 * 
-	 * @param name        material name
+	 * @param description description to match product on.
 	 * @param allProducts preselected list of cadidate productcards
 	 * @return selection of productcards based on similarity score and cutoff
 	 *         criteria
 	 */
-	private List<NmdProductCard> selectProductsBasedOnStringSimilarity(String name, List<NmdProductCard> allProducts) {
+	private List<NmdProductCard> selectProductsBasedOnStringSimilarity(String description, List<NmdProductCard> allProducts) {
 		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();
 		List<NmdProductCard> res = new ArrayList<NmdProductCard>();
 
-		Set<String> materialDescription = parseStringForWords(name);
+		Set<String> materialDescription = parseStringForWords(description);
 
 		if (materialDescription.isEmpty()) {
 			return res;
