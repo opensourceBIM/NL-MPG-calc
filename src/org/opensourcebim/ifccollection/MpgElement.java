@@ -114,7 +114,7 @@ public class MpgElement {
 		
 		if (mat instanceof TotalMaterialSource && this.getTotalMap() == null) {
 			this.setTotalMap((TotalMaterialSource) mat);
-		} else {
+		} else if (!(mat instanceof TotalMaterialSource)) {
 			// add the material to the mpgObject if it has not been added yet.
 			if (this.getMpgObject().getListedMaterials().isEmpty() || 
 				this.getMpgObject().getListedMaterials().stream()
