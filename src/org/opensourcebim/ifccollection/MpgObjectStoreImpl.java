@@ -344,6 +344,7 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			parents.forEach(el -> {
 				if (el.getMappingMethod() == NmdMappingType.None && allChildrenAreMapped(el)) {
 					el.setMappingMethod(NmdMappingType.IndirectThroughChildren);
+					el.removeProductCards();
 				}
 			});
 		} else {
@@ -352,20 +353,23 @@ public class MpgObjectStoreImpl implements MpgObjectStore {
 			children.forEach(el -> {
 				if (el.getMappingMethod() == NmdMappingType.IndirectThroughParent) {
 					el.setMappingMethod(NmdMappingType.None);
+					el.removeProductCards();
 				}
 			});
+			
 			// any parents that had a indirect through children mapping will be reverted
 			parents.forEach(el -> {
 				if (el.getMappingMethod() == NmdMappingType.IndirectThroughChildren) {
 					el.setMappingMethod(NmdMappingType.None);
+					el.removeProductCards();
 				}
 			});
 		}
-
 	}
 
 	/**
-	 * Recursively check whether all children are mapped.
+	 * Recursively check whether all children are mapped. a child is mapped when it is mapped itself 
+	 * or the grandchildren are mapped (recursive check)
 	 * 
 	 * @param el MpgElement to check hierarchy of
 	 * @return a flag to indicate that all chidren have a mapping
