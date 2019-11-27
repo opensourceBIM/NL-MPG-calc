@@ -75,19 +75,18 @@ public class MpgCalculator {
 							double scaleFactor = 1.0;
 							// determine scale factor based on scaler. if no scaler is present the
 							// unitsRequired is sufficient (and no scaling is applied)
-							if (element.requiresScaling() && profielSet.getIsScalable()) {
-								if (profielSet.getScaler() != null) {
-									NmdScaler scaler = profielSet.getScaler();
-									int numDims = NmdScalingUnitConverter.getUnitDimension(product.getUnit());
-									if (numDims < 3) {
-										MpgScalingOrientation or = element.getMpgObject().getGeometry()
-												.getScalerOrientation(numDims);
-										Double[] dims = or.getScaleDims();
-										Double unitConversionFactor = NmdScalingUnitConverter
-												.getScalingUnitConversionFactor(scaler.getUnit(), this.getObjectStore());
+							if (product.requiresScaling() && profielSet.getIsScalable()) {
+								NmdScaler scaler = product.getScalerForProfileSet(profielSet.getProfielId());
+								// no need to scale bulk goods (in volume units)
+								int numDims = NmdScalingUnitConverter.getUnitDimension(product.getUnit());
+								if (numDims < 3 && scaler != null) {
+									MpgScalingOrientation or = element.getMpgObject().getGeometry()
+											.getScalerOrientation(numDims);
+									Double[] dims = or.getScaleDims();
+									Double unitConversionFactor = NmdScalingUnitConverter
+											.getScalingUnitConversionFactor(scaler.getUnit(), this.getObjectStore());
 
-										scaleFactor = scaler.scaleWithConversion(dims, unitConversionFactor);
-									}
+									scaleFactor = scaler.scaleWithConversion(dims, unitConversionFactor);
 								}
 							}
 
