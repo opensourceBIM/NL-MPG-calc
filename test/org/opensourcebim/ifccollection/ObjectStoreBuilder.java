@@ -14,13 +14,13 @@ import org.opensourcebim.ifccollection.MpgObjectStoreImpl;
 import org.opensourcebim.ifccollection.MpgSpaceImpl;
 
 import nl.tno.bim.nmd.domain.NlsfbCode;
+import nl.tno.bim.nmd.domain.NmdBaseProductCard;
 import nl.tno.bim.nmd.domain.NmdElement;
 import nl.tno.bim.nmd.domain.NmdElementImpl;
 import nl.tno.bim.nmd.domain.NmdFaseProfiel;
 import nl.tno.bim.nmd.domain.NmdFaseProfielImpl;
 import nl.tno.bim.nmd.domain.NmdMilieuCategorie;
 import nl.tno.bim.nmd.domain.NmdProductCard;
-import nl.tno.bim.nmd.domain.NmdProductCardImpl;
 import nl.tno.bim.nmd.domain.NmdProfileSet;
 import nl.tno.bim.nmd.domain.NmdProfileSetImpl;
 import nl.tno.bim.nmd.domain.NmdReferenceResources;
@@ -156,13 +156,12 @@ public class ObjectStoreBuilder {
 		return el;
 	}
 
-	public NmdProductCardImpl createDummyProductCard(String description, int category, String unit, int lifetime,
+	public NmdProductCard createDummyProductCard(String description, int category, String unit, int lifetime,
 			NmdElement el) {
-		NmdProductCardImpl card = new NmdProductCardImpl();
+		NmdBaseProductCard card = new NmdBaseProductCard();
 		card.setProductId(getNewUniqueId());
 		card.setCategory(category);
 		card.setDescription(description);
-		card.setIsTotaalProduct(false);
 		card.setLifetime(lifetime);
 		if (el != null) {
 			card.setNlsfbCode(el.getNlsfbCode());

@@ -11,7 +11,7 @@ import org.opensourcebim.ifccollection.MpgElement;
 import org.opensourcebim.ifccollection.MpgObjectImpl;
 import org.opensourcebim.ifccollection.ObjectStoreBuilder;
 
-import nl.tno.bim.nmd.domain.NmdProductCardImpl;
+import nl.tno.bim.nmd.domain.NmdProductCard;
 
 public class MpgCalculatorTest {
 
@@ -87,9 +87,7 @@ public class MpgCalculatorTest {
 		int category = 1;
 		
 		el.setMpgObject(builder.createDummyObject(name, "IfcBeam", "", "42.42"));
-		NmdProductCardImpl card = builder.createDummyProductCard(name, category, unit, 1, null);
-
-		card.setIsTotaalProduct(false);
+		NmdProductCard card = builder.createDummyProductCard(name, category, unit, 1, null);
 		
 		el.mapProductCard(new MaterialSource("1", "steel", "dummy"), card);
 

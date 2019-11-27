@@ -2,11 +2,13 @@ package org.opensourcebim.nmd;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import nl.tno.bim.nmd.domain.NlsfbCode;
 import nl.tno.bim.nmd.domain.NmdProductCard;
 import nl.tno.bim.nmd.domain.NmdProfileSet;
+import nl.tno.bim.nmd.scaling.NmdScaler;
 
 /**
  * Product card implementation for validation purposes
@@ -23,12 +25,21 @@ public class NmdProductCardReference implements NmdProductCard {
 	}
 	
 	@Override
+	public NmdScaler getScalerForProfileSet(Integer psId) {
+		Optional<NmdProfileSet> ps = this.getProfileSets().stream()
+				.filter(pset -> pset.getProfielId() == psId).findFirst();
+		return ps.isPresent() ? ps.get().getScaler() : null;
+	}
+	
+	@Override
+	public boolean requiresScaling() {
+		return !this.getUnit().equals("p");
+	}
+	
+	@Override
 	public String getDescription() {
 		return "reference card";
 	}
-
-	@Override
-	public Boolean getIsTotaalProduct() { return false;}
 
 	@Override
 	public Set<NmdProfileSet> getProfileSets() { return new HashSet<>();}
@@ -72,5 +83,11 @@ public class NmdProductCardReference implements NmdProductCard {
 	@Override
 	public Double getProfileSetsCoeficientSum() {
 		return coefficientSum;
+	}
+
+	@Override
+	public Optional<NmdProfileSet> getProfileSetByName(String name) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

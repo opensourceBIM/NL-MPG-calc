@@ -128,16 +128,6 @@ public class MpgElement {
 	}
 
 	/**
-	 * returns a flag inidcating if the element needs to be scaled
-	 * 
-	 * @return see above
-	 */
-	public boolean requiresScaling() {
-		return this.getNmdProductCards().stream().flatMap(pc -> pc.getProfileSets().stream())
-				.anyMatch(ps -> ps.getIsScalable() && ps.getScaler() != null);
-	}
-
-	/**
 	 * Indicates that all the materials have a mapping and that the material has at
 	 * least a single material
 	 * 
