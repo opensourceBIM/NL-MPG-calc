@@ -552,7 +552,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		if (mpgElement.getMpgObject().getLayers().size() > 0) {
 			// map on each material individually
 			for (MaterialSource mat : mats) {
-				this.findMappingForDescription(mat.getName(), mpgElement, allProducts, viableCandidates, selectCard,
+				this.findMappingForDescription(mat.getName(), mpgElement, allProducts, viableCandidates,
 						mat);
 			}
 
@@ -560,7 +560,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			// try map on the full material description
 			String description = mpgElement.getMpgObject().getListedMaterials().stream().map(MaterialSource::getName)
 					.collect(Collectors.joining(" "));
-			this.findMappingForDescription(description, mpgElement, allProducts, viableCandidates, selectCard,
+			this.findMappingForDescription(description, mpgElement, allProducts, viableCandidates,
 					new TotalMaterialSource("resolver"));
 		}
 
