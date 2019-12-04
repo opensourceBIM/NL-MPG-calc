@@ -542,12 +542,6 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		List<MaterialSource> mats = mpgElement.getMpgObject().getListedMaterials();
 		Set<NmdProductCard> viableCandidates = new HashSet<NmdProductCard>();
 
-		// currently: select most favorable card
-		Function<List<NmdProductCard>, NmdProductCard> selectCard = (list) -> {
-			list.sort((pc1, pc2) -> pc2.getProfileSetsCoeficientSum().compareTo(pc1.getProfileSetsCoeficientSum()));
-			return list.get(0);
-		};
-
 		// Find per material the most likely candidates that fall within the
 		// specifications
 		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
@@ -574,9 +568,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	private void findMappingForDescription(String description, MpgElement mpgElement, List<NmdProductCard> allProducts,
-			Set<NmdProductCard> viableCandidates, Function<List<NmdProductCard>, NmdProductCard> selectCard,
+			Set<NmdProductCard> viableCandidates,
 			MaterialSource mat) {
 
+		// currently: select most favorable card
+		Function<List<NmdProductCard>, NmdProductCard> selectCard = (list) -> {
+			list.sort((pc1, pc2) -> pc2.getProfileSetsCoeficientSum().compareTo(pc1.getProfileSetsCoeficientSum()));
+			return list.get(0);
+		};
+		
+		
 		List<NmdProductCard> productOptions = selectProductsBasedOnStringSimilarity(description, allProducts);
 
 		List<NmdProductCard> removeCards = new ArrayList<>();
