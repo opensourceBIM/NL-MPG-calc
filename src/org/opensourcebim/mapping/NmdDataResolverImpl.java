@@ -188,14 +188,13 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		
 		MpgElement element = mappedElements.size() == 0 ? 
 				elGroup.get(0) : 
-				getMostRecentMappingSetMapForListOfElements(mappedElements, set);
+				getMostRecentMappedElement(mappedElements, set);
 		String guid = element.getMpgObject().getGlobalId();
 
 		List<MpgElement> toBeMappedElements = null;
 		if (mappedElements.size() == 0) {
-			// found no preexisting mappings. find one and apply on the rest.
+			// found no preexisting mappings. find a fitting product card and apply on the rest.
 			resolveNmdMappingForElement(element);
-			// avoid adding elements that could not be found a nmd productcard for.
 			if (element.hasMapping()) {
 				newMapping = true;
 				map = createMappingFromMappedElement(element);
@@ -235,21 +234,27 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param set a MappingSet with mappings in it
 	 * @return the MpgElement with the most recetn mapping based on the input mappingset.
 	 */
-	private MpgElement getMostRecentMappingSetMapForListOfElements(@Nonnull List<MpgElement> mappedElements, @Nonnull MappingSet set) {
+	private MpgElement getMostRecentMappedElement(@Nonnull List<MpgElement> mappedElements, @Nonnull MappingSet set) {
 		// collect any mappingsetmaps that match with at least one of the object guids.
 		List<String> elGuids = mappedElements.stream().map(el -> el.getMpgObject().getGlobalId()).collect(Collectors.toList());
+		MappingSetMap latestMsm = getLatestMappingSetMapForElementGuids(elGuids, set);
+		return mappedElements.stream().filter(el -> el.getMpgObject().getGlobalId().equals(latestMsm.getElementGuid())).findFirst().get();
+	}
+	
+	/**
+	 * Return the MappingSetMap that has the largest revision id based on list of element guids and a mappingset
+	 * @param elGuids Element guids that are eligible for evaluation
+	 * @param set Mappngset to retrieve the MappingSetMap from
+	 * @return the MappingSetMpa with lthe largest revision id in the MappingSet belogning to one of the element guids
+	 */
+	private MappingSetMap getLatestMappingSetMapForElementGuids(@Nonnull List<String> elGuids, @Nonnull MappingSet set) {
 		List<MappingSetMap> latestMsm = set.getMappingSetMaps().stream()
 				.filter(msm -> elGuids.contains(msm.getElementGuid()) && msm.getMappingRevisionId() != null)
 				.collect(Collectors.toList());
 		
-		// if there is no r
-		if (latestMsm.size() <= 0) return mappedElements.get(0);
-	
 		// get the elementguid of the MappingSetMap with the latest revision and return the related MpgElement
-		String latestElementGuid = Collections.max(latestMsm, 
-				Comparator.comparing(msm -> msm.getMappingRevisionId()))
-				.getElementGuid();
-		return mappedElements.stream().filter(el -> el.getMpgObject().getGlobalId().equals(latestElementGuid)).findFirst().get();
+		return Collections.max(latestMsm, 
+				Comparator.comparing(msm -> msm.getMappingRevisionId()));
 	}
 	
 
