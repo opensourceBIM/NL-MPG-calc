@@ -500,8 +500,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// STEP4: from every candidate element we should pick 0:1 productcards per
 		// material and add a mapping
-		Set<NmdProductCard> selectedProducts = selectProductsForElements(mpgElement, candidateElements);
-		if (selectedProducts.size() > 0 && mpgElement.getTotalMap() == null) {
+		Boolean mapFound = getProductCardsForElement(mpgElement, candidateElements);
+		if (mapFound && mpgElement.getTotalMap() == null) {
 			mpgElement.setMappingMethod(NmdMappingType.DirectDeelProduct);
 		} else if (mpgElement.getTotalMap() != null) {
 			mpgElement.setMappingMethod(NmdMappingType.DirectTotaalProduct);
@@ -535,24 +535,22 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param mpgElement mpgElement to add product cards to
 	 * @param candidates possible nmProductCard matches for the mpgElement
 	 */
-	private Set<NmdProductCard> selectProductsForElements(MpgElement mpgElement, List<NmdElement> candidates) {
+	private Boolean getProductCardsForElement(MpgElement mpgElement, List<NmdElement> candidates) {
 
 		List<NmdProductCard> allProducts = candidates.stream().flatMap(e -> e.getProducts().stream())
 				.collect(Collectors.toList());
 		List<MaterialSource> mats = mpgElement.getMpgObject().getListedMaterials();
-		Set<NmdProductCard> viableCandidates = new HashSet<NmdProductCard>();
+		Set<NmdProductCard> viableCandidates = new HashSet<>();
 
 		// Find per material the most likely candidates that fall within the
 		// specifications
 		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
 
-		// 3 options. map for each layer separately, map on all mats in one go or map
-		// per material.
-		// if no material is present try map on the object name
+		// 3 options. map for each layer separately, map on all mats in one go or map per material.
 		if (mpgElement.getMpgObject().getLayers().size() > 0) {
 			// map on each material individually
 			for (MaterialSource mat : mats) {
-				this.findMappingForDescription(mat.getName(), mpgElement, allProducts, viableCandidates,
+				this.findViableCandidateForElement(mat.getName(), mpgElement, allProducts, viableCandidates,
 						mat);
 			}
 
@@ -560,14 +558,15 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			// try map on the full material description
 			String description = mpgElement.getMpgObject().getListedMaterials().stream().map(MaterialSource::getName)
 					.collect(Collectors.joining(" "));
-			this.findMappingForDescription(description, mpgElement, allProducts, viableCandidates,
+			this.findViableCandidateForElement(description, mpgElement, allProducts, viableCandidates,
 					new TotalMaterialSource("resolver"));
 		}
 
-		return viableCandidates;
+		return mpgElement.getTotalMap() != null || 
+				mpgElement.getMpgObject().getListedMaterials().stream().anyMatch(m -> m.getMapId() > 0);
 	}
 
-	private void findMappingForDescription(String description, MpgElement mpgElement, List<NmdProductCard> allProducts,
+	private void findViableCandidateForElement(String description, MpgElement mpgElement, List<NmdProductCard> allProducts,
 			Set<NmdProductCard> viableCandidates,
 			MaterialSource mat) {
 
