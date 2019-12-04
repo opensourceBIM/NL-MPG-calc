@@ -146,14 +146,7 @@ public class MpgIfcObjectCollector {
 
 				this.getPropertySetsFromIfcProduct(product, mpgObject);
 				MpgGeometry geom = geometryParser.getGeometryFromProduct(product);
-				if (geom.getVolume().isNaN()) {
-					// if the geomServer does not return a volume we have to try it through properties.
-					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "Geometry from property set");
-					mpgObject.setGeometry(this.getGeometryFromPropertySet(product, mpgObject));
-				} else {
-					mpgObject.addTag(MpgInfoTagType.geometrySourceType, "Geometry from ifcopenShell");
-					mpgObject.setGeometry(geom);
-				}
+				mpgObject.setGeometry(geom);
 
 				// set Pset materials
 //				if (mpgObject.getProperties().containsKey("material")) {
@@ -178,46 +171,7 @@ public class MpgIfcObjectCollector {
 		objectStore.reloadParentChildRelationShips(childToParentMap);
 		return objectStore;
 	}
-
-	/**
-	 * Alternative method to get geometry parameters based on the property sets. Should be discarded!
-	 * 
-	 * @param product   IfcProduct object
-	 * @param mpgObject mpgObject to add parsed properties to.
-	 * @return mpgGeometry object
-	 */
-	private MpgGeometry getGeometryFromPropertySet(IfcProduct product, MpgObjectImpl mpgObject) {
-		MpgGeometry geom = new MpgGeometry();
-
-		// first try to set the geometry by properties
-		Double vol = null;
-		if (mpgObject.getProperties().containsKey("volume")) {
-			vol = ((double) mpgObject.getProperties().get("volume"));
-		}
-		if (mpgObject.getProperties().containsKey("netvolume") && vol == null) {
-			vol = ((double) mpgObject.getProperties().get("netvolume"));
-		}
-		if (vol != null) {
-			geom.setVolume(vol);
-		}
-
-		Double area = null;
-		if (mpgObject.getProperties().containsKey("grosssidearea")) {
-			area = ((double) mpgObject.getProperties().get("grosssidearea"));
-		}
-		if (mpgObject.getProperties().containsKey("area")) {
-			area = ((double) mpgObject.getProperties().get("area"));
-		}
-		if (mpgObject.getProperties().containsKey("netarea") && area == null) {
-			area = ((double) mpgObject.getProperties().get("netarea"));
-		}
-		if (area != null) {
-			geom.setFloorArea(area);
-		}
-		geom.setIsComplete(false);
-		return geom;
-	}
-
+	
 	/**
 	 * retrieve the property sets from the ifc product and any present templates
 	 * 
