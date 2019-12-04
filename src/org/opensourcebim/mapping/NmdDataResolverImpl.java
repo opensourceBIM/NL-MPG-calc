@@ -204,8 +204,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				
 				toBeMappedElements = elGroup.subList(1, elGroup.size());
 			}
-		} else if (!element.getMappingMethod().isIndirectMapping() &&
-				set.getMappingSetMaps() != null) {
+		} else if (!element.getMappingMethod().isIndirectMapping() && set.getMappingSetMaps() != null) {
 			// even if multiple mpgelements have a mapping we should apply the one with the latest revision
 			MappingSetMap elMap = getMostRecentMsm.apply(guid);
 			if (elMap != null) {
@@ -709,40 +708,37 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * Check if the product card can be mapped on the element based on scaling
 	 * restrictions
 	 * 
-	 * @param prod       the canidate NmdProductCard
+	 * @param prod       the candidate NmdProductCard
 	 * @param mpgElement mpgElement that we want to add the productCard to
 	 * @return a boolean to indicate whether the ProductCard is a viable option
 	 */
 	private boolean canProductBeUsedForElement(NmdProductCard prod, MpgScalingOrientation orientation) {
 		int numDims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
-		for (NmdProfileSet profielSet : prod.getProfileSets()) {
-
-			// if there is no scaler defined, but the item is marked as scalable return true
-			// by default.
-			if (profielSet.getIsScalable()) {
-				// should there be no scaler defined, we can assume linear scaling
-				if (profielSet.getScaler() == null) {
-					return true;
-				}
-
-				NmdScaler scaler = profielSet.getScaler();
-
-				String unit = scaler.getUnit();
-				if (numDims < 3) {
-
-					Double[] dims = orientation.getScaleDims();
-					if (scaler.getNumberOfDimensions() > dims.length) {
-						// cannot scale a wall (in m2) on more than 1 dimension
-						return false;
+		if (prod.requiresScaling()) {
+			
+			for (NmdProfileSet profielSet : prod.getProfileSets()) {
+	
+				// if there is no scaler defined, but the item is marked as scalable return true
+				// by default.
+				if (profielSet.getIsScalable()) {
+					NmdScaler scaler = prod.getScalerForProfileSet(profielSet.getProfielId());
+					if (numDims < 3 && scaler != null) {
+						String unit = scaler.getUnit();
+	
+						Double[] dims = orientation.getScaleDims();
+						if (scaler.getNumberOfDimensions() > dims.length) {
+							// cannot scale a wall (in m2) on more than 1 dimension
+							return false;
+						}
+	
+						Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit, this.getStore());
+						if (!scaler.areDimsWithinBounds(dims, convFactor)) {
+							return false;
+						}
 					}
-
-					Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit, this.getStore());
-					if (!scaler.areDimsWithinBounds(dims, convFactor)) {
-						return false;
-					}
+				} else {
+					return false;
 				}
-			} else if (!profielSet.getIsScalable()) {
-				return false;
 			}
 		}
 
