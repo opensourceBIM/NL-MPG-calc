@@ -111,16 +111,16 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				log.warn("No Object Store set for retrieving NMD data");
 				return;
 			}
-	
+
 			// do several pre-processing step imputating properties using the mapping data.
 			this.tryFindAdditionalInfo();
 			this.resolveAlternativeNlsfbCodes();
 			this.resolveUnknownGeometries();
-	
+
 			// start nmd service
 			getService().login();
 			getService().preLoadData();
-	
+
 			// first check if there are already mappings available for this dataset
 			MappingSet set = this.tryGetMappingSet();
 			if (set == null) {
@@ -128,21 +128,22 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 				set.setProjectId(store.getProjectId());
 				set.setDate(new Date());
 			}
-	
-			// first try to get mappings for the children. (mapping them all covers the parent by default)
+
+			// first try to get mappings for the children. (mapping them all covers the
+			// parent by default)
 			Map<String, List<MpgElement>> childGroups = store.getChildElementGroups();
 			boolean addedNewMapping = false;
 			for (List<MpgElement> elGroup : childGroups.values()) {
-				if (this.findMappingForElementGroup(elGroup, set)) 
+				if (this.findMappingForElementGroup(elGroup, set))
 					addedNewMapping = true;
 			}
-			
+
 			Map<String, List<MpgElement>> parentGroups = store.getParentElementGroups();
 			for (List<MpgElement> elGroup : parentGroups.values()) {
-				if (this.findMappingForElementGroup(elGroup, set)) 
+				if (this.findMappingForElementGroup(elGroup, set))
 					addedNewMapping = true;
 			}
-	
+
 			// finally: post all the new mappings to the object store.
 			if (addedNewMapping) {
 				getMappingService().postMappingSet(set);
@@ -154,109 +155,96 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 	}
 
+	/**
+	 * For each set of similar elements find a uniqe mapping if not already present
+	 * and apply the most recent on on the rest of the group
+	 * 
+	 * @param elGroup a list of elements that may or may not have mappings.
+	 * @param set The MappingSet to check against
+	 * @return a flag indicating whether a product in the group has an updated mapping
+	 */
 	private boolean findMappingForElementGroup(List<MpgElement> elGroup, MappingSet set) {
 		Boolean newMapping = false;
 		Mapping map = null;
-		
-		Function<String, MappingSetMap> getMostRecentMsm = (guid) -> {
-			if (set.getMappingSetMaps() != null) {
-				List<MappingSetMap> relevantMaps = set.getMappingSetMaps().stream()
-						.filter(msm -> msm.getElementGuid().equals(guid)).collect(Collectors.toList());
-				if(relevantMaps.size() == 1) {
-					return relevantMaps.get(0);
-				} else if (relevantMaps.size() > 1) {
-					MappingSetMap foundMsm = Collections.max(relevantMaps, 
-						Comparator.comparing(msm -> msm.getMappingRevisionId() != null ? msm.getMappingRevisionId() : 0));
-					return foundMsm;
-				}
-			}
-			return null;
-		};
-		
-		// apply the most recent mappingsetmap found in the mapping per group
-		for (MpgElement el : elGroup) {
-			if (el != null) {
-				MappingSetMap msm = getMostRecentMsm.apply(el.getMpgObject().getGlobalId());
-				if (msm != null) {
-					setNmdProductCardForElement(msm, el);
-				}
-			}
-		}
-		
-		List<MpgElement> mappedElements = elGroup.stream().filter(el -> el.hasMapping())
-				.collect(Collectors.toList());
-		
-		MpgElement element = mappedElements.size() == 0 ? 
-				elGroup.get(0) : 
-				getMostRecentMappedElement(mappedElements, set);
-		String guid = element.getMpgObject().getGlobalId();
-
 		List<MpgElement> toBeMappedElements = null;
-		if (mappedElements.size() == 0) {
-			// found no preexisting mappings. find a fitting product card and apply on the rest.
-			resolveNmdMappingForElement(element);
-			if (element.hasMapping()) {
-				newMapping = true;
-				map = createMappingFromMappedElement(element);
-				map = mappingService.postMapping(map).getObject();
-				set.addMappingToMappingSet(map, guid);
-				
-				toBeMappedElements = elGroup.subList(1, elGroup.size());
-			}
-		} else if (!element.getMappingMethod().isIndirectMapping() && set.getMappingSetMaps() != null) {
-			// even if multiple mpgelements have a mapping we should apply the one with the latest revision
-			MappingSetMap elMap = getMostRecentMsm.apply(guid);
-			if (elMap != null) {
-				map = elMap.getMapping();
-				toBeMappedElements = elGroup;
-			} else {
-				log.warn("Could not find mapping that should exist in mappingset for element: " + guid);
-			}
-		}
-		// apply the found or created mapping on similar IfcObjects
-		if (toBeMappedElements != null) {
-			for (MpgElement el : toBeMappedElements) {
-				String elGuid = el.getMpgObject().getGlobalId();
-				if (!elGuid.equals(guid)) {
+		List<String> elGuids = elGroup.stream().map(el -> el.getMpgObject().getGlobalId()).collect(Collectors.toList());
+
+		// apply the most recent mappingsetmap found in the mapping per group
+		MappingSetMap msm = this.getLatestMappingSetMapForElementGuids(elGuids, set);
+
+		if (msm != null) {
+			// found a mappingsetmap. apply it to the rest
+			toBeMappedElements = elGroup;
+		} else {
+			// did not find a mappingsetmap. try find a suitable product
+			List<MpgElement> elementsRequireMapping = elGroup.stream().filter(el -> !el.hasMapping())
+					.collect(Collectors.toList());
+			if (elementsRequireMapping.size() > 0) {
+				MpgElement element = elGroup.get(0);
+				String guid = element.getMpgObject().getGlobalId();
+
+				// found no preexisting mappings. find a fitting product card and apply on the
+				// rest.
+				resolveNmdMappingForElement(element);
+				if (element.hasMapping()) {
 					newMapping = true;
-					set.addMappingToMappingSet(map, elGuid);
-					MappingSetMap msm = getMostRecentMsm.apply(elGuid);
-					setNmdProductCardForElement(msm, el);
+					map = createMappingFromMappedElement(element, "");
+					map = mappingService.postMapping(map).getObject();
+					set.addMappingToMappingSet(map, guid);
+
+					toBeMappedElements = elGroup.subList(1, elGroup.size());
 				}
 			}
 		}
+
+		// apply the found or created mapping on the not yet mapped elements
+		if (toBeMappedElements != null) {
+			msm = this.getLatestMappingSetMapForElementGuids(elGuids, set);
+			map = msm.getMapping();
+			for (MpgElement el : toBeMappedElements) {
+				if (!el.getMappingMethod().isIndirectMapping()) {
+					setNmdProductCardForElement(msm, el);
+
+					// also check if the mapping for this element requires an update
+					String elGuid = el.getMpgObject().getGlobalId();
+					Optional<MappingSetMap> elMsm = set.getMappingSetMaps().stream()
+							.filter(elmsm -> elmsm.getElementGuid().equals(elGuid)).findFirst();
+					if (!elMsm.isPresent() || (msm.getMappingRevisionId() != null
+							&& elMsm.get().getMappingRevisionId() < msm.getMappingRevisionId())) {
+						set.addMappingToMappingSet(map, elGuid);
+						newMapping = true;
+					}
+				}
+			}
+		}
+
 		return newMapping;
 	}
 
 	/**
-	 * Find the most recent mapped MpgElement by checking the MappingSetMap revisionId
-	 * @param mappedElements a list of (mapped) elements
-	 * @param set a MappingSet with mappings in it
-	 * @return the MpgElement with the most recetn mapping based on the input mappingset.
-	 */
-	private MpgElement getMostRecentMappedElement(@Nonnull List<MpgElement> mappedElements, @Nonnull MappingSet set) {
-		// collect any mappingsetmaps that match with at least one of the object guids.
-		List<String> elGuids = mappedElements.stream().map(el -> el.getMpgObject().getGlobalId()).collect(Collectors.toList());
-		MappingSetMap latestMsm = getLatestMappingSetMapForElementGuids(elGuids, set);
-		return mappedElements.stream().filter(el -> el.getMpgObject().getGlobalId().equals(latestMsm.getElementGuid())).findFirst().get();
-	}
-	
-	/**
-	 * Return the MappingSetMap that has the largest revision id based on list of element guids and a mappingset
+	 * Return the MappingSetMap that has the largest revision id based on list of
+	 * element guids and a mappingset
+	 * 
 	 * @param elGuids Element guids that are eligible for evaluation
-	 * @param set Mappngset to retrieve the MappingSetMap from
-	 * @return the MappingSetMpa with lthe largest revision id in the MappingSet belogning to one of the element guids
+	 * @param set     Mappngset to retrieve the MappingSetMap from
+	 * @return the MappingSetMpa with lthe largest revision id in the MappingSet
+	 *         belogning to one of the element guids
 	 */
-	private MappingSetMap getLatestMappingSetMapForElementGuids(@Nonnull List<String> elGuids, @Nonnull MappingSet set) {
-		List<MappingSetMap> latestMsm = set.getMappingSetMaps().stream()
-				.filter(msm -> elGuids.contains(msm.getElementGuid()) && msm.getMappingRevisionId() != null)
-				.collect(Collectors.toList());
-		
-		// get the elementguid of the MappingSetMap with the latest revision and return the related MpgElement
-		return Collections.max(latestMsm, 
-				Comparator.comparing(msm -> msm.getMappingRevisionId()));
+	private MappingSetMap getLatestMappingSetMapForElementGuids(@Nonnull List<String> elGuids,
+			@Nonnull MappingSet set) {
+		if (set.getMappingSetMaps() != null) {
+			List<MappingSetMap> latestMsm = set.getMappingSetMaps().stream()
+					.filter(msm -> elGuids.contains(msm.getElementGuid())).collect(Collectors.toList());
+
+			// get the elementguid of the MappingSetMap with the latest revision and return
+			// the related MpgElement
+			if (latestMsm.size() > 0) {
+				return Collections.max(latestMsm, Comparator
+						.comparing(msm -> msm.getMappingRevisionId() == null ? 0 : msm.getMappingRevisionId()));
+			}
+		}
+		return null;
 	}
-	
 
 	/**
 	 * Check whether there is already a mappingset available for the given
@@ -298,10 +286,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 	private boolean setNmdProductCardForElement(Mapping mapping, List<NmdProductCard> cards, Boolean isOriginalMapping,
 			MpgElement el) {
-		
-		Function<Long, Optional<NmdProductCard>> getCard = (id) -> {return cards.parallelStream().filter(c -> (long) c.getProductId() == id)
-				.findFirst();};
-		
+
+		Function<Long, Optional<NmdProductCard>> getCard = (id) -> {
+			return cards.parallelStream().filter(c -> (long) c.getProductId() == id).findFirst();
+		};
+
 		if (cards != null) {
 			// first check if a totaal product needs to be mapped
 			Long totId = mapping.getNmdTotaalProductId();
@@ -318,13 +307,13 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			if (mapping.getMaterialMappings() != null) {
 				mapping.getMaterialMappings().forEach(mMap -> {
 					el.getMpgObject().getListedMaterials().forEach(mat -> {
-	
+
 						if (mat.getName().toLowerCase().trim().equals(mMap.getMaterialName().toLowerCase().trim())) {
 							Optional<NmdProductCard> foundCard = getCard.apply(mMap.getNmdProductId());
 							if (foundCard.isPresent()) {
 								el.mapProductCard(mat, foundCard.get());
-								el.setMappingMethod(
-										isOriginalMapping ? NmdMappingType.DirectDeelProduct : NmdMappingType.UserMapping);
+								el.setMappingMethod(isOriginalMapping ? NmdMappingType.DirectDeelProduct
+										: NmdMappingType.UserMapping);
 							}
 						}
 					});
@@ -341,10 +330,12 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param el
 	 * @return
 	 */
-	private static Mapping createMappingFromMappedElement(MpgElement el) {
+	private static Mapping createMappingFromMappedElement(MpgElement el, String nlsfb) {
 		Mapping map = new Mapping();
 
-		String nlsfb = el.getMpgObject().getNLsfbCode() == null ? "" : el.getMpgObject().getNLsfbCode().print();
+		nlsfb = nlsfb == null || nlsfb.isBlank()
+				? el.getMpgObject().getNLsfbCode() == null ? "" : el.getMpgObject().getNLsfbCode().print()
+				: nlsfb;
 		map.setNlsfbCode(nlsfb);
 		map.setOwnIfcType(el.getMpgObject().getObjectType());
 		if (!el.getMpgObject().getParentId().isEmpty()) {
@@ -352,8 +343,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		} else {
 			map.setQueryIfcType(el.getMpgObject().getObjectType());
 		}
-		
-		Long totalId = (long) (el.getTotalMap()!= null ? el.getTotalMap().getMapId() : -1);
+
+		Long totalId = (long) (el.getTotalMap() != null ? el.getTotalMap().getMapId() : -1);
 		if (totalId > 0) {
 			map.setNmdTotaalProductId(totalId);
 		} else {
@@ -426,7 +417,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * Check whether a generic string contains a material keyword from the mapping db
+	 * Check whether a generic string contains a material keyword from the mapping
+	 * db
+	 * 
 	 * @param objectName
 	 * @return a set with any words that are deemed a keyword.
 	 */
@@ -446,7 +439,9 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * Clean up a description based on predefined delimiters and clean up strange characters
+	 * Clean up a description based on predefined delimiters and clean up strange
+	 * characters
+	 * 
 	 * @param description
 	 * @return a set of separate unique words.
 	 */
@@ -557,38 +552,31 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		// specifications
 		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
 
-		// 3 options. map for each layer separately, map on all mats in one go or map per material.
+		// 3 options. map for each layer separately, map on all mats in one go or map
+		// per material.
 		// if no material is present try map on the object name
 		if (mpgElement.getMpgObject().getLayers().size() > 0) {
 			// map on each material individually
 			for (MaterialSource mat : mats) {
-				this.findMappingForDescription(mat.getName(), mpgElement, 
-						allProducts, viableCandidates, selectCard, mat);
+				this.findMappingForDescription(mat.getName(), mpgElement, allProducts, viableCandidates, selectCard,
+						mat);
 			}
-			
+
 		} else if (mpgElement.getMpgObject().getListedMaterials().size() >= 1) {
 			// try map on the full material description
-			String description = mpgElement.getMpgObject().getListedMaterials().stream()
-					.map(MaterialSource::getName)
+			String description = mpgElement.getMpgObject().getListedMaterials().stream().map(MaterialSource::getName)
 					.collect(Collectors.joining(" "));
-			this.findMappingForDescription(description, mpgElement, 
-					allProducts, viableCandidates, selectCard, new TotalMaterialSource("resolver"));
+			this.findMappingForDescription(description, mpgElement, allProducts, viableCandidates, selectCard,
+					new TotalMaterialSource("resolver"));
 		}
-//		} else {
-//			// try map on the product card description
-//			this.findMappingForDescription(mpgElement.getMpgObject().getObjectName(), mpgElement, 
-//					allProducts, viableCandidates, selectCard, new TotalMaterialSource("resolver"));
-//		}
 
 		return viableCandidates;
 	}
 
-	private void findMappingForDescription(String description, MpgElement mpgElement, 
-			List<NmdProductCard> allProducts,
-			Set<NmdProductCard> viableCandidates, 
-			Function<List<NmdProductCard>, NmdProductCard> selectCard, 
+	private void findMappingForDescription(String description, MpgElement mpgElement, List<NmdProductCard> allProducts,
+			Set<NmdProductCard> viableCandidates, Function<List<NmdProductCard>, NmdProductCard> selectCard,
 			MaterialSource mat) {
-		
+
 		List<NmdProductCard> productOptions = selectProductsBasedOnStringSimilarity(description, allProducts);
 
 		List<NmdProductCard> removeCards = new ArrayList<>();
@@ -597,8 +585,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 			int dims = NmdScalingUnitConverter.getUnitDimension(card.getUnit());
 			if (!card.getProfileSets().isEmpty()) {
 				// determine scaling dimension
-				MpgScalingOrientation orientation = mpgElement.getMpgObject().getGeometry()
-						.getScalerOrientation(dims);
+				MpgScalingOrientation orientation = mpgElement.getMpgObject().getGeometry().getScalerOrientation(dims);
 
 				// check if the productcard does not constrain the element in its physical
 				// dimensions.
@@ -638,7 +625,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return selection of productcards based on similarity score and cutoff
 	 *         criteria
 	 */
-	private List<NmdProductCard> selectProductsBasedOnStringSimilarity(String description, List<NmdProductCard> allProducts) {
+	private List<NmdProductCard> selectProductsBasedOnStringSimilarity(String description,
+			List<NmdProductCard> allProducts) {
 		List<Pair<NmdProductCard, Double>> prods = new ArrayList<Pair<NmdProductCard, Double>>();
 		List<NmdProductCard> res = new ArrayList<NmdProductCard>();
 
@@ -720,23 +708,24 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	private boolean canProductBeUsedForElement(NmdProductCard prod, MpgScalingOrientation orientation) {
 		int numDims = NmdScalingUnitConverter.getUnitDimension(prod.getUnit());
 		if (prod.requiresScaling()) {
-			
+
 			for (NmdProfileSet profielSet : prod.getProfileSets()) {
-	
+
 				// if there is no scaler defined, but the item is marked as scalable return true
 				// by default.
 				if (profielSet.getIsScalable()) {
 					NmdScaler scaler = prod.getScalerForProfileSet(profielSet.getProfielId());
 					if (numDims < 3 && scaler != null) {
 						String unit = scaler.getUnit();
-	
+
 						Double[] dims = orientation.getScaleDims();
 						if (scaler.getNumberOfDimensions() > dims.length) {
 							// cannot scale a wall (in m2) on more than 1 dimension
 							return false;
 						}
-	
-						Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit, this.getStore());
+
+						Double convFactor = NmdScalingUnitConverter.getScalingUnitConversionFactor(unit,
+								this.getStore());
 						if (!scaler.areDimsWithinBounds(dims, convFactor)) {
 							return false;
 						}
