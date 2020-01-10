@@ -2,6 +2,7 @@ package org.opensourcebim.ifccollection;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Function;
 
 import org.bimserver.emf.IfcModelInterface;
 import org.bimserver.models.geometry.Bounds;
@@ -9,6 +10,7 @@ import org.bimserver.models.geometry.GeometryInfo;
 import org.bimserver.models.ifc2x3tc1.IfcProduct;
 import org.bimserver.models.ifc2x3tc1.IfcRelDecomposes;
 import org.bimserver.models.ifc2x3tc1.IfcSpace;
+import org.bimserver.models.ifc2x3tc1.impl.IfcCoveringImpl;
 import org.bimserver.utils.AreaUnit;
 import org.bimserver.utils.IfcUtils;
 import org.bimserver.utils.LengthUnit;
@@ -85,19 +87,39 @@ public class MpgGeometryParser {
 					double z_dir = this.convertLength(bounds.getMax().getZ() - bounds.getMin().getZ());
 					
 					geom.setFloorArea(this.convertArea(geomData.get("SURFACE_AREA_ALONG_Z").asDouble()));				
-					//double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
-										
-
-					x_dir = Double.isInfinite(x_dir) || Double.isNaN(x_dir) ? 0.0 : x_dir;
-					y_dir = Double.isInfinite(y_dir) || Double.isNaN(y_dir) ? 0.0 : y_dir;
-					z_dir = Double.isInfinite(z_dir) || Double.isNaN(z_dir) ? 0.0 : z_dir;
+					
+					Function<Double, Double> dimCheck = (dim) -> {
+						return Double.isInfinite(dim) || Double.isNaN(dim) ? 0.0 : dim;
+					};
+					
+					x_dir = dimCheck.apply(x_dir);
+					y_dir = dimCheck.apply(y_dir);
+					z_dir = dimCheck.apply(z_dir);
 					geom.setDimensions(x_dir, y_dir, z_dir);
 					
-					if (x_dir * y_dir * z_dir <= geom.getVolume() / 1e6) {
+					// check if there are exceptional cases where there are leaks in the geometry
+					// i.e.: stairs often show this behaviour
+					if (x_dir * y_dir * z_dir <= geom.getVolume() / 1e5 || geom.getVolume() == 0) {
 						geom.setVolume(x_dir * y_dir * z_dir);
 						geom.setFloorArea(x_dir * y_dir);
+					}					
+
+					// check cases where the bounding box doesn't snap correctly around the object.
+					// This is a large issues with roofs.
+					double largest_face_area = geomData.get("LARGEST_FACE_AREA").asDouble();
+					double face_area_ratio = geom.getFaceArea() / largest_face_area;
+					if ((face_area_ratio < 0.5 || face_area_ratio > 2) 
+							&& (prod instanceof IfcCoveringImpl)) {
+						double max_area_dim = geom.getPrincipalDimension();
+						double min_area_dim =geom.getFaceArea() / max_area_dim;
+						
+						// xyz order doesn't really matter!
+						double new_z_dir = geom.getVolume() / geom.getFaceArea();
+						double new_x_dir = Math.sqrt(Math.pow(max_area_dim, 2) + Math.pow(min_area_dim, 2));
+						double new_y_dir = geom.getVolume() / new_x_dir/ new_z_dir;
+
+						geom.setDimensions(new_x_dir, new_y_dir, new_z_dir);						
 					}
-					
 				}
 			} catch (IOException e) {
 				LOGGER.error("Error encountered while retrieving geometry from product: " + e.getMessage());
