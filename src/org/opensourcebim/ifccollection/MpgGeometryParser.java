@@ -100,7 +100,7 @@ public class MpgGeometryParser {
 					
 				}
 			} catch (IOException e) {
-				LOGGER.error("Error encountered whiel retrieving geometry from product: " + e.getMessage());
+				LOGGER.error("Error encountered while retrieving geometry from product: " + e.getMessage());
 			}
 		}
 		return geom;

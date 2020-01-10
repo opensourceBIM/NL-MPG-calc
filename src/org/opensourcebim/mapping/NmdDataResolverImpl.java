@@ -513,7 +513,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	}
 
 	/**
-	 * Determine which elements should be included based on restrictions and ifc
+	 * Determine which products should be included based on restrictions and ifc
 	 * object properties
 	 * 
 	 * @param mpgElement object containing non mapped ifc product properties
@@ -533,7 +533,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * Find out wich candidate product should be mapped to the mpgElement.
 	 * 
 	 * @param mpgElement mpgElement to add product cards to
-	 * @param candidates possible nmProductCard matches for the mpgElement
+	 * @param candidateProducts possible nmProductCard matches for the mpgElement
 	 */
 	private Boolean getProductCardsForElement(MpgElement mpgElement, List<NmdElement> candidates) {
 

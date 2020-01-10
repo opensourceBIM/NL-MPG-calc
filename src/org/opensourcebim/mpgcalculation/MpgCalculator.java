@@ -92,12 +92,12 @@ public class MpgCalculator {
 
 							// calculate total units required taking into account category modifiers.
 							// replacements, # of profielSet items per productCard and scaling
-							double lifeTimeUnitsPerProfiel = replacements * profielSet.getQuantity() * unitsRequired
+							double lifeTimeUnitsPerProfile = replacements * profielSet.getQuantity() * unitsRequired
 									* categoryMultiplier * scaleFactor;
 
 							// example for production
 							profielSet.getAllFaseProfielen().values().forEach(fp -> {
-								Set<NmdCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfiel);
+								Set<NmdCostFactor> factors = fp.calculateFactors(lifeTimeUnitsPerProfile);
 								Long objectId = element.getMpgObject().getObjectId();
 								results.addCostFactors(factors, product.getDescription(), profielSet.getName(), objectId);
 							});
