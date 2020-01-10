@@ -38,10 +38,18 @@ public class MpgCalculationResults {
 		totalLifeTime = 1.0;
 	}
 
+	public double getTotalLifeTime() {
+		return this.totalLifeTime;
+	}
+	
 	public void setTotalLifeTime(double designLife) {
 		this.totalLifeTime = designLife;
 	}
 
+	public double getTotalFloorArea() {
+		return this.totalFloorArea;
+	}
+	
 	public void setTotalFloorArea(double totalFloorArea) {
 		this.totalFloorArea = totalFloorArea;
 	}
