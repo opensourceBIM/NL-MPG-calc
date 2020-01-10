@@ -491,8 +491,8 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// STEP3: select the elements we want to include based on mandatory flags and/or
 		// other constraints
-		List<NmdElement> candidateElements = selectCandidateElements(mpgElement, allMatchedElements);
-		if (candidateElements.size() == 0) {
+		List<NmdProductCard> candidateProducts = selectCandidateProducts(mpgElement, allMatchedElements);
+		if (candidateProducts.size() == 0) {
 			mpgElement.getMpgObject().addTag(MpgInfoTagType.nmdProductCardWarning,
 					"None of the candidate NmdElements matching the selection criteria.");
 			return;
@@ -500,7 +500,7 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// STEP4: from every candidate element we should pick 0:1 productcards per
 		// material and add a mapping
-		Boolean mapFound = getProductCardsForElement(mpgElement, candidateElements);
+		Boolean mapFound = getProductCardsForElement(mpgElement, candidateProducts);
 		if (mapFound && mpgElement.getTotalMap() == null) {
 			mpgElement.setMappingMethod(NmdMappingType.DirectDeelProduct);
 		} else if (mpgElement.getTotalMap() != null) {
@@ -521,12 +521,17 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return a list of elements of which at least one product should be selected
 	 *         for the mapping
 	 */
-	private List<NmdElement> selectCandidateElements(MpgElement mpgElement, List<NmdElement> candidates) {
+	private List<NmdProductCard> selectCandidateProducts(MpgElement mpgElement, List<NmdElement> candidates) {
 
-		List<NmdElement> filteredCandidates = candidates.stream().filter(ce -> (ce.getProducts().size() > 0))
+		// flatten the products and throw away any products defined per kg as we do not have density data
+		List<NmdProductCard> candidateProducts = candidates.stream().flatMap(e -> e.getProducts().stream())
+				.filter(pc -> !pc.getUnit().equals("kg")) 
 				.collect(Collectors.toList());
+		
+		// if not already laoded. get more specific data
+		candidateProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
 
-		return filteredCandidates;
+		return candidateProducts;
 	}
 
 	/**
@@ -535,39 +540,40 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @param mpgElement mpgElement to add product cards to
 	 * @param candidateProducts possible nmProductCard matches for the mpgElement
 	 */
-	private Boolean getProductCardsForElement(MpgElement mpgElement, List<NmdElement> candidates) {
-
-		List<NmdProductCard> allProducts = candidates.stream().flatMap(e -> e.getProducts().stream())
-				.collect(Collectors.toList());
+	private Boolean getProductCardsForElement(MpgElement mpgElement, List<NmdProductCard> candidateProducts) {
 		List<MaterialSource> mats = mpgElement.getMpgObject().getListedMaterials();
-		Set<NmdProductCard> viableCandidates = new HashSet<>();
-
-		// Find per material the most likely candidates that fall within the
-		// specifications
-		allProducts.forEach(p -> getService().getAdditionalProfileDataForCard(p));
 
 		// 3 options. map for each layer separately, map on all mats in one go or map per material.
 		if (mpgElement.getMpgObject().getLayers().size() > 0) {
 			// map on each material individually
 			for (MaterialSource mat : mats) {
-				this.findViableCandidateForElement(mat.getName(), mpgElement, allProducts, viableCandidates,
-						mat);
+				this.mapProductCardOnElement(mat.getName(), mpgElement, 
+						candidateProducts, mat);
 			}
 
 		} else if (mpgElement.getMpgObject().getListedMaterials().size() >= 1) {
 			// try map on the full material description
 			String description = mpgElement.getMpgObject().getListedMaterials().stream().map(MaterialSource::getName)
 					.collect(Collectors.joining(" "));
-			this.findViableCandidateForElement(description, mpgElement, allProducts, viableCandidates,
+			this.mapProductCardOnElement(description, mpgElement, 
+					candidateProducts, 
 					new TotalMaterialSource("resolver"));
 		}
 
 		return mpgElement.getTotalMap() != null || 
 				mpgElement.getMpgObject().getListedMaterials().stream().anyMatch(m -> m.getMapId() > 0);
 	}
-
-	private void findViableCandidateForElement(String description, MpgElement mpgElement, List<NmdProductCard> allProducts,
-			Set<NmdProductCard> viableCandidates,
+	
+	/**
+	 * perform string and geometry comparison for the candidate products and the ifc object embedded in the mpgelement
+	 * @param description description to match on
+	 * @param mpgElement mpgelement with ifc object data (geometry)
+	 * @param allProducts candidate product cards
+	 * @param viableCandidates
+	 * @param mat
+	 */
+	private void mapProductCardOnElement(String description, MpgElement mpgElement, 
+			List<NmdProductCard> allProducts,
 			MaterialSource mat) {
 
 		// currently: select most favorable card
@@ -607,11 +613,17 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 
 		// determine which product card should be returned based on an input filter
 		// function and add this one to the results list
-		// ToDo: currently this is a set Function, but this can be replaced with any
-		// user defined selection method.
+		NmdProductCard chosenCard = null;
 		if (!productOptions.isEmpty()) {
-			NmdProductCard chosenCard = selectCard.apply(productOptions);
-			viableCandidates.add(chosenCard);
+			chosenCard = selectCard.apply(productOptions);
+		} else if (!removeCards.isEmpty()) {
+			// if we cannot find a suitable card that fits the geometry we should look into the discarded cards.
+			// This should be removed once reference dimensions for all cards are defined.
+			chosenCard = selectCard.apply(removeCards);
+			mpgElement.getMpgObject().addTag(MpgInfoTagType.mappingWarning,
+					"selected product card might have geometry restrictions: " + description);
+		}
+		if (chosenCard != null) {
 			mpgElement.mapProductCard(mat, chosenCard);
 			mpgElement.getMpgObject().setNLsfbCode(chosenCard.getNlsfbCode());
 		}
@@ -637,8 +649,11 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 		}
 
 		allProducts.forEach(p -> prods
-				.add(new ImmutablePair<NmdProductCard, Double>(p, getProductSimilarityScore(materialDescription, p))));
-
+				.add(new ImmutablePair<NmdProductCard, Double>(p, getProductSimilarityScore(materialDescription, p, false))));
+		allProducts.forEach(p -> prods
+				.add(new ImmutablePair<NmdProductCard, Double>(p, getProductSimilarityScore(materialDescription, p, true))));
+		
+		
 		// determine the best product and benchmark with the other remaining candidates.
 		prods.sort((p1, p2) -> Double.compare(p1.getValue(), p2.getValue()));
 		Double benchMark = prods.get(0).getValue();
@@ -659,13 +674,19 @@ public class NmdDataResolverImpl implements NmdDataResolver {
 	 * @return the minimum levensthein distance of the reference word wrt any of the
 	 *         profileSet names
 	 */
-	private Double getProductSimilarityScore(Set<String> refWords, NmdProductCard card) {
+	private Double getProductSimilarityScore(Set<String> refWords, NmdProductCard card, boolean includeProfileSet) {
 		// get all words in the profileSet names and card description and clean them
-		Set<String> map = card.getProfileSets().stream().map(ps -> ps.getName()).collect(Collectors.toSet());
+		Set<String> map = new HashSet<String>();
 		map.add(card.getDescription());
+		if (includeProfileSet) {
+			map.addAll(card.getProfileSets().stream().map(ps -> ps.getName()).collect(Collectors.toSet()));
+		}
+		
+		// make it one big string and clean up everything in one go.
 		String totalDescription = String.join(" ", map);
 		Set<String> keyWords = NmdDataResolverImpl.parseStringForWords(totalDescription);
-
+		
+		// compare reference set of words with card descriptors
 		return calculateSimilarityScore(refWords, keyWords.stream().collect(Collectors.toList()));
 	}
 
