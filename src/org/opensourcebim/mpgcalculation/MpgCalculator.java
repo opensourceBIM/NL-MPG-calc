@@ -171,6 +171,7 @@ public class MpgCalculator {
 				String unit = "";
 				String cardDescription = "";
 				Integer nmdId = null;
+				Double totalUnits = 0d;
 				if (!elements.get(0).getMappingMethod().isIndirectMapping()) {
 					if (cards.size() >= 1) {
 						if (cards.size() > 1) {
@@ -180,47 +181,56 @@ public class MpgCalculator {
 						}
 						unit = cards.get(0).getUnit();
 						cardDescription = String.join("|", cards.stream().map(c -> c.getDescription()).collect(Collectors.toList()));
+
+						totalUnits = elements.stream()
+							.mapToDouble(el -> el.getRequiredNumberOfUnits(cards.get(0)))
+							.sum();
 						nmdId = cards.get(0).getProductId();
 					} else {
 						bom.addAnnotation(String.format(
 								"found no product card for element group %s",
 								elements.get(0).getUnMappedGroupHash()));
-					} 
-				}
-				
-				String materialNames = elements.get(0).getMpgObject().getListedMaterials().stream()
-						.map(MaterialSource::getName)
-						.collect(Collectors.joining("|"));
-				
-				Double totalVolume = elements.stream()
-						.mapToDouble(el -> el.getMpgObject().getGeometry().getVolume())
-						.filter(vol -> Double.isFinite(vol)).sum();
-				Double totalArea = elements.stream()
-						.mapToDouble(el -> el.getMpgObject().getGeometry().getFaceArea())
-						.filter(vol -> Double.isFinite(vol)).sum();
-				
-				List<Long> ids = elements.stream().map(el -> el.getMpgObject().getObjectId()).collect(Collectors.toList());
-				
-				Double mkiContribution = ids.stream()
-				        .filter(mkiContributions::containsKey)
-				        .collect(Collectors.toMap(Function.identity(), mkiContributions::get))
-				        .values().stream().mapToDouble(d -> d).sum();
+					}
 					
-				// report the total score together with metadata such as total volume
-				// num elements, material description etc.
-				bomEntry.put("nmd card", cardDescription);
-				bomEntry.put("nmd id", nmdId);
-				bomEntry.put("mapping type", elements.get(0).getMappingMethod());
-				
-				bomEntry.put("Ifc type", elements.get(0).getMpgObject().getObjectType());
-				bomEntry.put("Ifc object name", elements.get(0).getMpgObject().getObjectName());
-				bomEntry.put("IFC materials", materialNames);
-				bomEntry.put("number of elements", elements.size());
-				bomEntry.put("unit", unit);
-				bomEntry.put("volume", totalVolume);
-				bomEntry.put("area", totalArea);
-				bomEntry.put("mki contribution", mkiContribution);
-				bom.addEntry(bomEntry);
+					String materialNames = elements.get(0).getMpgObject().getListedMaterials().stream()
+							.map(MaterialSource::getName)
+							.collect(Collectors.joining("|"));
+					
+					Double totalVolume = elements.stream()
+							.mapToDouble(el -> el.getMpgObject().getGeometry().getVolume())
+							.filter(vol -> Double.isFinite(vol)).sum();
+					Double totalArea = elements.stream()
+							.mapToDouble(el -> el.getMpgObject().getGeometry().getFaceArea())
+							.filter(vol -> Double.isFinite(vol)).sum();
+					
+					List<Long> ids = elements.stream().map(el -> el.getMpgObject().getObjectId()).collect(Collectors.toList());
+					
+					Double mkiContribution = ids.stream()
+					        .filter(mkiContributions::containsKey)
+					        .collect(Collectors.toMap(Function.identity(), mkiContributions::get))
+					        .values().stream().mapToDouble(d -> d).sum();
+					
+					MpgElement parent = this.objectStore.getElementByObjectGuid(elements.get(0).getMpgObject().getParentId());
+					String parentDescription = parent != null ? parent.getMpgObject().getObjectName() : "";
+						
+					// report the total score together with metadata such as total volume
+					// num elements, material description etc.
+					bomEntry.put("nmd card", cardDescription);
+					bomEntry.put("nmd id", nmdId);
+					bomEntry.put("mapping type", elements.get(0).getMappingMethod());
+					
+					bomEntry.put("Ifc type", elements.get(0).getMpgObject().getObjectType());
+					bomEntry.put("Ifc object name", elements.get(0).getMpgObject().getObjectName());
+					bomEntry.put("parent name", parentDescription);
+					bomEntry.put("IFC materials", materialNames);
+					bomEntry.put("number of elements", elements.size());
+					bomEntry.put("units of product required", totalUnits);
+					bomEntry.put("product unit", unit);
+					bomEntry.put("volume", totalVolume);
+					bomEntry.put("area", totalArea);
+					bomEntry.put("mki contribution", mkiContribution);
+					bom.addEntry(bomEntry);
+				}
 			}
 		}
 		this.results.setBillOfMaterials(bom);
