@@ -80,14 +80,10 @@ public class ObjectStoreBuilder {
 			Double[] dims, String nlsfb, String type, String parentUUID) {
 		MpgGeometry geom = this.createDummyGeom(dims[0], dims[1], dims[2]);
 		MpgElement el = getStore().addElement(ifcName);
-		MpgObjectImpl obj = new MpgObjectImpl();
-		obj.setObjectName(ifcName);
+		MpgObjectImpl obj = new MpgObjectImpl(getNewUniqueId(), getUUID(), ifcName,type, parentUUID);
 		obj.setGeometry(geom);
 		obj.setNLsfbCode(nlsfb);
-		obj.setGlobalId(getUUID());
-		obj.setObjectType(type);
-		obj.setParentId(parentUUID);
-
+		
 		ifcMatSpecs.forEach((name, ratio) -> {
 			String id = getUUID();
 			if (createLayers) {

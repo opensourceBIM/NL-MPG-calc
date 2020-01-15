@@ -54,7 +54,7 @@ public class MpgCalculationResults {
 		this.totalFloorArea = totalFloorArea;
 	}
 
-	public void SetResultsStatus(ResultStatus status) {
+	public void setResultsStatus(ResultStatus status) {
 		this.status = status;
 	}
 
@@ -73,6 +73,14 @@ public class MpgCalculationResults {
 	 */
 	public double getTotalCorrectedCost() {
 		return getTotalCost() / totalFloorArea / totalLifeTime;
+	}
+	
+	public void setBillOfMaterials(BillOfMaterials bom) {
+		this.billOfMaterials = bom;
+	}
+
+	public BillOfMaterials getBillOfMaterials() {
+		return billOfMaterials;
 	}
 
 
@@ -159,13 +167,5 @@ public class MpgCalculationResults {
 		for (NmdCostFactor costFactor : factors) {
 			this.addCostFactor(costFactor, product, specName, objectId);
 		}
-	}
-
-	public void setBillOfMaterials(BillOfMaterials bom) {
-		this.billOfMaterials = bom;
-	}
-
-	public BillOfMaterials getBillOfMaterials() {
-		return billOfMaterials;
 	}
 }

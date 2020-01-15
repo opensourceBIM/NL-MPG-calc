@@ -42,12 +42,12 @@ public class MpgCalculator {
 	public MpgCalculationResults calculate(double designLife) {
 
 		if (objectStore == null) {
-			results.SetResultsStatus(ResultStatus.NoData);
+			results.setResultsStatus(ResultStatus.NoData);
 			return results;
 		}
 
 		if (!(objectStore.isIfcDataComplete() && objectStore.isElementDataComplete())) {
-			results.SetResultsStatus(ResultStatus.IncompleteData);
+			results.setResultsStatus(ResultStatus.IncompleteData);
 		}
 
 		try {
@@ -109,11 +109,11 @@ public class MpgCalculator {
 			this.generateBillOfMaterials();
 			
 			if (results.getStatus() != ResultStatus.IncompleteData) {
-				results.SetResultsStatus(ResultStatus.Success);
+				results.setResultsStatus(ResultStatus.Success);
 			}
 
 		} catch (Exception e) {
-			results.SetResultsStatus(ResultStatus.ValueError);
+			results.setResultsStatus(ResultStatus.ValueError);
 		}
 		return results;
 	}
@@ -160,9 +160,9 @@ public class MpgCalculator {
 		if (this.objectStore != null && this.objectStore.getProductCards().size() > 0) {
 			Collection<List<MpgElement>> elementGroups = this.objectStore.getElementGroups().values();
 			HashMap<Long, Double> mkiContributions = this.results.getCostPerObjectId();
-			
+
 			for (List<MpgElement> elements : elementGroups) {
-				// get the total score contributed by these elements
+				// get the total score contributed by this element group
 				Map<String, Object> bomEntry = new HashMap<String, Object>();
 				List<NmdProductCard> cards = elements.stream()
 						.flatMap(el -> el.getNmdProductCards().stream())
