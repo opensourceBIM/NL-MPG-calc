@@ -106,7 +106,7 @@ public class WorkSheetReader {
 		List<Object> cleanedData = new ArrayList<>();
 		if (lastObject.isPresent()) {
 			int idx = columnData.lastIndexOf(lastObject.get());
-			cleanedData = columnData.subList(0, idx);
+			cleanedData = columnData.subList(0, idx +1);
 		}
 		return cleanedData;
 	}

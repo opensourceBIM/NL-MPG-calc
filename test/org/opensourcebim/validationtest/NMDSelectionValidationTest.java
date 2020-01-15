@@ -22,18 +22,20 @@ import org.opensourcebim.ifccollection.ObjectStoreBuilder;
 import org.opensourcebim.mapping.MappingDataServiceRestImpl;
 import org.opensourcebim.mapping.NmdDataResolver;
 import org.opensourcebim.mapping.NmdDataResolverImpl;
+import org.opensourcebim.mpgcalculation.BillOfMaterials;
+import org.opensourcebim.mpgcalculation.MpgCalculator;
 import org.opensourcebim.test.WorkSheetReader;
 
 import nl.tno.bim.nmd.services.Nmd3DataService;
 
 public class NMDSelectionValidationTest {
 	List<String> columnData = new ArrayList<>(Arrays.asList("Bouwdeel", "key SfB element", "SfB element", "Toelichting",
-			"material key", "Materiaal", "breedte (m)", "lengte (m)", "dikte (m)", "hoeveelheid ", "eenheid",
+			"material key", "Materiaal", "breedte (m)", "lengte (m)", "dikte (m)", "hoeveelheid", "eenheid",
 			"oppervlak per woning", "opmerkingen", "volume m³/m (muur)", "volume/woning (m³)", "dichtheid (kg/m³)",
 			"kg/woning", "kg/m2", "ID NMD", "NMD productkaart", "MKI/m²", "MKI/woning"));
 
 	Path rootDir = Paths.get(System.getProperty("user.dir")).resolve("test").resolve("ReferenceExcelFiles");
-	String relPath = "Bob - gem_MKI_per_m2.xlsx";
+	String relPath = "Bob - gem_MKI_per_m2_edited_for_analysis.xlsx";
 
 	protected Path getFullIfcModelPath() {
 		return rootDir.resolve(this.relPath);
@@ -59,13 +61,18 @@ public class NMDSelectionValidationTest {
 
 			for (int rowIdx = 0; rowIdx < max_length; rowIdx++) {
 				String ifcName = this.getStringValueFromColumn("Toelichting", data, rowIdx);
+
+				String qVal = this.getStringValueFromColumn("hoeveelheid", data, rowIdx);
+				Double quantity = qVal != null && qVal != "" ? Double.parseDouble(qVal) : 1d;
 				Map<String, Double> matSpecs = this.getMaterialSpecs(data, rowIdx);
 				Double[] dims = this.getDimensions(data, rowIdx);
 				String nlsfb = "";
 				String type = this.getIfcType(data, rowIdx);
 				String parentUUID = "";
 
-				builder.AddUnmappedMpgElement(ifcName, false, matSpecs, dims, nlsfb, type, parentUUID);
+				for (int i = 0; i < quantity; i++) {
+					builder.AddUnmappedMpgElement(ifcName, false, matSpecs, dims, nlsfb, type, parentUUID);
+				}
 			}
 		}
 		return builder.getStore();
@@ -92,22 +99,22 @@ public class NMDSelectionValidationTest {
 		Double[] dims = new Double[3];
 		List<Object> areaColumn = data.get("oppervlak per woning");
 
-		if (areaColumn.size() > index) {
-			Object areaObj = areaColumn.get(index);
-			Double area = areaObj != null ? Double.parseDouble(areaObj.toString()) : 0.0;
-			// simplified assumption to take the sqrt of the area. is sufficient for most
-			// situations
-			dims[0] = Math.sqrt(area);
-			dims[1] = dims[0];
-		} else {
-			// no area defined. take the width and length
-			Object widthObj = data.get("breedte (m)").get(index);
-			dims[0] = widthObj != null ? Double.parseDouble(widthObj.toString()) : 0.0;
-			Object lengthObj = data.get("lengte (m)").get(index);
-			dims[1] = lengthObj != null ? Double.parseDouble(lengthObj.toString()) : 0.0;
-		}
+		// first try using the principal dimensions
+		Object widthObj = data.get("breedte (m)").get(index);
+		dims[0] = widthObj != null ? Double.parseDouble(widthObj.toString()) : 0.0;
+		Object lengthObj = data.get("lengte (m)").get(index);
+		dims[1] = lengthObj != null ? Double.parseDouble(lengthObj.toString()) : 0.0;
 		Object thicknessObj = data.get("dikte (m)").get(index);
 		dims[2] = thicknessObj != null ? Double.parseDouble(thicknessObj.toString()) : 0.05;
+
+		// if not all principal dimensions are defined try it through deduciton by
+		// element
+		if (areaColumn.size() > index && (dims[0] == 0.0 || dims[1] == 0.0 || dims[2] == 0.0)) {
+			Object areaObj = areaColumn.get(index);
+			Double area = areaObj != null ? Double.parseDouble(areaObj.toString()) : 0.0;
+			dims[0] = Math.sqrt(area);
+			dims[1] = dims[0];
+		}
 
 		return dims;
 	}
@@ -126,6 +133,8 @@ public class NMDSelectionValidationTest {
 			switch (column.get(index).toString()) {
 			case "Fundering":
 				return "IfcFooting";
+			case "Balken":
+				return "IfcBeam";
 			case "Begane grond vloeren":
 			case "Verdiepingsvloeren":
 				return "IfcSlab";
@@ -156,15 +165,18 @@ public class NMDSelectionValidationTest {
 		try {
 			resolver.setNmdService(Nmd3DataService.getInstance());
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		resolver.setMappingService(new MappingDataServiceRestImpl());
 		resolver.setStore(store);
 		// this will edit the store object with results of NMD product card selection
 		resolver.nmdToMpg();
-		
-		assertEquals(40, store.getElements().size());
+		MpgCalculator calc = new MpgCalculator();
+		calc.setObjectStore(resolver.getStore());
+		calc.calculate(75d);
+		BillOfMaterials bom = calc.getResults().getBillOfMaterials();
+		System.out.println(bom.printToCsv("|"));
+		assertEquals(37, store.getElements().size());
 		assertTrue(store.getProductCards().size() > 0);
 	}
 
